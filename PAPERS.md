@@ -25,7 +25,9 @@ Claims to establish:
 - A4. Jet mass is built from products of moments (m² ≈ 2·ΣpT·Σ pT r² − 2|Σ pT r⃗|²) in d4/d5. [E6]
 - A5. The 16 neurons are statements on A3's objects. Replacing each stage by its formula keeps the network's calls. [E7]
 - A6. Classes are combinations of neuron objects, and imposing a combination causes the class (J33b on the network's own objects). [E8]
-- A7. The same objects appear in all 20 official JEDI-linear models; an untrained network does not show them. [E9]
+- A7. The same objects appear across JEDI-linear sizes and input sets; an untrained network does not show them. Scope (user,
+  2026-10-16: not all 20 official models): 3-feature n8/n32/n64/n128, 3-feature-perminv n64 (ordering control), 16-feature n64
+  (input control), untrained n64. [E9]
 - A9 (user, 2026-10-16). High-level variables are built over the layers: sums of particles first (P, S), then products
   and ratios (h4, h5), then clustering-type variables, if at all. The layer where a variable first becomes linearly readable
   rises with its algebraic depth. [E10; E6 for mass]

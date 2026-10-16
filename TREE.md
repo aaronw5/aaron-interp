@@ -11,7 +11,7 @@ Stages: 1 = initial implementation, 2 = baselines and controls, 3 = research age
 | E4 | E3 | 3 | A2 | context round g | interp/e4_e5_jedi.py | running (agent) | | | |
 | E5 | E3 | 3 | A3 | second-round objects named + causal | interp/e4_e5_jedi.py | running (agent) | | | |
 | E6 | E3 | 3 | A4 | mass from moments; where the product forms | interp/e6_mass_jedi.py | running (agent) | | | |
-| E9 | E3 | 2/4 | A7 | 20 official models + untrained, cluster | interp/e1_e3_sweep.py | running (agent) | | | |
+| E9 | E3 | 2/4 | A7 | 6 official models (n8/32/64/128, perminv n64, 16-feature n64) + untrained, cluster | interp/e1_e3_sweep.py | running (agent) | | | |
 | E10 | E3 | 3 | A9 | variables over layers vs algebraic depth | interp/e10_layers_jedi.py | running (agent) | | | |
 | E7 | E5,E6 | 3/4 | A5 | neurons on own objects; stage substitution | – | todo | | | |
 | E8 | E7 | 4 | A6 | classes as combinations, imposed | – | todo | | | |
