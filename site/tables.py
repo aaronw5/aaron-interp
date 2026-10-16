@@ -1,7 +1,7 @@
 import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 import os, pathlib
 S = str(pathlib.Path(__file__).resolve().parents[1] / 'results' / 'site') + '/'; os.makedirs(S, exist_ok=True)
-def table(fname, title, cols, rows, widths, note=None, h=0.42):
+def table(fname, title, cols, rows, widths, note=None, h=0.5):
     fig, ax = plt.subplots(figsize=(sum(widths), 0.9 + h*len(rows) + (0.5 if note else 0)), dpi=160); ax.axis('off')
     t = ax.table(cellText=rows, colLabels=cols, colWidths=[w/sum(widths) for w in widths], loc='upper center', cellLoc='left', colLoc='left')
     t.auto_set_font_size(False); t.set_fontsize(9); t.scale(1, 1.75)
@@ -43,17 +43,17 @@ table('T2_mass_and_windows.png', 'JEDI-linear: how the mass is formed and read (
   ['iso-mass edit', 'pT × 0.8, angles × 1.25 (m fixed)', '78 % of W jets → top: pT is used at fixed mass']],
  [1.6, 4.0, 4.2])
 table('T3_rotation_test.png', 'JEDI-linear: are the second-round objects radial? Rigid rotations and reflections of whole jets (E5v; 10,000 fresh test jets, seed 7)',
- ['edit (every r unchanged)', 'calls changed, fixed point', 'calls changed, float + masks', 'objects moving > 0.25 SD', 'carriers of the call change (one object patched)'],
+ ['edit (every r unchanged)', 'calls changed\n(fixed point)', 'calls changed\n(float + masks)', 'objects moving > 0.25 SD (rms ΔS / SD)', 'carriers of the call change\n(one rotated object patched in)'],
  [['rotate 45°', '3.81 %', '3.13 %', 'S58 0.68, S31 0.44, S56 0.34, S52 0.33, S62 0.26', '—'],
   ['rotate 90°', '4.08 %', '3.90 %', 'same ordering', '—'],
-  ['rotate 180°', '3.87 %', '3.17 %', 'S31 0.44, S58 0.41, S56 0.30, S52 0.29, S62 0.25', 'S1 2.27 %, S29 2.11 %, S56 1.58 %, S31 1.09 %, S17 1.05 %'],
+  ['rotate 180°', '3.87 %', '3.17 %', 'S31 0.44, S58 0.41, S56 0.30, S52 0.29, S62 0.25', 'S1 2.27 %, S29 2.11 %, S56 1.58 %,\nS31 1.09 %, S17 1.05 %'],
   ['reflect Δφ → −Δφ', '3.73 %', '3.04 %', 'same ordering', '—'],
   ['reflect Δη → −Δη', '4.08 %', '3.62 %', 'same ordering', '—'],
   ['per-particle azimuth scramble', '6.85 %', '6.37 %', 'S58 1.52, S31 1.25', '—'],
-  ['— radial to ≤ 0.1 SD under every edit', '', '', 'S0, S19, S20, S29, S30, S40, S43, S50, S51, S60 (10 of 17 particle objects; the five costliest among them)', ''],
+  ['— radial to ≤ 0.1 SD under every edit', '', '', 'S0, S19, S20, S29, S30, S40, S43, S50, S51, S60\n(10 of 17 particle objects; the five costliest among them)', ''],
   ['— 0.1–0.2 SD', '', '', 'S13, S17, S63, S1', ''],
-  ['— directional', '', '', 'S52, S56, S62; S31, S58 (built from the η-cut units g5, g29 and φ-cut units g39, g55)', '']],
- [2.6, 1.6, 1.7, 4.2, 3.6],
+  ['— directional', '', '', 'S52, S56, S62; S31, S58\n(built from the η-cut units g5, g29 and φ-cut units g39, g55)', '']],
+ [2.7, 1.4, 1.5, 5.2, 3.4],
  note='First round under the same edits: 9 of 13 live P units move 0.7–1.2 SD (the half-planes); P15, P21, P32, P56 (pT units) move 0. Accuracy stays 80.7–81.0 %.')
 table('T4_e5v_naming_context.png', 'JEDI-linear: verification of the S29 name and of the context path (E5v, fresh sample)',
  ['check', 'measurement', 'result'],
