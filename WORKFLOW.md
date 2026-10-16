@@ -67,7 +67,8 @@ Questions for the user go out as a notification (PushNotification) and are liste
 ## Results page (user 2026-10-16)
 One tabbed HTML page, one tab per paper (`site/content.py` → `site/gen.py` → published artifact "Tagger Interp Results",
 https://claude.ai/artifact/JhMsJ4hbzPfVkCgtj1F6gR). Plots and tables as PNGs (`site/tables.py`), also sent to the user whenever a
-result lands. The ledger step updates `site/content.py` (claims, confidence, figures, experiments, thesis log) each round; tabs
+result lands. The ledger step updates `site/content.py` each round: every claim carries a `detail` block (what the claim is, procedure with
+sample/edit/control/metric, result numbers, tables, figures, verification, files) rendered as a drop-down (user 2026-10-16); tabs
 merge when papers merge. Prose: succinct, no verdict or editorial language.
 
 ## Git (user 2026-10-16)

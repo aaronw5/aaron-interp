@@ -20,20 +20,32 @@ def table(cols, rows):
     return f'<div class="tw"><table><thead><tr>{h}</tr></thead><tbody>{b}</tbody></table></div>'
 
 
+def claim(c):
+    d = c['detail']
+    conf = f'<span class="bar"><i style="width:{int(c["confidence"]*100)}%"></i></span> {c["confidence"]:.2f}'
+    tabs_ = ''.join(f'<h4>{e(t)}</h4>{table(cols, rows)}' for t, cols, rows in d.get('tables', []))
+    figs = ''.join(f'<figure>{img(f)}<figcaption>{e(cap)}</figcaption></figure>' for f, cap in d.get('figures', []))
+    return f'''<details class="claim"><summary><span class="cid">{e(c['id'])}</span> {e(c['statement'])}
+<span class="meta">{e(c['status'])} · confidence {conf} · {e(c['evidence'])}</span></summary>
+<div class="body">
+<h4>What the claim is</h4><p>{e(d['what'])}</p>
+<h4>Procedure</h4><p>{e(d['procedure'])}</p>
+<h4>Result</h4><p>{e(d['result'])}</p>
+{tabs_}{figs}
+<h4>Verification</h4><p>{e(d['verification'])}</p>
+<p class="mut">Files: {e(d['files'])}</p>
+</div></details>'''
+
+
 def paper(p):
-    conf = lambda c: f'<span class="bar"><i style="width:{int(c*100)}%"></i></span> {c:.2f}'
-    claims = ''.join(f'<tr><td>{e(k)}</td><td>{e(t)}</td><td>{e(s)}</td><td>{conf(c)}</td><td>{e(ev)}</td></tr>' for k, t, s, c, ev in p['claims'])
-    figs = ''.join(f'<figure>{img(f)}<figcaption>{e(cap)}</figcaption></figure>' for f, cap in p['figures']) or '<p class="mut">No figures yet.</p>'
+    claims = ''.join(claim(c) for c in p['claims'])
     log = ''.join(f'<li><b>{e(v)}</b> — {e(t)}</li>' for v, t in p['thesis_log'])
-    exps = table(['id', 'question', 'result', 'status'], p['experiments']) if p['experiments'] else '<p class="mut">None yet.</p>'
     opens = ''.join(f'<li>{e(o)}</li>' for o in p['open'])
     return f'''<section id="tab-{p['key']}" class="tab" hidden>
 <h2>{e(p['title'])}</h2>
 <h3>Thesis (current)</h3><p class="thesis">{e(p['thesis'])}</p>
 <details><summary>Thesis history</summary><ul>{log}</ul></details>
-<h3>Claims</h3><div class="tw"><table><thead><tr><th>claim</th><th>statement</th><th>status</th><th>confidence</th><th>evidence</th></tr></thead><tbody>{claims}</tbody></table></div>
-<h3>Figures and tables</h3>{figs}
-<h3>Experiments</h3>{exps}
+<h3>Claims (open each for procedure, numbers, tables, figures)</h3>{claims}
 <h3>Open</h3><ul>{opens}</ul>
 </section>'''
 
@@ -43,7 +55,7 @@ overview = f'''<section id="tab-overview" class="tab">
 <h2>{e(ov['title'])}</h2><p>{e(ov['intro'])}</p>
 <h3>Running</h3>{table(['what', 'state'], ov['status'])}
 <h3>Decisions</h3>{table(['date', 'decision'], ov['decisions'])}
-<h3>Papers</h3>{table(['tab', 'title', 'claims verified / total'], [(p['tab'], p['title'], f"{sum(1 for c in p['claims'] if c[2].startswith('verified'))} / {len(p['claims'])}") for p in C.PAPERS])}
+<h3>Papers</h3>{table(['tab', 'title', 'claims verified / total'], [(p['tab'], p['title'], f"{sum(1 for c in p['claims'] if c['status'].startswith('verified'))} / {len(p['claims'])}") for p in C.PAPERS])}
 </section>'''
 
 tabs = [('overview', 'Overview')] + [(p['key'], p['tab']) for p in C.PAPERS]
@@ -67,6 +79,10 @@ table{{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric
 th,td{{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}} th{{color:var(--mut);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}}
 .bar{{display:inline-block;width:60px;height:8px;background:var(--bar);border-radius:4px;vertical-align:middle;margin-right:4px}} .bar i{{display:block;height:100%;background:var(--acc);border-radius:4px}}
 .mut{{color:var(--mut)}} details{{margin:6px 0}} summary{{cursor:pointer;color:var(--acc)}} ul{{padding-left:20px}} li{{margin:3px 0}}
+details.claim{{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:8px 0}} details.claim summary{{color:var(--fg);list-style:none;display:block}}
+details.claim summary::before{{content:'▸ ';color:var(--acc)}} details.claim[open] summary::before{{content:'▾ '}}
+.cid{{font-weight:700;color:var(--acc);margin-right:4px}} .meta{{display:block;font-size:.82rem;color:var(--mut);margin-top:2px}}
+details.claim .body{{border-top:1px solid var(--line);margin-top:8px;padding-top:4px}} h4{{font-size:.82rem;margin:14px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}}
 </style>
 <main>
 <h1>Tagger Interp Results</h1>
