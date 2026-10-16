@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: anrunw-ai-train-n32-s1
+  namespace: cms-ml
+  labels: {owner: anrunw, study: aaron-interp, set: small-taggers}
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels: {owner: anrunw, study: aaron-interp, set: small-taggers}
+    spec:
+      restartPolicy: Never
+      activeDeadlineSeconds: 86400
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values: [k8s-haosu-24.sdsc.optiputer.net, ry-gpu-01.sdsc.optiputer.net, nautilus-it-gpu05.fullerton.edu, fiona-prg1.cesnet.cz, k8s-chase-ci-07.calit2.optiputer.net, dtn-gpu2.kreonet.net, gpn-fiona-mizzou-2.rnet.missouri.edu, rci-nrp-gpu-05.sdsu.edu, node-2-2.sdsc.optiputer.net, hcc-nrp-shor-c6017.unl.edu, hcc-nrp-shor-c5925.unl.edu, epic001.clemson.edu, k8s-chase-ci-10.calit2.optiputer.net, nautilus-ext-gpu01.fullerton.edu, chi-dgx-node04.csuchico.edu, gpu-12.nrp.mghpcc.org, gpu-14.nrp.mghpcc.org, hcc-chase-shor-c4715.unl.edu, k8s-3090-01.usd.edu, k8s-haosu-22.sdsc.optiputer.net, k8s-haosu-18.sdsc.optiputer.net]
+              - key: nvidia.com/gpu.product
+                operator: In
+                values: [NVIDIA-GeForce-RTX-3090, NVIDIA-GeForce-RTX-4090, NVIDIA-A10, NVIDIA-A40, NVIDIA-L40, NVIDIA-L40S, NVIDIA-L4, NVIDIA-RTX-A6000, NVIDIA-TITAN-RTX, NVIDIA-RTX-A5000, NVIDIA-RTX-A4000, Quadro-RTX-6000, NVIDIA-GeForce-RTX-2080-Ti]
+      containers:
+      - name: train
+        image: gitlab-registry.nrp-nautilus.io/jmduarte/weaver:latest
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          mkdir -p /j-jepa-vol/aaron-interp/logs
+          bash /j-jepa-vol/aaron-interp/code/train/gpu_job.sh n32-s1 7 tf-1b-d16:32:1 tf-2b-d16:32:1 tf-1b-d32:32:1 tf-2b-d32:32:1 linf-1b-d32-k4:32:1 linf-2b-d32-k8:32:1 dsets-d64:32:1 > /j-jepa-vol/aaron-interp/logs/train-n32-s1.log 2>&1
+        resources:
+          limits: {nvidia.com/gpu: "1", memory: "20Gi", cpu: "6"}
+          requests: {nvidia.com/gpu: "1", memory: "20Gi", cpu: "6"}
+        volumeMounts:
+        - {name: vol, mountPath: /j-jepa-vol}
+      volumes:
+      - name: vol
+        persistentVolumeClaim: {claimName: j-jepa-vol}

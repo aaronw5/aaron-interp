@@ -15,7 +15,7 @@ OVERVIEW = dict(
         ('E5v', 'done: A2 verified; A3 verified in corrected form (10 of 17 objects radial, 3 directional)'),
         ('E11', 'MARS fit of the entire trigger model, all stages: 10 cluster jobs finished, analysis in progress'),
         ('P1', 'ParT translation test running on an A10 (job anrunw-ai-p1b); interim: at δ = 0.02 ParT_full changes 1.4 % of calls, W → Z 0.114 → 0.122 (JEDI at δ = 0.03: 0.03 → 0.26)'),
-        ('Small transformers', 'native transformer / Linformer / Deep Sets on hls4ml, per-epoch checkpoints: GPU jobs being launched'),
+        ('Small transformers', 'first set trained (N = 32, seed 0, 30 epochs): tf-2b-d32 77.2 %, dsets-d64 77.8 %, linf-2b-d32-k8 78.4 % vs JEDI n32 78.0 %; the other three jobs queued; per-epoch checkpoints saved'),
         ('Models and data', 'ParticleNet JetClass weights copied; no released L-GATr weights exist, so it is trained in-house; LorentzNet ships top-tagging and QG checkpoints; top-tagging and QG data on the volume'),
     ],
     decisions=[
