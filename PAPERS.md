@@ -191,6 +191,14 @@ formula does? If yes, B is one section of A. Which if-statement form transfers a
 - Quark–Gluon (Komiske, Metodiev & Thaler; 2M Pythia jets, with PID; user 2026-10-16): also one signal class; the
   multiplicity / Casimir-scaling story (Frye et al. 1704.06266) has a direct test here. Same weights check first.
 
+Cross-model mass row (2026-10-16, P1; verification P1v running): ParT_full and ParT_kin are not translation invariant either.
+A rigid φ shift by 0.06 rad (invariant mass unchanged; only the per-particle dphi and deltaR inputs change) moves true-W → Z
+from 12 to 31 % (full) and 16 to 37 % (kin); the class-token read-out mass rises by 0.7–0.8 (full) and 1.1–1.4 (kin) of the
+½Δlog(M0·M2) prediction, against 0.78–0.84 for JEDI. On data the two mass definitions coincide (|M1|²/(M0·M2) median 2e-3 on
+JetClass, 3.5e-4 on hls4ml) because the stored axis is the pT centroid; the edit identifies which formula each network computes.
+Physical consequence under test (P1v): the taggers' dependence on the axis convention (winner-take-all vs centroid axis).
+C3 v1 ("ParT's mass is the invariant mass, unlike JEDI's") refuted by P1.
+
 ## Paper C: circuits (ParT)
 
 **Thesis (v1, 2026-10-16):** ParT computes jet mass through geometric routing, as three linked steps:

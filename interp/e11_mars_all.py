@@ -73,10 +73,18 @@ def uid(stage, j):
 
 
 # ------------------------------------------------------------------ inputs
-def handbuilt(x):
-    """energy-flow sums over pT-rank windows (pT in GeV, r = ΔR to the axis in rad, N = counts) -> {id: (J,)}"""
+def handbuilt(x, halfplanes=False):
+    """energy-flow sums over pT-rank windows (pT in GeV, r = ΔR to the axis in rad, N = counts) -> {id: (J,)}
+    halfplanes (supplement, --halfplanes): E2's first-round statements are half-planes through the axis, so also the
+    one-sided angular sums Σ (n·r⃗)₊ and counts N(n·r⃗ > 0) for 8 directions n (every 45°) in 4 rank windows"""
     pt, eta, phi = (np.asarray(x[..., k], np.float64) for k in range(3)); real = pt > 0; r = np.hypot(eta, phi)
     H = {}
+    if halfplanes:
+        for name in ('all', 'top14', 'r1-63', 'r13-63'):
+            lo, hi = WINDOWS[name]; w = real.copy(); w[:, :lo] = False; w[:, hi:] = False
+            for deg in range(0, 360, 45):
+                p = np.cos(np.radians(deg)) * eta + np.sin(np.radians(deg)) * phi
+                H[f'H:Σ(n·r)₊[{deg}°][{name}]'] = (np.maximum(p, 0) * w).sum(1); H[f'H:N(n·r>0)[{deg}°][{name}]'] = (w & (p > 0)).sum(1)
     for name, (lo, hi) in WINDOWS.items():
         w = real.copy(); w[:, :lo] = False; w[:, hi:] = False; s = f'[{name}]'
         if name != 'all':
@@ -129,8 +137,8 @@ class Data:
         self.overlap = int((~keep).sum()); xt, yt = xt[keep], yt[keep]; Qt = {k: v[keep] for k, v in Qt.items()}
         J = len(x); perm = np.random.default_rng(0).permutation(J); nf = 2 * J // 3
         self.ix = dict(fit=perm[:nf], dev=perm[nf:])
-        phys = {**{k: np.asarray(v, np.float64) for k, v in Q.items()}, **handbuilt(x)}
-        physt = {**{k: np.asarray(v, np.float64) for k, v in Qt.items()}, **handbuilt(xt)}
+        phys = {**{k: np.asarray(v, np.float64) for k, v in Q.items()}, **handbuilt(x, a.halfplanes)}
+        physt = {**{k: np.asarray(v, np.float64) for k, v in Qt.items()}, **handbuilt(xt, a.halfplanes)}
         self.keys = [k for k in phys if np.isfinite(phys[k]).all() and np.isfinite(physt[k]).all() and np.ptp(phys[k][self.ix['fit']]) > 0]
         self.phys = {s: {k: phys[k][ix] for k in self.keys} for s, ix in self.ix.items()}; self.phys['test'] = {k: physt[k] for k in self.keys}
         self.y = {s: y[ix] for s, ix in self.ix.items()}; self.y['test'] = yt
@@ -210,7 +218,7 @@ def loadf(name):
 
 def meta(D):
     return dict(jets=D.n, overlap_removed=D.overlap, per_class=D.a.per_class, test_per_class=D.a.test_per_class, seeds=dict(fit=0, test=11), max_terms=ARGS.max_terms,
-                n_select=min(ARGS.n_select, D.n['fit']), source='test file (full_test.npz) for every split', n_physics_inputs=len(D.keys))
+                n_select=min(ARGS.n_select, D.n['fit']), source='test file (full_test.npz) for every split', n_physics_inputs=len(D.keys), halfplanes=ARGS.halfplanes)
 
 
 # ------------------------------------------------------------------ modes
@@ -249,7 +257,8 @@ def mode_control_shuffle(D, stage):
 
 def mode_eval(D):
     net, T = D.net, 'test'; Nt = D.V[T]; y = D.y[T]; call = Nt['logits'].argmax(1); J = len(y)
-    acc_net = float((call == y).mean()); res = dict(network_acc_test=acc_net, **meta(D), units=UNITS, costs={s: LIVE[s] for s in STG})
+    acc_net = float((call == y).mean()); res = dict(network_acc_test=acc_net, network_per_class_acc=[float((call[y == k] == k).mean()) for k in range(5)],
+                                                 **meta(D), units=UNITS, costs={s: LIVE[s] for s in STG})
     fa = {s: loadf(f'fit_a_{s}') for s in STG}; fb = {'P': fa['P'], **{s: loadf(f'fit_b_{s}') for s in STG[1:]}}
     # formula values on the test jets: (a) from physics; (b) chain (recursive) and (b) single (true previous-stage network values)
     Fa = {s: evaluate(fa[s]['units'], D.phys[T], RELU[s]) for s in STG}
@@ -365,7 +374,7 @@ def plot(res):
         ax.set_yticks(range(len(fams))); ax.set_yticklabels(fams, fontsize=9); ax.set_title(title, fontsize=10, loc='left')
         ax.tick_params(length=0)
         for sp in ax.spines.values(): sp.set_visible(False)
-    fig.suptitle('Which physics each stage\'s formulas use: % of the stage\'s formula weight (|coef × spread|, units weighted by their ablation cost)', fontsize=10.5, x=0.01, ha='left')
+    fig.suptitle('What each stage\'s formulas are made of: % of formula weight |coef × spread| per observable family (units weighted by ablation cost)', fontsize=10.5, x=0.01, ha='left')
     fig.tight_layout(rect=(0, 0, 1, 0.94)); p = OUT / f'{ARGS.prefix}_evolution.png'; fig.savefig(p, dpi=150); log(f'wrote {p}')
 
 
@@ -374,6 +383,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser(); ap.add_argument('mode', choices=['fit', 'control', 'eval']); ap.add_argument('args', nargs='*')
     ap.add_argument('--per-class', type=int, default=6000); ap.add_argument('--test-per-class', type=int, default=2000)
     ap.add_argument('--max-terms', type=int, default=30); ap.add_argument('--n-select', type=int, default=10000); ap.add_argument('--prefix', default='e11')
+    ap.add_argument('--halfplanes', action='store_true', help='supplement: add the one-sided angular sums of handbuilt() to the physics inputs')
     ARGS = ap.parse_args()
     log('args', vars(ARGS))
     if ARGS.mode == 'fit':

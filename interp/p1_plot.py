@@ -30,7 +30,7 @@ for n in ('full', 'kin'):
                      dm_phi=[0.0] + [E[f'phi{d}']['dlogm_hat_lin'] for d in R['deltas']], dm_eta=[0.0] + [E[f'eta{d}']['dlogm_hat_lin'] for d in R['deltas']],
                      pred=[0.0] + [E[f'phi{d}']['pred_sqrtM0M2'] for d in R['deltas']], k11_WZ=E['k1.1']['W_to_Z'], k11_dm=E['k1.1']['dlogm_hat_lin'])
 series['jedi'] = JEDI
-fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 4.8), dpi=150)
+fig, (a1, a2) = plt.subplots(1, 2, figsize=(12, 5.6), dpi=150)
 for ax in (a1, a2):
     ax.grid(True, color=GRID, linewidth=0.8); ax.set_axisbelow(True); ax.set_xlabel('rigid shift of all particles  δ  [rad]')
     ax.set_xlim(-0.003, 0.095); ax.set_xticks([0, 0.03, 0.06, 0.09])
@@ -38,21 +38,21 @@ for n in ('jedi', 'full', 'kin'):
     s = series[n]; c = COL[n]
     a1.plot(s['d'], 100 * np.array(s['WZ_phi']), '-o', color=c, lw=2, ms=7, label=NAME[n] + ', shift along φ')
     a1.plot(s['d'], 100 * np.array(s['WZ_eta']), 'o', color=c, mfc='white', mew=1.6, ms=7, label=NAME[n] + ', along η')
-    a2.plot(s['d'], s['dm_phi'], '-o', color=c, lw=2, ms=7)
+    a2.plot(s['d'], s['dm_phi'], '-o', color=c, lw=2, ms=7, label=NAME[n] + ' (φ; η hollow)')
     a2.plot(s['d'], s['dm_eta'], 'o', color=c, mfc='white', mew=1.6, ms=7)
-a2.plot(JEDI['d'], JEDI['pred'], '-', color=COL['jedi'], lw=1.1, alpha=0.55)
-a2.plot(D, series['full']['pred'], '-', color=COL['full'], lw=1.1, alpha=0.55)
-a2.axhline(0, color=MUTED, lw=1.1)
-a2.text(0.091, JEDI['pred'][-1] * 0.06 / 0.09 * 1.0 if False else JEDI['pred'][-1], '√(M0·M2) prediction,\nhls4ml jets', color=COL['jedi'], fontsize=9.5, va='bottom', ha='right', alpha=0.9)
-a2.text(0.091, series['full']['pred'][-1], '√(M0·M2) prediction,\nJetClass jets', color=COL['full'], fontsize=9.5, va='bottom', ha='right', alpha=0.9)
-a2.text(0.091, 0.004, 'invariant mass: 0', color=MUTED, fontsize=9.5, va='bottom', ha='right')
-a1.set_ylabel('true W jets called Z  [%]'); a1.set_ylim(0, 100)
-a2.set_ylabel('shift of the read-out mass  Δ log m̂   (0.1 ≈ +10 %)')
-a1.legend(frameon=False, fontsize=9.5, loc='upper left', ncol=1)
+a2.plot(JEDI['d'], JEDI['pred'], '-', color=COL['jedi'], lw=1.1, alpha=0.6, label='√(M0·M2) prediction, hls4ml jets')
+a2.plot(D, series['full']['pred'], '-', color=COL['full'], lw=1.1, alpha=0.6, label='√(M0·M2) prediction, JetClass jets')
+a2.axhline(0, color=MUTED, lw=1.1, label='invariant mass: 0')
+a1.set_ylabel('true W jets called Z  [%]'); a1.set_ylim(0, 100); a1.set_title('W → Z calls', loc='left')
+a2.set_ylabel('Δ log m̂ of the read-out mass  (0.1 ≈ +10 %)'); a2.set_title('read-out mass (ridge on the last-stage neurons)', loc='left')
+a1.legend(frameon=False, fontsize=9.5, loc='upper left'); a2.legend(frameon=False, fontsize=9.5, loc='upper left')
 f, k, j = series['full'], series['kin'], JEDI
 i06 = D.index(0.06)
-a1.set_title(f'W → Z at δ = 0.06 rad (m unchanged): JEDI {100 * j["WZ_phi"][2]:.0f} %, ParT_full {100 * f["WZ_phi"][i06]:.0f} %, ParT_kin {100 * k["WZ_phi"][i06]:.0f} %\n'
-             f'control, angles × 1.1 (m +10 %): JEDI {100 * j["k11_WZ"]:.0f} %, ParT_full {100 * f["k11_WZ"]:.0f} %, ParT_kin {100 * k["k11_WZ"]:.0f} %', loc='left')
-a2.set_title(f'read-out mass at δ = 0.06: JEDI {j["dm_phi"][2]:+.2f} (predicted {j["pred"][2]:.2f}), ParT_full {f["dm_phi"][i06]:+.3f} (predicted {f["pred"][i06]:.2f}), '
-             f'ParT_kin {k["dm_phi"][i06]:+.3f}\ncontrol, angles × 1.1: JEDI {j["k11_dm"]:+.2f}, ParT_full {f["k11_dm"]:+.2f}, ParT_kin {k["k11_dm"]:+.2f}  (true Δlog m +0.095)', loc='left')
-fig.tight_layout(); fig.savefig(OUT / 'p1_translation.png'); print('wrote', OUT / 'p1_translation.png')
+fig.suptitle(f'Rigid shift of all particles by δ — the invariant mass is unchanged.  At δ = 0.06 rad:\n'
+             f'W → Z:  JEDI {100 * j["WZ_phi"][0]:.0f} → {100 * j["WZ_phi"][2]:.0f} %,  ParT_full {100 * f["WZ_phi"][0]:.0f} → {100 * f["WZ_phi"][i06]:.0f} %,  '
+             f'ParT_kin {100 * k["WZ_phi"][0]:.0f} → {100 * k["WZ_phi"][i06]:.0f} %.\n'
+             f'Read-out mass Δ log m̂:  JEDI {j["dm_phi"][2]:+.2f} (√(M0·M2) predicts {j["pred"][2]:.2f}),  '
+             f'ParT_full {f["dm_phi"][i06]:+.2f} ({f["pred"][i06]:.2f}),  ParT_kin {k["dm_phi"][i06]:+.2f} ({k["pred"][i06]:.2f});  invariant mass predicts 0.\n'
+             f'Control, angles × 1.1 (true Δ log m +0.095):  W → Z  JEDI {100 * j["k11_WZ"]:.0f} %,  ParT_full {100 * f["k11_WZ"]:.0f} %,  ParT_kin {100 * k["k11_WZ"]:.0f} %;   '
+             f'Δ log m̂  JEDI {j["k11_dm"]:+.2f},  ParT_full {f["k11_dm"]:+.2f},  ParT_kin {k["k11_dm"]:+.2f}.', x=0.01, y=0.995, ha='left', va='top', fontsize=11)
+fig.tight_layout(rect=(0, 0, 1, 0.86)); fig.savefig(OUT / 'p1_translation.png'); print('wrote', OUT / 'p1_translation.png')

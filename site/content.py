@@ -3,7 +3,7 @@ Writing rule: plain statements of what was measured; no verdict words, no metaph
 Each claim carries a `detail` block (rendered as a drop-down): what the claim is, procedure (sample, edit, control, metric),
 result (numbers), tables, figures, verification, files. Figure paths are relative to the repo root; missing files are skipped."""
 
-UPDATED = '2026-10-16 (E5v, P1 interim)'
+UPDATED = '2026-10-16 (E5v, P1)'
 
 OVERVIEW = dict(
     title='Overview',
@@ -14,7 +14,7 @@ OVERVIEW = dict(
         ('Science loop (Paper A + B)', 'round 1 on the cluster: E8 (classes as conjunctions, imposed), E14, E15; then verify → ledger → review'),
         ('E5v', 'done: A2 verified; A3 verified in corrected form (10 of 17 objects radial, 3 directional)'),
         ('E11', 'MARS fit of the entire trigger model, all stages: 10 cluster jobs finished, analysis in progress'),
-        ('P1', 'ParT translation test running on an A10 (job anrunw-ai-p1b); interim: at δ = 0.02 ParT_full changes 1.4 % of calls, W → Z 0.114 → 0.122 (JEDI at δ = 0.03: 0.03 → 0.26)'),
+        ('P1', 'done: ParT is not translation invariant either (φ shift 0.06: ParT_full 8.1 % of calls, W → Z 12 → 31 %; read-out mass 0.7× the M2 prediction); verification P1v running (input location, WTA axis)'),
         ('Small transformers', 'first set trained (N = 32, seed 0, 30 epochs): tf-2b-d32 77.2 %, dsets-d64 77.8 %, linf-2b-d32-k8 78.4 % vs JEDI n32 78.0 %; the other three jobs queued; per-epoch checkpoints saved'),
         ('Models and data', 'ParticleNet JetClass weights copied; no released L-GATr weights exist, so it is trained in-house; LorentzNet ships top-tagging and QG checkpoints; top-tagging and QG data on the volume'),
     ],
@@ -180,10 +180,10 @@ A_CLAIMS = [
                   procedure='20,000 test jets (4,000 per class, seed 21); live = ≥ 0.1 % of calls changed when mean-ablated; one card (PNG) per unit; tally of units with one main job (≥ 80 % of activation mass in one cluster), two related jobs, or unexplained.',
                   result='Pending.', tables=[], figures=[], verification='—', files='interp/e16_atlas.py (in progress); results/jedi/e16/')),
  dict(id='A8/A10', statement='The same stages appear in ParT, ParticleNet and small transformers trained on the same data.',
-      status='running (P1 on GPU; training jobs)', confidence=0.2, evidence='P1, X-series',
+      status='first cross-model row measured (P1: ParT mass read-out also un-recentred); small models training', confidence=0.35, evidence='P1, X0',
       detail=dict(what='For each JEDI stage a counterpart in ParT (pair-bias statements, head-pooled sets as objects, class token as context, class-token neurons, conjunctions) and in the small models.',
                   procedure='P1: the same rigid-translation edit on ParT_full and ParT_kin (1,000 jets per class, δ = 0–0.09), with angle scaling as the positive control; metrics: calls changed, W → Z, the W/Z neuron shift, Δlog m̂ vs ½Δlog M2 and vs 0.',
-                  result='Interim (ParT_full, 10,000 jets, accuracy 85.9 %; W/Z neuron = index 97, sd 1.756, last layer × sd W +2.06 / Z −0.67; ridge R² for log m from the class token 0.881): '
+                  result='See claim C3 (Paper C tab) for the full P1 table. Interim notes kept: (ParT_full, 10,000 jets, accuracy 85.9 %; W/Z neuron = index 97, sd 1.756, last layer × sd W +2.06 / Z −0.67; ridge R² for log m from the class token 0.881): '
                          'δ = 0.01: 0.7 % of calls change, W → Z 0.114 (baseline 0.114), Δlog m̂ −0.001 (prediction +0.0003); δ = 0.02 along η / φ: 1.4 / 1.5 % change, W → Z 0.122 / 0.125, '
                          'Δlog m̂ +0.001 / +0.007 (prediction +0.005 / +0.010), slope on prediction 0.02–0.03. JEDI at δ = 0.03: W → Z 0.26–0.29, Δlog m̂ 0.07 (prediction 0.11). '
                          'Larger δ, ParT_kin and the angle-scaling controls pending. Cluster smoke test: ParT_full 86.2 %, ParT_kin 74.4 % (as G192); the corrected rebuild changes 0.05 % of calls.',
@@ -232,14 +232,28 @@ dict(key='b', tab='Paper B', title='B — Turning a model into if-statements',
 dict(key='c', tab='Paper C', title='C — Circuits in ParT',
     thesis='ParT computes jet mass through geometric routing: the pair-bias formula fixes head roles; head b2h8 switches near 85 GeV; far-side '
            'heads write into the W/Z neuron (index 97, "n98"). Variables of higher algebraic depth may need more blocks.',
-    thesis_log=[('v1, 2026-10-16', 'From G21b/c, G22, G101, G107, G108, G121–G123, G131, G157.')],
+    thesis_log=[('v1, 2026-10-16', 'From G21b/c, G22, G101, G107, G108, G121–G123, G131, G157.'), ('C3 v2, P1', 'ParT\'s mass read-out is not translation invariant (v1 expected invariance from the pair features); the response is 0.7–0.8 of the M2 prediction for ParT_full, as for JEDI.')],
     claims=[
         dict(id='C1', statement='Attention is mostly the fixed pair bias; the bias is a hinge formula on (ln kT, ln z, ln ΔR, ln m²).', status='earlier evidence', confidence=0.8, evidence='G107, G108',
              detail=dict(what='Each head\'s attention logit = content term + a pair bias shared by all 8 blocks.', procedure='G107: variance share of the bias; attention recomputed from the bias alone. G108: additive hinge formula fitted to the bias (R² 0.86–0.99 per head), ParT rerun with it.', result='Bias explains a median 79 % of logit variance; bias-only attention 69.4 % accuracy, content-only 40.2 %; formula bias 85.0 % vs 85.4 %.', tables=[], figures=[], verification='—', files='FINDINGS.md G107/G108')),
         dict(id='C2', statement='The mass enters through the attention; head b2h8 is a threshold near 85 GeV.', status='earlier evidence', confidence=0.7, evidence='G21b/c, G22',
              detail=dict(what='Decomposition of the W/Z neuron shift under angle scaling into attention and per-particle parts.', procedure='10,000 W/Z jets, angles × 1.1; exact decomposition; b2h8 class-token share vs mass.', result='Shift −0.478 s.d. = attention −0.458 + features −0.019; b2h8 share 87 % at 60–65 GeV → 7 % at 105+ GeV.', tables=[], figures=[], verification='—', files='FINDINGS.md G21b/G21c/G22')),
-        dict(id='C3', statement='ParT\'s mass is the invariant mass (translation invariant), unlike JEDI\'s.', status='running (P1)', confidence=0.5, evidence='P1',
-             detail=dict(what='ParT\'s pair features are translation invariant by construction; its per-particle inputs (Δη, Δφ, ΔR) are not.', procedure='Same translation edit as E6 on ParT_full and ParT_kin, 1,000 jets per class.', result='Pending.', tables=[], figures=[], verification='—', files='interp/p1_translation_part.py')),
+        dict(id='C3', statement='ParT\'s mass read-out is not translation invariant either: a rigid φ shift of all particles (invariant mass unchanged) raises it by 0.7–0.8 (ParT_full) and 1.1–1.4 (ParT_kin) of the ½Δlog(M0·M2) prediction. v1 ("ParT\'s mass is the invariant mass, unlike JEDI\'s") is refuted by P1.', status='measured; verification running (input location, fresh sample, WTA axis)', confidence=0.7, evidence='P1, P1v',
+             detail=dict(what='ParT\'s pair features (ln kT, ln z, ln ΔR, ln m²) are translation invariant by construction; its per-particle inputs deltaR, deta, dphi are measured from the stored jet axis and are not. A φ shift with the axis held fixed changes only dphi and deltaR.',
+                         procedure='P1: 10,000 JetClass test jets (1,000 per class, rows 3,000–4,000); baseline = the same jets rebuilt at δ = 0; δ = 0.01–0.09 rad along φ and η; positive control: angles × 1.1 and × 1.25 (true mass +0.094, +0.221 in log). Metrics: calls changed; true-W → Z; class-token index 97 ("n98") shift on W jets in SD; ridge read-out of log m from the class token (held-out R² 0.881 full, 0.920 kin) vs ½Δlog(M0·M2) and vs 0.',
+                         result='φ shift δ = 0.06: ParT_full 8.1 % of calls change, W → Z 12 → 31 %, index 97 −0.35 SD on W jets, Δlog m̂ +0.052 (prediction 0.073); ParT_kin 19.6 %, 16 → 37 %, Δlog m̂ +0.095. δ = 0.09: full 17.3 %, W → Z 49 %, Δlog m̂ +0.110 (prediction 0.143); kin 39.9 %, Δlog m̂ +0.193. Control angles × 1.1: full 12.6 % changed, W → Z 37 %, index 97 −0.43 SD, Δlog m̂ +0.076 (true 0.094). JEDI at δ = 0.06: W → Z 2 → 76 %, Δlog m̂ 0.26 (prediction 0.31). Ratio read-out/prediction: JEDI 0.78–0.84, ParT_full 0.7–0.8, ParT_kin 1.1–1.4.',
+                         tables=[('P1 by shift size (φ; η in parentheses)', ['δ [rad]', 'calls changed full / kin', 'true-W → Z full / kin (unedited 0.117 / 0.162)', 'index-97 shift on W full / kin [SD]', 'Δlog m̂ full / kin', '½Δlog(M0·M2)'],
+                                  [['0.01', '0.7 / 1.9 %', '0.114 / 0.169', '−0.01 / +0.01', '+0.002 / +0.002', '0.003'],
+                                   ['0.02', '1.5 / 3.6 %', '0.125 / 0.182', '−0.03 / +0.01', '+0.007 / +0.010', '0.010'],
+                                   ['0.03', '2.8 (2.3) / 5.8 %', '0.149 (0.133) / 0.210', '−0.08 / +0.03', '+0.014 (+0.006) / +0.024', '0.021 (0.014)'],
+                                   ['0.045', '5.1 / 11.3 %', '0.216 / 0.286', '−0.19 / +0.06', '+0.030 / +0.054', '0.044 (0.034)'],
+                                   ['0.06', '8.1 (7.2) / 19.6 %', '0.310 (0.283) / 0.373', '−0.35 / +0.09', '+0.052 (+0.037) / +0.095', '0.073 (0.059)'],
+                                   ['0.09', '17.3 / 39.9 %', '0.490 (0.467) / 0.442', '−0.69 / +0.17', '+0.110 (+0.090) / +0.193', '0.143 (0.125)'],
+                                   ['angles × 1.1', '12.6 / 18.7 %', '0.371 / 0.455', '−0.43 / −0.01', '+0.076 / +0.079', 'true +0.094'],
+                                   ['angles × 1.25', '37.2 / 49.6 %', '0.461 / 0.493', '−0.75 / −0.09', '+0.171 / +0.171', 'true +0.221']])],
+                         figures=[('results/site/F3_part_translation.png', 'P1: W → Z calls and read-out mass under a rigid shift of all particles, JEDI-linear vs ParT_full vs ParT_kin; the invariant mass predicts 0 for every curve.')],
+                         verification='P1v running: feature-by-feature edit hygiene; which input carries the response (the edit with deltaR or dphi fed unedited); a fresh sample; the same taggers fed coordinates about the winner-take-all axis (an axis convention used in real reconstruction). Setup facts: smoke test ParT_full 86.2 %, ParT_kin 74.4 % (as G192); the corrected rebuild changes 0.05 % of calls; on JetClass jets |M1|²/(M0·M2) median 2.0e-3.',
+                         files='interp/p1_translation_part.py, interp/p1_plot.py, interp/part_core.py; results/part/p1_translation.json, p1_translation.png')),
         dict(id='C4', statement='Per-block readability of observables follows algebraic depth.', status='not started', confidence=0.0, evidence='—',
              detail=dict(what='E10 on ParT\'s blocks.', procedure='—', result='—', tables=[], figures=[], verification='—', files='—')),
     ],

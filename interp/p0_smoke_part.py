@@ -41,7 +41,7 @@ for n, want in (('full', 86.2), ('kin', 74.4)):
                z_active=int((R0['z'].std(0) > 0.01).sum()))
     res[n] = row
     log(f'ParT_{n}: accuracy {100 * acc:.1f} % (G192 {want} %); {row["s_per_1000"]:.1f} s per 1,000 jets; rebuild changes {100 * row["calls_changed_by_rebuild"]:.2f} % of calls '
-        f'(max logit diff {row["max_logit_diff_rebuild"]:.3g}); hooks on: max logit diff {row["max_logit_diff_hooks"]:.3g}; active neurons {row["z_active"]}, sd(n98) {row["z_sd_n98"]:.3f}')
+        f'(max logit diff {row["max_logit_diff_rebuild"]:.3g}); hooks on: max logit diff {hook_diff if isinstance(hook_diff, str) else f"{hook_diff:.3g}"}; active neurons {row["z_active"]}, sd(z[98]) {row["z_sd_n98"]:.3f}')
     log('   own-class rate: ' + ' '.join(f'{c} {100 * v:.0f}' for c, v in zip(CL, row['own_class'])))
     del net
 json.dump(res, open(OUT / 'p0_smoke.json', 'w'), indent=1); log(f'P0 DONE ({time.time() - t0:.0f} s)')
