@@ -15,4 +15,5 @@ Stages: 1 = initial implementation, 2 = baselines and controls, 3 = research age
 | E10 | E3 | 3 | A9 | variables over layers vs algebraic depth | interp/e10_layers_jedi.py | running (agent) | | | |
 | E7 | E5,E6 | 3/4 | A5 | neurons on own objects; stage substitution | – | todo | | | |
 | E8 | E7 | 4 | A6 | classes as combinations, imposed | – | todo | | | |
-| E3w | E3q | 2 | A1 | which later quantizer makes the all-float network fall to 43.7 % (d7 modulo wrap?) | – | todo | | | |
+| E3w | E3q | 2 | A1 | which quantizer the all-float network lacks | interp/e3w_quantizers.py | done | acc per leave-one-in | – | l3/qs1, not d7 |
+| E3m | E3w | 2 | A1/A3/B | float + zero-bit masks | interp/e3m_masks.py | done | 80.68 % vs 81.29 % | – | objects = cut ∧ rank window |

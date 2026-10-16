@@ -37,6 +37,11 @@ separately as a perturbation.
 E2 detail for the narrative: the angular statements are half-planes through the jet axis and carry no pT weight, so the first
 objects are particle-count-weighted angular spreads, not energy-weighted ones.
 
+Refinement 2 (2026-10-16, E3w/E3m): the right float program keeps HGQ's zero-bit entries as fixed masks (80–84 % of the
+slot × channel entries in the second round). Float + masks scores 80.68 % (fixed point 81.29 %, 4.49 % calls changed); fully
+float 43.7 %. So an object is a cut AND a pT-rank window (e.g. u0: the 14 hardest particles; u19: ranks 13–63). Claim A1 now
+reads: statement = cut on (pT, Δη, Δφ); object = particles passing the cut within a fixed rank window, read by count and sums.
+
 Narrative order: architecture identity (A1) → objects (A2, A3) → how mass is computed (A4) → neurons and classes (A5, A6)
 → universality (A7) → a larger model (A8).
 

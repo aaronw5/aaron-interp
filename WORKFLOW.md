@@ -39,6 +39,10 @@ Every node that produces a figure has it opened and checked: readable at a glanc
 The figure is redone if it fails.
 
 ## 4. Write-up (`paper/`)
+**Gate (user, 2026-10-16):** no paper writing starts until the results behind that paper reach about 90 % confidence, and the
+user is asked first. The timeline is several months of research; depth comes before writing. Until the gate is passed, this
+stage is limited to keeping PAPERS.md (theses, claims, confidence per claim) current.
+
 - A LaTeX draft per paper in ICML format.
 - Sections are filled as claims reach stage 4.
 - Citations come from IDEAS.md's literature list, plus searches for each claim.
