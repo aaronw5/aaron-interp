@@ -1,4 +1,7 @@
-# Resume checklist (written 2026-10-16 when the API session limit paused all agents; limit resets 16:00 America/New_York)
+# Resume checklist (general; first used 2026-10-16 when the API session limit paused all agents)
+
+Rule (user): whenever agents or workflows stop on the API usage limit, resume them automatically after the reset, until the end of the
+project. A session cron job fires twice an hour and runs this checklist when it finds rate-limit terminations.
 
 Cluster jobs keep running while agents are paused. On resume:
 1. `kubectl -n cms-ml get jobs -l study=aaron-interp`; read finished logs under /j-jepa-vol/aaron-interp/logs/ (e5v, e11-*, e1e3-3f-n64*, p1, train-*).
