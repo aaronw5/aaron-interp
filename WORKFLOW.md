@@ -70,6 +70,10 @@ https://claude.ai/artifact/JhMsJ4hbzPfVkCgtj1F6gR). Plots and tables as PNGs (`s
 result lands. The ledger step updates `site/content.py` (claims, confidence, figures, experiments, thesis log) each round; tabs
 merge when papers merge. Prose: succinct, no verdict or editorial language.
 
+## Git (user 2026-10-16)
+Remote: https://github.com/aaronw5/aaron-interp (public; the user's account only). Every commit is pushed right away
+(`git push` after each commit by the ledger step and by me). Code and ledger files only; data, models, results and logs stay out.
+
 ## Ledger
 - `EXPERIMENTS.md`: one row per node result, with the effect on the thesis: supports / weakens / refines.
 - Thesis changes go in `PAPERS.md`, versioned.
