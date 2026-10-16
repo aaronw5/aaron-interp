@@ -64,6 +64,12 @@ measurement.
 ## Questions
 Questions for the user go out as a notification (PushNotification) and are listed in QUESTIONS.md with the date and the answer.
 
+## Results page (user 2026-10-16)
+One tabbed HTML page, one tab per paper (`site/content.py` → `site/gen.py` → published artifact "Tagger Interp Results",
+https://claude.ai/artifact/JhMsJ4hbzPfVkCgtj1F6gR). Plots and tables as PNGs (`site/tables.py`), also sent to the user whenever a
+result lands. The ledger step updates `site/content.py` (claims, confidence, figures, experiments, thesis log) each round; tabs
+merge when papers merge. Prose: succinct, no verdict or editorial language.
+
 ## Ledger
 - `EXPERIMENTS.md`: one row per node result, with the effect on the thesis: supports / weakens / refines.
 - Thesis changes go in `PAPERS.md`, versioned.
