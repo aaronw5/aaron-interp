@@ -21,6 +21,30 @@ one jet through the network and sees, at each stage, a quantity with a name:
 The worked variable (mass) is the proof of the layer-ordering claim (A9): sum → context → product → window. Each step
 has a substitution test and a causal edit. ParT/ParticleNet then show the same stages in a different arithmetic.
 
+Scale requirement (user 2026-10-16: "it can't JUST be a trigger tagger"): the small model is where the program is complete
+and exact; the paper's claim is about taggers in general, so ParT (and ParticleNet) are a main section, not an appendix. For
+every JEDI stage there is a ParT counterpart, run with the same edits:
+| stage | JEDI-linear | ParT |
+|---|---|---|
+| statements | l1 cuts on (pT, Δη, Δφ) | per-particle embedding MLP's first layer on 17 inputs; pair-bias hinge formulas on (ln kT, ln z, ln ΔR, ln m²) [G108] |
+| objects | cut ∧ rank window, pooled by sum | the particle sets a head pools: prongs, displaced-track sets [G201]; head roles fixed by the pair bias [G101, G157] |
+| context | g (ΣpT) added to every particle | class token; messages (1–2 numbers per particle late) [G121/G122] |
+| variables over layers | P → S → h4/h5 → z | block-by-block read-out of the same observable list (E10 on ParT) |
+| mass | √(M0·M2) about the given axis, no recentring | pair features are translation invariant by construction, so ParT's mass should be the invariant mass: the SAME translation edit on both models is the cross-model table |
+| neurons | 16 windows | 13 active class-token neurons [G5b, G197] |
+| classes | conjunctions of windows [J33b] | conjunctions of neurons [G206] |
+
+## Reviewer lens (keep current; every objection gets an experiment)
+| objection | answer / experiment |
+|---|---|
+| "A 16-neuron FPGA model is a toy" | same stages shown on ParT (2M-parameter transformer) and ParticleNet; the points where exactness stops are stated |
+| "Objects is a relabelling of sum pooling / EFN filter plots" | rank-window masks and cut ∧ window membership are not in EFN; causal edits that move one particle across a cut change the call as the identity predicts; untrained control |
+| "Probes show readability, not use" | every probe claim paired with an intervention (translation, iso-mass, freeze S0/g) |
+| "One dataset" | hls4ml + JetClass; top tagging / QG when weights exist |
+| "Off-manifold edits" | on-manifold check: |M1|²/(M0M2) median 3.5e-4, so the two mass definitions coincide on data; the edit isolates which one is computed |
+| "Prior work: Rai & Ganguly, Wang et al." | they trace a top-tagging circuit / attention sparsity; here: stage-wise formulas, exact identity, cross-architecture comparison |
+| "Quantisation specifics" | float + masks reproduces 95.5 % of calls; results reported on the float program with the fixed-point network as the reference |
+
 ## Main results, A vs B (and the merge rule)
 
 - **A's main result:** the complete program of a deployed tagger. For JEDI-linear: ~13 particle cuts → ~11 first objects
