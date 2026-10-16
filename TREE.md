@@ -17,3 +17,7 @@ Stages: 1 = initial implementation, 2 = baselines and controls, 3 = research age
 | E8 | E7 | 4 | A6 | classes as combinations, imposed | – | todo | | | |
 | E3w | E3q | 2 | A1 | which quantizer the all-float network lacks | interp/e3w_quantizers.py | done | acc per leave-one-in | – | l3/qs1, not d7 |
 | E3m | E3w | 2 | A1/A3/B | float + zero-bit masks | interp/e3m_masks.py | done | 80.68 % vs 81.29 % | – | objects = cut ∧ rank window |
+| E6v | E6 | 4 | A4 | skeptic rerun of the translation result (fresh seed, dose–response, direction, input-range and P-unit controls) | interp/e6_verify.py | running (agent) | | results/jedi/e6_verify_translation.png | |
+| P0 | – | 1 | A8/A10 | ParT package + helpers copied into aaron-interp; smoke test ParT_full 86 %, ParT_kin 74 % | interp/part_core.py | running (agent) | | | |
+| P1 | P0,E6 | 4 | A4/A8 | translation test on ParT_full / ParT_kin (mirror of E6); cross-model mass row | interp/p1_translation_part.py | running (agent) | | results/part/p1_translation.png | |
+
