@@ -10,6 +10,10 @@ Fields follow v2: Name, Title, Short Hypothesis, Related Work, Abstract, Experim
 - The working thesis and its version history live in `PAPERS.md`.
 - A novelty check against the literature runs before each paper's write-up starts.
 
+## Loops per paper (user, 2026-10-16)
+One science loop per paper. When the evidence diverges from a paper's thesis, or a result points to a paper that does not
+exist yet, a new thesis goes into PAPERS.md and a new loop starts on it. At most 3 loops run at once.
+
 ## 2. Experiment tree (`TREE.md`)
 Each node records:
 - id
