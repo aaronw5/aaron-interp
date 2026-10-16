@@ -34,6 +34,21 @@ every JEDI stage there is a ParT counterpart, run with the same edits:
 | neurons | 16 windows | 13 active class-token neurons [G5b, G197] |
 | classes | conjunctions of windows [J33b] | conjunctions of neurons [G206] |
 
+Two shapes for Paper A (user 2026-10-16: "if we can get a FULL STRONG PAPER off the toy or small models that's also very
+valuable"), decided after P1 and the first small-transformer results:
+- **A-small: a complete account on small models.** Precedent at ICML/ICLR: complete mechanistic accounts of small networks
+  (modular-addition circuits, toy models of superposition/universality) were accepted because the account was complete and
+  the phenomenon general. Here the model is deployed (a trigger tagger) and the inputs are physical. Requirements for
+  "full strong": (i) the whole program written out and verified stage by stage (substitution + causal edits) for JEDI-linear;
+  (ii) the same program structure (statements → objects → moments → products → windows → conjunctions) recovered in ≥2 other
+  small architectures trained on the same data (native transformer, Linformer; a Deep Sets / EFN baseline if cheap), with
+  an untrained control each; (iii) the layer-ordering result (A9) and the mass result (A4) shown in all of them; (iv) the
+  points where the architectures differ stated as measurements (e.g. does a small transformer's mass also lack recentring?).
+  ParT then goes to Paper C (circuits at scale) with a one-paragraph bridge in A.
+- **A-scale: small model + ParT as a main section** (the stage table above).
+The small-transformer training set is therefore needed for either shape; it is launched now with the proposed set
+(QUESTIONS.md), adjustable later.
+
 ## Reviewer lens (keep current; every objection gets an experiment)
 | objection | answer / experiment |
 |---|---|
