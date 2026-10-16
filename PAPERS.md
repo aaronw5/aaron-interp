@@ -39,7 +39,10 @@ Claims to establish:
   the passing particles), exactly. [E2, E3]
 - A2. The second round adds jet context that shifts the per-particle cuts. Its size and its role are to be measured. [E4]
 - A3. The second-round objects are nameable energy-flow quantities (counts and pT-weighted sums over regions). [E5]
-- A4. Jet mass is built from products of moments (m² ≈ 2·ΣpT·Σ pT r² − 2|Σ pT r⃗|²) in d4/d5. [E6]
+- A4 (v2, 2026-10-16, E6; pending verification). The network's mass variable is √(M0·M2) with M0 = ΣpT and M2 = Σ pT r²,
+  formed in h4/h5 from S-level M2 and an M0 channel (S0, fed through the context g); the −|M1|² recentring term of
+  m² ≈ M0·M2 − |M1|² is absent (a 0.06 rad translation of all particles, which leaves m unchanged, moves the read-out mass by
+  0.24–0.29 in log and turns 76 % of W calls into Z). v1 read "m² ≈ 2·ΣpT·Σ pT r² − 2|Σ pT r⃗|²": the factor 2 was an error.
 - A5. The 16 neurons are statements on A3's objects. Replacing each stage by its formula keeps the network's calls. [E7]
 - A6. Classes are combinations of neuron objects, and imposing a combination causes the class (J33b on the network's own objects). [E8]
 - A7. The same objects appear across JEDI-linear sizes and input sets; an untrained network does not show them. Scope (user,
