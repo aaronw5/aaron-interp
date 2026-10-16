@@ -1,0 +1,82 @@
+[
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToBB_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToBB_101.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToCC_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToCC_101.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToGG_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToGG_101.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToWW2Q1L_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToWW2Q1L_101.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToWW4Q_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/HToWW4Q_101.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/TTBar_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/TTBar_101.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/TTBarLep_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/TTBarLep_101.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/WToQQ_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/WToQQ_101.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/ZJetsToNuNu_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/ZJetsToNuNu_101.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/ZToQQ_100.root",
+  "jets": 100000
+ },
+ {
+  "file": "/j-jepa-vol/JetClass/Pythia/test_20M/ZToQQ_101.root",
+  "jets": 100000
+ }
+]
