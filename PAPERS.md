@@ -6,6 +6,23 @@ with the date and the experiment that changed it.
 
 ---
 
+## Main results, A vs B (and the merge rule)
+
+- **A's main result:** the complete program of a deployed tagger. For JEDI-linear: ~13 particle cuts → ~11 first objects
+  and a jet context → 19 second-round objects (named energy-flow quantities with pT-rank windows) → 16 neurons as statements
+  on them → 5 classes as combinations, each stage checked by substitution and by causal edits; the order in which
+  high-level variables appear across the layers; and the same stage structure found in ParT / ParticleNet / small
+  transformers.
+- **B's main result:** the procedure that produces such a program from any tagger, and the test that tells when it is wrong.
+  Content that is about the method and not about one model: the exact identity for sum-pooled layers; the MARS
+  if-statement fit for the rest; the validation suite (stage substitution, per-particle attribution, causal tuning curves);
+  the negative results that decision agreement does not imply mechanism fidelity (G160, G180–G190), measured on several
+  architectures; and comparisons with tree extraction, symbolic regression and probes.
+- **Merge rule (user, 2026-10-16):** if the papers become too similar or either fails to stand alone, combine them. B stands
+  alone only if it has (i) at least one result about the method measured on ≥3 architectures or 2 datasets, and (ii) the
+  baseline comparison. Decision point: after the first cross-architecture results (ParticleNet, small transformers, JEDI).
+  Default if B fails the test: B becomes A's method section and A's appendix carries the failure modes.
+
 ## Paper A: mechanistic interpretability (flagship), JEDI-linear first, then ParT
 
 **Thesis (v1, 2026-10-16):** a jet tagger builds its class boundaries in four steps, each written as an explicit formula:

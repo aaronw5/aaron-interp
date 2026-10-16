@@ -12,7 +12,7 @@ Fields follow v2: Name, Title, Short Hypothesis, Related Work, Abstract, Experim
 
 ## Loops per paper (user, 2026-10-16)
 One science loop per paper. When the evidence diverges from a paper's thesis, or a result points to a paper that does not
-exist yet, a new thesis goes into PAPERS.md and a new loop starts on it. At most 3 loops run at once.
+exist yet, a new thesis goes into PAPERS.md and a new loop starts on it. At most 3 loops run at once. Papers that become too similar, or that cannot stand alone, are combined (criteria in PAPERS.md).
 
 ## 2. Experiment tree (`TREE.md`)
 Each node records:
