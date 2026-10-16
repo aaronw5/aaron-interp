@@ -6,6 +6,21 @@ with the date and the experiment that changed it.
 
 ---
 
+## Narrative (user 2026-10-16: "what's most important is a compelling narrative")
+
+Paper A, as it stands after E1–E6 (E6 pending verification): *a trigger tagger's decision, written out.* The reader follows
+one jet through the network and sees, at each stage, a quantity with a name:
+1. particles pass 13 cuts (soft-particle ramps, half-planes through the axis);
+2. the cuts become objects: counts and sums over the passing particles inside pT-rank windows;
+3. the context round carries ΣpT (M0) into every particle's second cut;
+4. the second-round objects are moments: ΣpT, Σ pT r², one-sided angular sums;
+5. the dense layers multiply them: the network's "mass" is √(ΣpT · Σ pT r²) about the given axis, not the invariant mass
+   (a rigid 0.06 rad shift of the jet, which leaves m unchanged, turns 76 % of W calls into Z);
+6. the 16 neurons are windows on that variable (W window peaks at 75 GeV, Z at 94–98, top at 135–148);
+7. the classes are conjunctions of the windows.
+The worked variable (mass) is the proof of the layer-ordering claim (A9): sum → context → product → window. Each step
+has a substitution test and a causal edit. ParT/ParticleNet then show the same stages in a different arithmetic.
+
 ## Main results, A vs B (and the merge rule)
 
 - **A's main result:** the complete program of a deployed tagger. For JEDI-linear: ~13 particle cuts → ~11 first objects
@@ -45,9 +60,9 @@ Claims to establish:
   0.24–0.29 in log and turns 76 % of W calls into Z). v1 read "m² ≈ 2·ΣpT·Σ pT r² − 2|Σ pT r⃗|²": the factor 2 was an error.
 - A5. The 16 neurons are statements on A3's objects. Replacing each stage by its formula keeps the network's calls. [E7]
 - A6. Classes are combinations of neuron objects, and imposing a combination causes the class (J33b on the network's own objects). [E8]
-- A7. The same objects appear across JEDI-linear sizes and input sets; an untrained network does not show them. Scope (user,
-  2026-10-16: not all 20 official models): 3-feature n8/n32/n64/n128, 3-feature-perminv n64 (ordering control), 16-feature n64
-  (input control), untrained n64. [E9]
+- A7 (scope v3, user 2026-10-16: "just use the best version of JEDI"): one JEDI model, 3-feature n64 (the model of all
+  earlier J-results), with the untrained n64 network as the control. Cross-model generality comes from the other
+  architectures (A10), not from JEDI variants. [E9 → control only]
 - A9 (user, 2026-10-16). High-level variables are built over the layers: sums of particles first (P, S), then products
   and ratios (h4, h5), then clustering-type variables, if at all. The layer where a variable first becomes linearly readable
   rises with its algebraic depth. [E10; E6 for mass]
