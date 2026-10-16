@@ -77,6 +77,8 @@ formula does? If yes, B is one section of A. Which if-statement form transfers a
   object set vs background): candidates for pretrained weights online (ParT/ParticleNet fine-tunes, L-GATr `toptagging`
   config, PELICAN, LorentzNet); the mass / three-prong / W-inside-top story of Paper C has a direct test here. Weights check
   running (scout agent) before any training.
+- Quark–Gluon (Komiske, Metodiev & Thaler; 2M Pythia jets, with PID; user 2026-10-16): also one signal class; the
+  multiplicity / Casimir-scaling story (Frye et al. 1704.06266) has a direct test here. Same weights check first.
 
 ## Paper C: circuits (ParT)
 
