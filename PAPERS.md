@@ -101,10 +101,15 @@ Claims to establish:
   0–38, S19 = N(pT > 1 GeV) among ranks 13–63, S30 = Σ r for r < 0.165. Radial edits on S29/S1 match the hinge prediction
   (slope 1.03–1.04). The radial symmetry is built in round two from round one's directional half-planes. v1: "nameable
   energy-flow quantities (counts and pT-weighted sums over regions)".
-- A4 (v2, 2026-10-16, E6; pending verification). The network's mass variable is √(M0·M2) with M0 = ΣpT and M2 = Σ pT r²,
-  formed in h4/h5 from S-level M2 and an M0 channel (S0, fed through the context g); the −|M1|² recentring term of
-  m² ≈ M0·M2 − |M1|² is absent (a 0.06 rad translation of all particles, which leaves m unchanged, moves the read-out mass by
-  0.24–0.29 in log and turns 76 % of W calls into Z). v1 read "m² ≈ 2·ΣpT·Σ pT r² − 2|Σ pT r⃗|²": the factor 2 was an error.
+- A4 (v3, 2026-10-16, E6 + E6v, verified on a fresh sample; verifier confidence 0.55 for the exact form, > 0.9 for
+  non-recentring). The network's mass variable is an un-recentred M2-like quantity: M0 = ΣpT and M2 = Σ pT r² are read
+  separately at S and multiplied in h4/h5 (S0 carries M0 through the context g). A rigid translation of all particles by
+  δ (invariant mass unchanged to 1e-7) raises the read-out mass as δ² with 0.74–0.84 of the ½Δlog M2 prediction at every
+  δ ≥ 0.02 and flips 77 % of W calls to Z; the alternatives Σ pT r and Σ r² are excluded by magnitude (×1.7, ×2.1) and
+  exponent. It is not an exact function of r² about the axis: a direction-dependent odd term of 12–20 % of the even term
+  remains, consistent with its construction from nine asymmetric half-plane cuts (the only angular inputs); the pT·r²
+  products form piecewise-linearly in l2/l3 (the response travels a → s → u → S, not through P/g). v2: "√(M0·M2) about
+  the given axis" (exact form overstated). v1 read "m² ≈ 2·ΣpT·Σ pT r² − 2|Σ pT r⃗|²": the factor 2 was an error.
 - A5. The 16 neurons are statements on A3's objects. Replacing each stage by its formula keeps the network's calls. [E7]
 - A6. Classes are combinations of neuron objects, and imposing a combination causes the class (J33b on the network's own objects). [E8]
 - A7 (scope v3, user 2026-10-16: "just use the best version of JEDI"): one JEDI model, 3-feature n64 (the model of all
