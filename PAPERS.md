@@ -129,6 +129,10 @@ Claims to establish:
   and ratios (h4, h5), then clustering-type variables, if at all. The layer where a variable first becomes linearly readable
   rises with its algebraic depth. [E10; E6 for mass]
 - A8. ParT follows the same scheme: pair-bias statements, head routing, messages, class-token neurons, and combinations. [P-series]
+- A11 (user, 2026-10-16: "similar to the Goodfire post, look at neurons too"). Most live units have one main job that can be
+  stated as a physical pattern (jet images + observables), with weak activations that are neighbours of the main pattern and a
+  readable negative pole; units without one are listed. Tally per stage, analogous to Goodfire's 90 / 7 / 2–4 %. [E16 neuron atlas;
+  later the same on the small transformers' MLP neurons and heads across training checkpoints]
 - A10 (user, 2026-10-16). The same stages exist in other architectures: ParticleNet (EdgeConv: statements on particle pairs
   in k-NN graphs, pooled), L-GATr (Lorentz-equivariant tokens), and small transformers / Linformers trained on hls4ml. [X-series]
 
