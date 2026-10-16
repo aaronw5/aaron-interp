@@ -50,6 +50,16 @@ valuable"), decided after P1 and the first small-transformer results:
 The small-transformer training set is therefore needed for either shape; it is launched now with the proposed set
 (QUESTIONS.md), adjustable later.
 
+## What to look for (from Cammarata, "Neural Networks Are Already Clean", Goodfire; user 2026-10-16)
+Argument for our framing: most units have one main job once the tooling is right; superposition is the last hypothesis, not the
+first. Checklist applied to every unit we name:
+- describe the unit by the pattern it responds to (a cut, a radial hinge, a window), not by the class labels it fires on;
+- weak / offshoot activations: are they neighbours of the main pattern ("recursive generalisation")?
+- negative poles: for z neurons (pre-ReLU) and for the S-level hinges, what does the off side distinguish?
+- upstream and downstream context (which P/S units feed it; which logits read it), plus a steering test;
+- formation over training: per-epoch checkpoints of the small transformers (JEDI has no checkpoints);
+- unexplained remainder → suspect the tool (quantiser masks were exactly this: 43.7 % → 80.68 %).
+
 ## Reviewer lens (keep current; every objection gets an experiment)
 | objection | answer / experiment |
 |---|---|

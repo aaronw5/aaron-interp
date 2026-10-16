@@ -2,7 +2,7 @@
  "Name": "objects_from_statements",
  "Title": "From Particle Cuts to Class Boundaries: An Exact Statement–Object Program for a Jet Tagger",
  "Short Hypothesis": "A jet tagger builds its class boundaries from objects made of statements: cuts on single particles; the particle sets passing each cut, read by count and summed momentum and position; neurons as statements on those objects; classes as combinations of neuron objects. High-level jet variables are built over the layers in order of algebraic depth. For JEDI-linear the chain can be written as formulas from the input to the logits.",
- "Related Work": "Rai & Ganguly 2605.09881 (ParT top-tagging circuit; residual stream aligned with energy correlators); Wang et al. 2412.03673 (ParT attention); Komiske, Metodiev & Thaler (EFN/PFN: sum-pooled per-particle filters); Faucett et al. 2010.11998 (mapping networks to EFPs); Dreyer, Salam & Soyez 1807.04758 (Lund plane); mechanistic interpretability circuits (Olah et al.; Conmy et al. ACDC; Geiger et al. causal abstraction).",
+ "Related Work": "Rai & Ganguly 2605.09881 (ParT top-tagging circuit; residual stream aligned with energy correlators); Wang et al. 2412.03673 (ParT attention); Komiske, Metodiev & Thaler (EFN/PFN: sum-pooled per-particle filters); Faucett et al. 2010.11998 (mapping networks to EFPs); Dreyer, Salam & Soyez 1807.04758 (Lund plane); mechanistic interpretability circuits (Olah et al.; Conmy et al. ACDC; Geiger et al. causal abstraction).; Cammarata (Goodfire, 2026) 'Neural Networks Are Already Clean': units have one main job once tooling is right; superposition as last hypothesis.",
  "Abstract": "TBD after E1–E10.",
  "Experiments": [
   "E1 units per layer",
