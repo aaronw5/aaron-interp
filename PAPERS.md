@@ -13,7 +13,8 @@ one jet through the network and sees, at each stage, a quantity with a name:
 1. particles pass 13 cuts (soft-particle ramps, half-planes through the axis);
 2. the cuts become objects: counts and sums over the passing particles inside pT-rank windows;
 3. the context round carries ΣpT (M0) into every particle's second cut;
-4. the second-round objects are moments: ΣpT, Σ pT r², one-sided angular sums;
+4. the second-round objects are radial hinges summed over rank windows: ΣpT·r² (S29, S50), Σ(r − 0.2)₊ beyond the leading
+   particle (S1), soft multiplicity (S19), a core count (S30); the half-planes of round one have become radial functions;
 5. the dense layers multiply them: the network's "mass" is √(ΣpT · Σ pT r²) about the given axis, not the invariant mass
    (a rigid 0.06 rad shift of the jet, which leaves m unchanged, turns 76 % of W calls into Z);
 6. the 16 neurons are windows on that variable (W window peaks at 75 GeV, Z at 94–98, top at 135–148);
@@ -91,8 +92,15 @@ the network.
 Claims to establish:
 - A1. Each first-layer unit is one cut on (pT, Δη, Δφ). Each pooled channel equals count × offset + weights · (sums over
   the passing particles), exactly. [E2, E3]
-- A2. The second round adds jet context that shifts the per-particle cuts. Its size and its role are to be measured. [E4]
-- A3. The second-round objects are nameable energy-flow quantities (counts and pT-weighted sums over regions). [E5]
+- A2 (v2, 2026-10-16, E4; pending verification). The context g shifts the second-round cuts of 9 of 19 live units, and the
+  decision needs it through four objects: S0 (ΣpT, via g49 ← P15), S30, and S31/S58 (functions of g alone). g → mean changes
+  14.9 % of calls; those four objects alone 14.4 %. v1: "adds jet context; size and role to be measured".
+- A3 (v2, 2026-10-16, E5; pending verification). 17 of the 19 second-round objects are each a hinge in two variables
+  (pT or ln pT, and r = ΔR to the axis) summed over a fixed pT-rank window; azimuth adds ≤ 0.017 R². Named: S29 ≈ ΣpT·r² +
+  Σr² + soft count (R² 0.976; cost 40.9 %), S1 = Σ_{ranks ≥ 1}(r − 0.2)₊, S0 = ΣpT of the 14 hardest, S50 = ΣpT·r² over ranks
+  0–38, S19 = N(pT > 1 GeV) among ranks 13–63, S30 = Σ r for r < 0.165. Radial edits on S29/S1 match the hinge prediction
+  (slope 1.03–1.04). The radial symmetry is built in round two from round one's directional half-planes. v1: "nameable
+  energy-flow quantities (counts and pT-weighted sums over regions)".
 - A4 (v2, 2026-10-16, E6; pending verification). The network's mass variable is √(M0·M2) with M0 = ΣpT and M2 = Σ pT r²,
   formed in h4/h5 from S-level M2 and an M0 channel (S0, fed through the context g); the −|M1|² recentring term of
   m² ≈ M0·M2 − |M1|² is absent (a 0.06 rad translation of all particles, which leaves m unchanged, moves the read-out mass by

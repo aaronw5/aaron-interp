@@ -69,7 +69,8 @@ print('E2 dominant term among live statements:', kinds, flush=True)
 
 # ---------------- E3
 xn = inputs(x, 64).astype(np.float64)                     # the network's normalised input
-A = np.einsum('jnk,kc->jnc', xn, K1) + b1 > 0               # passing set per cut (padded slots included: they are inputs too)
+QS = np.asarray(net.L['qs'].iq.quantizer.b)[0] > 0            # zero-bit (slot, channel) entries of the pooling quantizer are fixed masks (E3m)
+A = (np.einsum('jnk,kc->jnc', xn, K1) + b1 > 0) & QS[None]    # passing set per cut inside the kept slots (padded slots included: they are inputs too)
 cnt = A.sum(1)                                            # (J, 64) particles passing each cut
 sums = np.einsum('jnc,jnk->jck', A.astype(np.float64), xn)  # (J, 64, 3) summed normalised inputs of the passing particles
 ident = (b1 * cnt + np.einsum('jck,kc->jc', sums, K1)) / 64
