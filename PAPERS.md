@@ -70,6 +70,14 @@ on the volume; L-GATr from other groups' runs, copied read-only).
 Open questions for B: does the MARS fit on hand observables match the network on substitution tests as well as the object
 formula does? If yes, B is one section of A. Which if-statement form transfers across architectures?
 
+## Datasets
+- hls4ml jets (5 classes g, q, W, Z, t): JEDI-linear family, small transformers / Linformers.
+- JetClass (10 classes): ParT, ParticleNet, L-GATr.
+- Top Tagging Landscape (Kasieczka et al. 2019; top vs QCD; user 2026-10-16: one signal class, so a decision boundary is one
+  object set vs background): candidates for pretrained weights online (ParT/ParticleNet fine-tunes, L-GATr `toptagging`
+  config, PELICAN, LorentzNet); the mass / three-prong / W-inside-top story of Paper C has a direct test here. Weights check
+  running (scout agent) before any training.
+
 ## Paper C: circuits (ParT)
 
 **Thesis (v1, 2026-10-16):** ParT computes jet mass through geometric routing, as three linked steps:
