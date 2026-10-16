@@ -3,7 +3,7 @@ Writing rule: plain statements of what was measured; no verdict words, no metaph
 Each claim carries a `detail` block (rendered as a drop-down): what the claim is, procedure (sample, edit, control, metric),
 result (numbers), tables, figures, verification, files. Figure paths are relative to the repo root; missing files are skipped."""
 
-UPDATED = '2026-10-16'
+UPDATED = '2026-10-16 (E5v, P1 interim)'
 
 OVERVIEW = dict(
     title='Overview',
@@ -12,9 +12,9 @@ OVERVIEW = dict(
           'tables and figures. Tabs merge if papers merge.',
     status=[
         ('Science loop (Paper A + B)', 'round 1 on the cluster: E8 (classes as conjunctions, imposed), E14, E15; then verify → ledger → review'),
-        ('E5v', 'rotation / reflection verification of the second-round objects: job finished, verdict being written'),
+        ('E5v', 'done: A2 verified; A3 verified in corrected form (10 of 17 objects radial, 3 directional)'),
         ('E11', 'MARS fit of the entire trigger model, all stages: 10 cluster jobs finished, analysis in progress'),
-        ('P1', 'ParT translation test on a TITAN Xp (job anrunw-ai-p1)'),
+        ('P1', 'ParT translation test running on an A10 (job anrunw-ai-p1b); interim: at δ = 0.02 ParT_full changes 1.4 % of calls, W → Z 0.114 → 0.122 (JEDI at δ = 0.03: 0.03 → 0.26)'),
         ('Small transformers', 'native transformer / Linformer / Deep Sets on hls4ml, per-epoch checkpoints: GPU jobs being launched'),
         ('Models and data', 'ParticleNet JetClass weights copied; no released L-GATr weights exist, so it is trained in-house; LorentzNet ships top-tagging and QG checkpoints; top-tagging and QG data on the volume'),
     ],
@@ -70,7 +70,7 @@ A_CLAIMS = [
                      'the small-transformer checkpoints will replace it).',
         files='interp/e1_e3_jedi.py, interp/e3w_quantizers.py, interp/e3m_masks.py, interp/e1_e3_sweep.py; results/jedi/e1_e3.json, results/sweep/summary.md')),
  dict(id='A2', statement='The context round carries ΣpT (and three other jet-level objects) into every particle\'s second cut; without it 14.9 % of calls change.',
-      status='verification run finished, verdict pending', confidence=0.6, evidence='E4, E5v',
+      status='verified (fresh sample; random-object controls)', confidence=0.85, evidence='E4, E5v',
       detail=dict(
         what='After the first pooling, a 64-unit jet vector g = ReLU(Wd·P + bd) is added to every particle\'s second-round pre-activation. '
              'The question is how much of each second-round cut is the particle\'s own part and how much is this shared context, and whether the decision needs it.',
@@ -87,11 +87,12 @@ A_CLAIMS = [
                   ['g55, g39, g5', 'u31', 'half-plane P units', '≤ 0.14', '2.20 / 1.98 / 1.57 %'],
                   ['g63', 'u58', '—', '0.46', '1.34 %']])],
         figures=[],
-        verification='E5v (cluster job, 926 s) reran g → mean, the four-object replacement, agreement with g → mean\'s calls, and five random-four controls on a '
-                     'fresh sample; numbers being read. Code review: the 14.4 % counts changed calls, not agreement with g → mean\'s calls.',
+        verification='E5v, fresh 10,000 jets (seed 7): g → mean 80.66 → 74.24 % (14.61 % of calls); the four objects alone 13.91 %, with the same call as g → mean on 98.07 % of '
+                     'jets and on 90.3 % of the 1,461 jets that g → mean changes; four random objects from the other 15: 0.00–0.88 %. Qualification: S31 and S58 are directional '
+                     'objects (see A3) and S30\'s own term is not Σ r (its edit response comes through g). Verifier confidence 0.9.',
         files='interp/e4_e5_jedi.py; results/jedi/e4_e5.json; inbox/E4_E5_objects.md')),
- dict(id='A3', statement='17 of the 19 second-round objects are each a hinge in (pT or ln pT, r = ΔR to the axis) summed over a fixed pT-rank window; the directional half-planes of round one have become radial functions.',
-      status='verification run finished, verdict pending; code review found a bit-count error in the window listing', confidence=0.5, evidence='E5, E5v',
+ dict(id='A3', statement='The second-round objects are hinges in (pT or ln pT, r = ΔR to the axis) summed over fixed pT-rank windows; 10 of the 17 particle objects (the five costliest among them) are radial to ≤ 0.1 SD under rotations of the whole jet, 4 to 0.1–0.2 SD, and 3 (plus the two context-only objects) are directional.',
+      status='verified in corrected form: 10 of 17 particle objects radial to ≤ 0.1 SD; 3 directional; rotations change 3.7–4.1 % of calls', confidence=0.8, evidence='E5, E5v',
       detail=dict(
         what='Each second-round object S_c = Σ_i u_{i,c}/16 with u_{i,c} = ReLU(W3 (s_i + g) + b3)_c. With g fixed at its mean, the per-particle '
              'response f_c(pT, Δη, Δφ) was measured directly and then named with jet-level quantities.',
@@ -106,11 +107,16 @@ A_CLAIMS = [
                '0.32 pT + 1.40, ΣpT (0.934; 61 % of its variance through g). S50: ΣpT·r² over ranks 0–38 (0.938). S19 (ranks 13–63): N(pT > 1 GeV) (0.991). '
                'S30: Σ r for r < 0.165 (0.957). S31, S58: functions of g alone.',
         tables=[],
-        figures=[('results/site/T1_second_round_objects.png', 'The nine costliest second-round objects: response, rank window, name, causal check.')],
-        verification='Open points from the code review: the window listing used a bit count of k+i+f where HGQ\'s is i+f, so a few isolated slots were counted '
-                     'as kept (S50: 42, 44, 47; S40: 19–21, 29, 44; S51: 14; they output 0, so the R² effect is small); octant means at r = 0.1–0.3 vary 2.5× '
-                     'for S1 and 2× for S52, so the radial claim rests on the rotation test (45°, 90°, 180° and reflections of whole jets, which leave every r '
-                     'unchanged), run in E5v; verdict pending.',
+        figures=[('results/site/T1_second_round_objects.png', 'The nine costliest second-round objects: response, rank window, name, causal check (E5).'),
+                 ('results/site/T3_rotation_test.png', 'Rotation and reflection test of the objects (E5v).'),
+                 ('results/site/T4_e5v_naming_context.png', 'Verification of the S29 name and of the context path (E5v).')],
+        verification='E5v, fresh 10,000 jets (seed 7), nothing refit. Rigid rotations by 45°, 90°, 180° and the two reflections (every r unchanged to 1e-7) change '
+                     '3.73–4.08 % of calls (float + masks 3.04–3.90 %); a per-particle azimuth scramble 6.85 %. rms ΔS/SD at 180°: S0, S19 0; S50, S40, S29, S43, S51, S30, S60, S20 '
+                     '0.06–0.09; S13, S63, S17, S1 0.12–0.21; S62, S52, S56 0.25–0.30; S58 0.41, S31 0.44 (both built from directional g units: g5, g29 η cuts; g39, g55 φ cuts). '
+                     'Carriers of the call change (one rotated object patched into the unrotated network): S1 2.27 %, S29 2.11 %, S56 1.58 %, S31 1.09 %, S17 1.05 %. '
+                     'S29 name: R² 0.976 on fresh jets; r × 1.1 edit moves S29 by +1.749 vs hinge-sum prediction +1.799 (slope 0.99) and 3-term formula +1.979 (slope 0.83): '
+                     'the causal object is Σ ReLU(4.44 ln pT + 93.8 r − 21.2)/16, the 3-term name a correlational proxy. Bit-count check: 0 disagreeing entries, the isolated '
+                     'window slots are real. Verifier verdict: R1 refuted as first stated ("radial" for all), confidence 0.85 in the corrected reading; R2 reproduced (0.9).',
         files='interp/e4_e5_jedi.py, interp/e5_causal_jedi.py, interp/e5_verify.py; results/jedi/e4_e5.json, e5_causal.json, e5_verify.json')),
  dict(id='A4', statement='The network\'s mass variable is an un-recentred M2-like quantity: ΣpT and Σ pT r² are read separately at S and multiplied in h4/h5; a rigid shift of the whole jet, which leaves the invariant mass unchanged, flips 77 % of W calls to Z.',
       status='verified (fresh sample, dose–response, direction, input-range and first-round controls)', confidence=0.85, evidence='E6, E6v',
@@ -172,7 +178,10 @@ A_CLAIMS = [
       status='running (P1 on GPU; training jobs)', confidence=0.2, evidence='P1, X-series',
       detail=dict(what='For each JEDI stage a counterpart in ParT (pair-bias statements, head-pooled sets as objects, class token as context, class-token neurons, conjunctions) and in the small models.',
                   procedure='P1: the same rigid-translation edit on ParT_full and ParT_kin (1,000 jets per class, δ = 0–0.09), with angle scaling as the positive control; metrics: calls changed, W → Z, the W/Z neuron shift, Δlog m̂ vs ½Δlog M2 and vs 0.',
-                  result='Pending (job running). Setup facts: ParT_full 86.2 % and ParT_kin 74.4 % on the smoke sample; on JetClass jets |M1|²/(M0M2) median 2.0e-3, so the √(M0M2) prediction at δ = 0.06 is of order 0.1 in log.',
+                  result='Interim (ParT_full, 10,000 jets, accuracy 85.9 %; W/Z neuron = index 97, sd 1.756, last layer × sd W +2.06 / Z −0.67; ridge R² for log m from the class token 0.881): '
+                         'δ = 0.01: 0.7 % of calls change, W → Z 0.114 (baseline 0.114), Δlog m̂ −0.001 (prediction +0.0003); δ = 0.02 along η / φ: 1.4 / 1.5 % change, W → Z 0.122 / 0.125, '
+                         'Δlog m̂ +0.001 / +0.007 (prediction +0.005 / +0.010), slope on prediction 0.02–0.03. JEDI at δ = 0.03: W → Z 0.26–0.29, Δlog m̂ 0.07 (prediction 0.11). '
+                         'Larger δ, ParT_kin and the angle-scaling controls pending. Cluster smoke test: ParT_full 86.2 %, ParT_kin 74.4 % (as G192); the corrected rebuild changes 0.05 % of calls.',
                   tables=[], figures=[], verification='—', files='interp/part_core.py, interp/p1_translation_part.py, part_job.sh')),
 ]
 
@@ -188,6 +197,7 @@ dict(key='a', tab='Paper A', title='A — How a tagger builds its decisions',
         ('refinement 2, E3w/E3m', 'The zero-bit entries of the fixed-point format are masks: an object is a cut AND a pT-rank window (float + masks 80.68 % vs 81.29 %).'),
         ('A4 v3, E6/E6v', 'The mass variable is an un-recentred M2-like quantity; exact form open (direction-dependent odd term 12–20 %).'),
         ('A2/A3 v2, E4/E5', 'Context enters through four objects; 17 of 19 second-round objects are radial (pT, r) hinges over rank windows.'),
+        ('A3 v3, E5v', 'Radial only for 10 of 17 particle objects (to ≤ 0.1 SD); S52, S56, S62 and the context-only S31, S58 are directional; rigid rotations change 3.7–4.1 % of calls.'),
     ],
     claims=A_CLAIMS,
     open=['Exact form of the mass variable (odd term).', 'Which u units combine which half-planes into radial functions (rotation test running).',

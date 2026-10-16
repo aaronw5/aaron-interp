@@ -143,6 +143,12 @@ slot × channel entries in the second round). Float + masks scores 80.68 % (fixe
 float 43.7 %. So an object is a cut AND a pT-rank window (e.g. u0: the 14 hardest particles; u19: ranks 13–63). Claim A1 now
 reads: statement = cut on (pT, Δη, Δφ); object = particles passing the cut within a fixed rank window, read by count and sums.
 
+A3 v3 (2026-10-16, E5v, verified on a fresh sample): rigid rotations and reflections of whole jets change 3.7–4.1 % of calls. Ten of
+the 17 particle objects (S0, S19, S20, S29, S30, S40, S43, S50, S51, S60 — the five costliest among them) move ≤ 0.1 SD; S13, S17,
+S63, S1 move 0.1–0.2 SD; S52, S56, S62 and the context-only S31, S58 (built from η- and φ-cut g units) are directional. S29's causal
+object is the hinge sum itself (edit slope 0.99); the 3-term name is a correlational proxy (slope 0.83). A2 verified (E5v: 14.61 %,
+four objects 13.91 %, random four 0–0.9 %).
+
 Narrative order: architecture identity (A1) → objects (A2, A3) → how mass is computed (A4) → neurons and classes (A5, A6)
 → universality (A7) → a larger model (A8).
 

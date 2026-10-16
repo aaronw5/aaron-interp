@@ -2,7 +2,12 @@
 
 ## Status
 - P0 (setup + smoke test): done. Local smoke test ran before the user's "no local compute" change; the cluster run of the
-  same test is queued (GPU job `anrunw-ai-p1`, pod Pending: insufficient GPUs at launch time).
+  same test is in GPU job `anrunw-ai-p1b` (log `/j-jepa-vol/aaron-interp/logs/p1b.log`; node hcc-nrp-shor-c6009.unl.edu,
+  container creating at 20:05Z). The first job `anrunw-ai-p1` (TITAN Xp, after a 60-min queue) read the 4,000 smoke jets
+  (same moments as locally) and then failed on a formatting bug of mine in the smoke script's log line (the torch < 2.0
+  hook fallback stores a string; fixed, re-synced, relaunched). Its rebuild check on the cluster: max |ΔE| 1.2e-4 GeV,
+  |Δpz| 3e-5, mass 3.4e-4 relative; the stored jet_energy differs from ΣE of the 128 stored particles by up to 2.5 %
+  (median ratio 0.99984), which build's recomputed jet_energy changes — hence the rebuilt δ = 0 baseline in P1.
 - P1: script written and verified to import/run on the cluster (50 jets, CPU, helper pod); the full run is the second half
   of the same job (`python -m interp.p0_smoke_part && python -m interp.p1_translation_part`). No P1 numbers yet.
   When the job finishes: log `/j-jepa-vol/aaron-interp/logs/p1.log`, results `/j-jepa-vol/aaron-interp/results/part/
