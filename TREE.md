@@ -20,4 +20,5 @@ Stages: 1 = initial implementation, 2 = baselines and controls, 3 = research age
 | E6v | E6 | 4 | A4 | skeptic rerun of the translation result (fresh seed, dose–response, direction, input-range and P-unit controls) | interp/e6_verify.py | running (agent) | | results/jedi/e6_verify_translation.png | |
 | P0 | – | 1 | A8/A10 | ParT package + helpers copied into aaron-interp; smoke test ParT_full 86 %, ParT_kin 74 % | interp/part_core.py | running (agent) | | | |
 | P1 | P0,E6 | 4 | A4/A8 | translation test on ParT_full / ParT_kin (mirror of E6); cross-model mass row | interp/p1_translation_part.py | running (agent) | | results/part/p1_translation.png | |
+| E11 | E5,E6 | 3/4 | A5, B (user idea 2026-10-16) | MARS-fit the ENTIRE trigger model: every live unit of P, g, S, h4, h5, z as hinge formulas on (a) physics observables, (b) the previous stage's formulas; stage substitution + full-chain accuracy; per-unit "what it looks at" table; feature-evolution figure | interp/e11_mars_all.py | running (agent) | same-call %, acc, R² per stage | results/jedi/e11_evolution.png | |
 

@@ -149,6 +149,10 @@ Models (user 2026-10-16): JEDI-linear family (20 official models); small native 
 hls4ml dataset (training approved by the user for this purpose); ParT, ParticleNet, L-GATr on JetClass (pretrained weights
 on the volume; L-GATr from other groups' runs, copied read-only).
 
+User idea (2026-10-16), node E11: MARS-fit the entire trigger model, every unit of every stage, on physics observables and
+compositionally on the previous stage's formulas; check whether the all-if-statement model reproduces the network's
+performance; read off how features evolve over the layers and what each neuron looks at, against physics.
+
 Open questions for B: does the MARS fit on hand observables match the network on substitution tests as well as the object
 formula does? If yes, B is one section of A. Which if-statement form transfers across architectures?
 
