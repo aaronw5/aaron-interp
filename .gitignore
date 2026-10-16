@@ -1,0 +1,11 @@
+data/
+models/
+results/
+logs/
+__pycache__/
+*.npy
+*.npz
+*.h5
+*.pt
+*.keras
+*.json.gz
