@@ -1,0 +1,11 @@
+{
+ "Name": "physics_audit",
+ "Title": "What JEDI-linear and ParT Use: Physics Edits versus Classical Taggers",
+ "Short Hypothesis": "Physics-motivated input edits, compared with classical taggers at their working points, show which physical quantities each model uses.",
+ "Related Work": "mMDT 1307.0007, soft drop 1402.2657, N-subjettiness 1011.2268, D2 1409.6298, JH 0806.0848, HEPTopTagger 1006.2833, pull 1001.5027, jet charge 1209.2421, DDT 1603.00027.",
+ "Abstract": "TBD.",
+ "Experiments": [
+  "J25–J33, G192–G206 at full statistics"
+ ],
+ "Risk Factors and Limitations": "Edit validity (off-manifold); 400 jets/class in several ParT tests."
+}

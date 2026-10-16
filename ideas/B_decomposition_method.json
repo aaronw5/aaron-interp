@@ -1,0 +1,13 @@
+{
+ "Name": "statement_object_decomposition",
+ "Title": "Statement–Object Decomposition of Sum-Pooling Networks",
+ "Short Hypothesis": "For networks that sum-pool ReLU per-particle features, Σ_i ReLU(w·x_i+b) = b·|A| + w·Σ_{i∈A} x_i makes every pooled channel an object defined by one cut. Layer-wise naming plus stage-by-stage substitution yields a decomposition that is exact where the identity holds and is validated causally.",
+ "Related Work": "Decision-tree extraction from ReLU nets; symbolic regression (Cranmer et al. 2020); EFN/PFN; KANs; linear probes and SAEs.",
+ "Abstract": "TBD.",
+ "Experiments": [
+  "identity on JEDI family (E3, E9)",
+  "substitution fidelity per stage (E7)",
+  "baselines: tree extraction, symbolic regression, probes on the same networks"
+ ],
+ "Risk Factors and Limitations": "Exactness only up to the first nonlinearity after pooling; later layers need fitted formulas."
+}

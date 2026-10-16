@@ -1,0 +1,18 @@
+# Experiment tree
+
+Stages: 1 = initial implementation, 2 = baselines and controls, 3 = research agenda, 4 = ablations and causal tests.
+
+| node | parent | stage | paper/claim | plan | script | status | metric | figure | note |
+|---|---|---|---|---|---|---|---|---|---|
+| E1 | – | 1 | A1/B | units per layer; mean ablation per unit | interp/e1_e3_jedi.py | done | dead/live units, % calls changed | – | 13 live l1 units |
+| E2 | E1 | 1 | A1 | l1 cuts in GeV and rad | interp/e1_e3_jedi.py | done | cut coefficients | – | two cut kinds: pT ramps, angular half-planes |
+| E3 | E1 | 1 | A1/B | count+sum identity on P | interp/e1_e3_jedi.py | done | max error | – | exact in float; fixed point differs |
+| E3q | E3 | 2 | A1/B | rounding removed per quantizer | scratch e3q3.py | done | % calls changed | – | l1+qs+qs1 float: 3.83 % calls |
+| E4 | E3 | 3 | A2 | context round g | interp/e4_e5_jedi.py | running (agent) | | | |
+| E5 | E3 | 3 | A3 | second-round objects named + causal | interp/e4_e5_jedi.py | running (agent) | | | |
+| E6 | E3 | 3 | A4 | mass from moments; where the product forms | interp/e6_mass_jedi.py | running (agent) | | | |
+| E9 | E3 | 2/4 | A7 | 20 official models + untrained, cluster | interp/e1_e3_sweep.py | running (agent) | | | |
+| E10 | E3 | 3 | A9 | variables over layers vs algebraic depth | interp/e10_layers_jedi.py | running (agent) | | | |
+| E7 | E5,E6 | 3/4 | A5 | neurons on own objects; stage substitution | – | todo | | | |
+| E8 | E7 | 4 | A6 | classes as combinations, imposed | – | todo | | | |
+| E3w | E3q | 2 | A1 | which later quantizer makes the all-float network fall to 43.7 % (d7 modulo wrap?) | – | todo | | | |

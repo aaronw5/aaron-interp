@@ -1,0 +1,14 @@
+{
+ "Name": "part_mass_circuit",
+ "Title": "How a Particle Transformer Computes Jet Mass",
+ "Short Hypothesis": "ParT computes jet mass through geometric routing: a pair-bias formula fixes head roles; head b2h8 switches near 85 GeV; far-side heads write into the W/Z neuron n98. Variables of higher algebraic depth appear in later blocks.",
+ "Related Work": "Rai & Ganguly 2605.09881; Wang et al. 2412.03673; causal abstraction / interchange interventions (Geiger et al.).",
+ "Abstract": "TBD.",
+ "Experiments": [
+  "per-block readability of observables (E10 on ParT)",
+  "interchange interventions",
+  "m²_ij-only vs ΔR-only mass edits",
+  "b2h8 threshold mechanism"
+ ],
+ "Risk Factors and Limitations": "Overlap with Rai & Ganguly; single checkpoint per input set."
+}

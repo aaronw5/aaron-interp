@@ -20,8 +20,17 @@ LAYERS = dict(l1='q_einsum_dense_batchnorm', qs='q_sum', l2='q_einsum_dense_batc
               d6='q_einsum_dense_batchnorm_6', d7='q_einsum_dense_batchnorm_7')
 
 
-def model_path(n):
-    return sorted((Path(MODELS) / '3-feature' / f'jet_classifier_large_{n}' / 'models').glob('*.keras'))[0]
+def model_path(n, family='3-feature'):
+    return sorted((Path(MODELS) / family / f'jet_classifier_large_{n}' / 'models').glob('*.keras'))[0]
+
+
+def redraw_untrained(model, seed=0):
+    """the untrained control: every kernel, bias and batch-norm scale redrawn from a Gaussian with that weight's trained
+    mean and spread (in model.weights order, one rng); the trained number formats are kept"""
+    rng = np.random.default_rng(seed)
+    for w in model.weights:
+        if getattr(w, 'path', w.name).endswith(('/kernel', '/bias', '/gamma')):
+            v = np.asarray(w.numpy()); w.assign(rng.normal(v.mean(), v.std(), v.shape).astype(v.dtype))
 
 
 class Network:
@@ -29,10 +38,7 @@ class Network:
         import keras, hgq, jax, jax.numpy as jnp  # noqa: F401  (hgq registers the quantized layers)
         self.n = n; self.model = keras.models.load_model(model_path(n), compile=False)
         if untrained:
-            rng = np.random.default_rng(seed)
-            for w in self.model.weights:
-                if getattr(w, 'path', w.name).endswith(('/kernel', '/bias', '/gamma')):
-                    v = np.asarray(w.numpy()); w.assign(rng.normal(v.mean(), v.std(), v.shape).astype(v.dtype))
+            redraw_untrained(self.model, seed)
         L = {k: self.model.get_layer(v) for k, v in LAYERS.items()}; KB = {}
         for k in ('l1', 'l2', 'dd', 'l3', 'd4', 'd5', 'd6', 'd7'):
             K, b = L[k].get_fused_qkernel_and_qbias(False, L[k].moving_mean, L[k].moving_variance); KB[k] = (jnp.asarray(K), jnp.asarray(b))

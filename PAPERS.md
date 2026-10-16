@@ -26,7 +26,16 @@ Claims to establish:
 - A5. The 16 neurons are statements on A3's objects. Replacing each stage by its formula keeps the network's calls. [E7]
 - A6. Classes are combinations of neuron objects, and imposing a combination causes the class (J33b on the network's own objects). [E8]
 - A7. The same objects appear in all 20 official JEDI-linear models; an untrained network does not show them. [E9]
+- A9 (user, 2026-10-16). High-level variables are built over the layers: sums of particles first (P, S), then products
+  and ratios (h4, h5), then clustering-type variables, if at all. The layer where a variable first becomes linearly readable
+  rises with its algebraic depth. [E10; E6 for mass]
 - A8. ParT follows the same scheme: pair-bias statements, head routing, messages, class-token neurons, and combinations. [P-series]
+
+Refinement (2026-10-16, E3/E3q): the identity is exact in floating point. With the network's fixed-point rounding, the
+float version of the particle and object stages changes 3.8 % of calls. The paper states the float program, and the rounding
+separately as a perturbation.
+E2 detail for the narrative: the angular statements are half-planes through the jet axis and carry no pT weight, so the first
+objects are particle-count-weighted angular spreads, not energy-weighted ones.
 
 Narrative order: architecture identity (A1) → objects (A2, A3) → how mass is computed (A4) → neurons and classes (A5, A6)
 → universality (A7) → a larger model (A8).
