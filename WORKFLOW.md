@@ -52,6 +52,14 @@ stage is limited to keeping PAPERS.md (theses, claims, confidence per claim) cur
 - It lists the weaknesses and the experiments that would address them.
 - Each weakness becomes a node in TREE.md, at stage 2–4.
 
+## Writing rule (all text: ledger, reports, later papers)
+No mannered prose: no metaphor or flourish in place of a direct statement ("a dial worth turning" → "a parameter worth
+varying"). When a literal phrase exists, use it. No editorial or declarative language; interpretations scoped to the
+measurement.
+
+## Questions
+Questions for the user go out as a notification (PushNotification) and are listed in QUESTIONS.md with the date and the answer.
+
 ## Ledger
 - `EXPERIMENTS.md`: one row per node result, with the effect on the thesis: supports / weakens / refines.
 - Thesis changes go in `PAPERS.md`, versioned.

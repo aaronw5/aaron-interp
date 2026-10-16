@@ -30,6 +30,8 @@ Claims to establish:
   and ratios (h4, h5), then clustering-type variables, if at all. The layer where a variable first becomes linearly readable
   rises with its algebraic depth. [E10; E6 for mass]
 - A8. ParT follows the same scheme: pair-bias statements, head routing, messages, class-token neurons, and combinations. [P-series]
+- A10 (user, 2026-10-16). The same stages exist in other architectures: ParticleNet (EdgeConv: statements on particle pairs
+  in k-NN graphs, pooled), L-GATr (Lorentz-equivariant tokens), and small transformers / Linformers trained on hls4ml. [X-series]
 
 Refinement (2026-10-16, E3/E3q): the identity is exact in floating point. With the network's fixed-point rounding, the
 float version of the particle and object stages changes 3.8 % of calls. The paper states the float program, and the rounding
@@ -45,12 +47,26 @@ reads: statement = cut on (pT, Δη, Δφ); object = particles passing the cut w
 Narrative order: architecture identity (A1) → objects (A2, A3) → how mass is computed (A4) → neurons and classes (A5, A6)
 → universality (A7) → a larger model (A8).
 
-## Paper B: method (statement–object decomposition)
+## Paper B: method — turning a model into if-statements, and the statement–object decomposition
 
-**Thesis (v1, 2026-10-16):** for networks that pool ReLU particle features with a sum (Deep Sets, EFN, and JEDI-type
-models), the pooled layer is exactly a set of particle cuts each read by count and summed inputs. This identity plus
-stage-by-stage substitution gives a decomposition that is exact where the identity holds. It is tested by substitution
-and by causal edits. It is compared with decision-tree extraction, symbolic regression, and probes on the same networks.
+**Thesis (v2, 2026-10-16; user: "write about the MARS fit method … turning model into if statements. Or explore it"):**
+a trained tagger can be rewritten as if-statements at two levels. (i) MARS-style fitting (jetdistill/mars.py): each neuron
+as a sum of hinge terms max(0, Q − t), max(0, t − Q) and their products on jet observables Q, chosen by forward selection,
+read through the network's own last layer; validated by stage substitution (same-call rate) and causal tuning curves
+(J18, G80/G81). (ii) The exact statement–object identity for sum-pooled ReLU layers: each pooled channel = b·count +
+w·(sums over the particles passing the cut, inside its rank window), which needs no fit. The method paper states both,
+their fidelity (same call, per-particle attribution, causal responses) and their failure modes (G160: accuracy kept but
+rejection lost; G180–G190: the fit cannot get both the jet and its particles right), and compares them with decision-tree
+extraction, symbolic regression and probes on the same networks.
+
+v1 (2026-10-16, superseded): decomposition identity + stage substitution only.
+
+Models (user 2026-10-16): JEDI-linear family (20 official models); small native transformers and Linformers trained on the
+hls4ml dataset (training approved by the user for this purpose); ParT, ParticleNet, L-GATr on JetClass (pretrained weights
+on the volume; L-GATr from other groups' runs, copied read-only).
+
+Open questions for B: does the MARS fit on hand observables match the network on substitution tests as well as the object
+formula does? If yes, B is one section of A. Which if-statement form transfers across architectures?
 
 ## Paper C: circuits (ParT)
 
