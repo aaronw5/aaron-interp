@@ -92,6 +92,9 @@ CLAIMS = {
     plain='The whole network, written as about 6,000 if-statements fitted layer by layer from physical quantities, reproduces 94 % of its decisions at the same accuracy.',
     background='Each unit is fitted with MARS-style hinge terms (if Q > t, add a·(Q − t)). Each layer is fitted on the previous layer\'s fitted values, so the final program never uses the network\'s own activations.',
     motivation='This is the "turn the model into if-statements" method applied to every unit, and tests whether such a program can stand in for the network.'),
+'A4n': dict(plain='On ordinary (unedited) jets whose axis is slightly off the pT centre, moving the particles so the jet is centred keeps the invariant mass the same but lowers the network\'s mass reading, as the axis-relative formula predicts in sign.', background='The rigid-shift test of A4 creates off-centre jets that do not occur in data; on most data the two mass definitions coincide. This test uses the naturally off-centre tail of real jets and moves them toward the centred configuration.', motivation='Review weakness 1 (off-manifold edits).'),
+'B5c': dict(plain='A short formula (at most 50 hinge terms) on quantities measured about the jet axis, tested on whether it changes its calls when the jet is shifted or re-axised the way the network does.', background='B4 showed the 3,824-term program is not more compact than standard surrogates; the proposed thesis v3 needs a short formula that carries the axis dependence.', motivation='Review weakness 3: the compact form of the mass/axis account.'),
+'D4m': dict(plain='When the jet axis convention changes, do the calls move the way each model\'s own mass formula predicts, or would any shift of the inputs of the same size do the same?', background='D4 measured that the axis convention changes 11.7–34.1 % of calls. A reviewer can read that as covariate shift: any model that is not translation invariant changes calls when its inputs move.', motivation='Review weakness 2: separates a formula-specific response from generic sensitivity to shifted inputs.'),
 'B3': dict(plain='A formula can make the same decisions as the network for different reasons.', background='Earlier ParT results: the formula kept 89 % of accuracy but 1–48 % of background rejection, and agreed on only half of the key particles.', motivation='Defines what "faithful" means for the method.'),
 'B4': dict(plain='Compare the method with other ways of explaining networks.', background='Decision-tree extraction, symbolic regression, linear probes.', motivation='Needed for a method paper.'),
 'C1': dict(plain='Most of ParT\'s attention pattern is set by a fixed formula of particle-pair geometry, not by the particles\' learned features.', background='Each ParT attention score is a learned content term plus a "pair bias" computed from pair features (ln kT, ln z, ln ΔR, ln m²).', motivation='Basis for describing ParT\'s routing as formulas.'),
@@ -573,6 +576,42 @@ E21_EXPLAINER = [
  ('Why it matters', 'The narrative step "the dense layers multiply the moments" is replaced by a measured statement: the class neurons depend on $S_0$ and $S_{50}$ approximately as on their product, with large per-jet scatter; the layer where this forms is the next test.', None),
 ]
 
+X7_EXPLAINER = [
+ ('Question', 'When a tagger is given inputs measured about a different jet axis than in training, do its calls change in the direction and by the amount its own axis-relative mass formula predicts, or does any network change calls under any shift of its inputs (covariate shift)?', None),
+ ('Background',
+  'The networks compute a mass-like variable $\\sqrt{M_0 M_2}$ from the particles\' offsets about the input axis, with $M_0 = \\sum_i p_{T,i}$ and $M_2 = \\sum_i p_{T,i}\\, r_i^2$. '
+  'Moving the axis by a vector $\\mathbf{a}$ from the $p_T$ centroid $\\mathbf{c}$ gives $M_2(\\mathbf{a}) = M_2(\\mathbf{c}) + M_0\\,|\\mathbf{a}-\\mathbf{c}|^2$, so the predicted change of the log mass reading is '
+  '$\\Delta = \\tfrac12\\,\\Delta\\log(M_0 M_2) = \\tfrac12 \\log\\big(M_2^{\\text{new axis}}/M_2^{\\text{training axis}}\\big)$. '
+  'For a model trained on the stored (centroid) axis and evaluated about the hardest particle, $\\Delta > 0$ for every jet (mean $+0.14$). For a model trained about the hardest particle (E18) and evaluated on the stored axis, $\\Delta < 0$ for every jet (mean $-0.14$). '
+  'A covariate-shift account predicts call changes in both directions without a preferred W/Z direction, and similar changes for any input shift of the same size.', None),
+ ('Method',
+  'Models: JEDI-linear (20,000 jets, sample seed 107) and Deep Sets / Linformer trained on the stored axis or about the hardest particle, two seeds each (20,000 jets of the val archive, X4 rows). '
+  'Edits: inputs recomputed about the hardest particle or the WTA axis (stored-trained models), or on the stored axis or WTA axis (hardest-trained models). '
+  'Reference for the formula: a real change of $\\tfrac12\\log(M_0M_2)$ of exactly $\\Delta$ per jet (offsets about the training axis scaled by $e^{\\Delta}$). '
+  'Control: a rotation about the training axis whose per-jet angle $\\theta = 2\\arcsin(\\bar d / 2\\bar r)$ gives the same mean particle displacement $\\bar d$ as the axis change, with $M_0$ and $M_2$ unchanged. '
+  'Invariant controls: A, JEDI-linear applied after recentring each jet on its $p_T$ centroid; B, an L1 logistic regression on 32 energy-flow polynomials (pairwise $\\Delta R$). '
+  'Read-out: ridge from the last hidden layer to $\\tfrac12\\log(M_0M_2)$ about the training axis, change under the edit divided by its change under the matched real change.', None),
+ ('Result',
+  'Stored-trained models evaluated about the hardest particle change 31.0 % (JEDI-linear), 41.8–42.8 % (Deep Sets) and 32.4–34.6 % (Linformer) of calls; the matched real mass change changes 32.3 %, 35.0–35.2 % and 33.9–34.5 %; the matched rotation 3.2 %, 2.5 % and 0.9–1.0 %. '
+  'Among calls that switch between W and Z, 1,740–2,230 go W → Z and 1–45 go Z → W. '
+  'Hardest-trained models evaluated on the stored axis change 10.1–11.1 % (Deep Sets) and 17.6–20.5 % (Linformer) of calls, against 28.8–32.6 % for the matched real change and 0.8–2.9 % for the rotation; here 1–233 calls go W → Z and 694–1,997 go Z → W '
+  '(true Z called W: 5 → 19 % Deep Sets, 5 → 45–50 % Linformer). Read-out response relative to the matched real change: forward 0.47–1.09 (JEDI-linear 0.80 [0.78, 0.82]), reverse 0.16–0.62; forward minus reverse 0.085–0.53, every 95 % interval above 0. '
+  'Invariant controls A and B change 0 of 20,000 calls under both axis changes (their inputs are identical bit for bit).', 'results/jedi/x7_axis_reverse.png'),
+ ('Checks',
+  'JEDI-linear reproduces 80.75 % on its sample; the small models reproduce their stored test probabilities to $10^{-5}$. The rotation leaves $\\tfrac12\\log(M_0M_2)$ unchanged to $4\\times10^{-8}$ and matches the edit\'s mean displacement (median ratio 1.000). '
+  'Rotation calls show no W/Z direction (JEDI-linear W → Z 2.4 → 2.2 %, McNemar p = 0.40). Per jet, the read-out change correlates with $\\Delta$ (Spearman 0.26–0.74, all intervals above 0). '
+  'The per-jet change of the Z − W logit margin correlates with $\\Delta$ with opposite signs for W jets (forward +0.46 to +0.74) and Z jets (−0.59 to −0.76), so the pooled W+Z correlation is near 0. 266 tests, Holm-corrected.', None),
+ ('Verification (X7v, fresh samples, confidence 0.4)',
+  'Rerun on JEDI sample(3000, 211) and 10,000 new val rows: edit call changes within 1 point of X7 (JEDI 31.66 % [30.89, 32.35]). '
+  'Added control m2t: the same translation $\\vec t$, then the offsets rescaled so that $\\tfrac12\\log(M_0M_2)$ about the training axis is unchanged ($\\Delta = 0$). Stored-trained models: 9.8–18.0 % of calls change (JEDI 11.4 %), 0.30–0.42 of the edit, 3.4–12× the rotation, with no W → Z flow (JEDI 95 W → Z vs 329 Z → W). '
+  'Hardest-trained models: 23–31 % of calls change, 1.1–3.0× the edit, with W → Z 886–1,207 vs Z → W 1–68 (true W called Z 2.5–2.8 → 42.6–56.5 %). '
+  'Added control rnd (JEDI): a translation of the same length in a random direction has the same $\\Delta$ (+0.141) and changes 35.4 % of calls with 1,594 W → Z vs 9 Z → W. '
+  'Given the translation length $|\\vec t|$, the per-jet margin correlation with $\\Delta$ falls to −0.23 to +0.17. The invariant controls change 0 calls because their inputs are bit-identical by construction (a code check).', None),
+ ('Why it matters',
+  'For models trained on the stored axis, the W → Z direction of the call changes and about 2/3 of their number require the change of $\\Delta$; the remaining third also changes under a translation with $\\Delta = 0$. '
+  'A rotation about the axis is not an adequate covariate-shift control for these near-radial models. Models trained about the hardest particle read $\\tfrac12\\log(M_0M_2)$ about their own axis together with a translation-invariant spread; their response on the stored axis (10.6–21.6 % of calls; read-out 0.16–0.59 of a matched real change) is the net of the two, and it is larger than the 0.13–0.41 measured in X4 with the axis-jump edit.', None),
+]
+
 X6_EXPLAINER = [
  ('Question', 'Are the program elements found in JEDI-linear (64 particles) properties of one trained checkpoint, or do they appear in other, separately trained official JEDI-linear models?', None),
  ('Background',
@@ -632,6 +671,73 @@ B4_EXPLAINER = [
   'The staged program is not the most compact way to reproduce the calls, and its advantage over boosted trees holds for mass-raising displacements in general, not for the coherent shift only. The edit that separates surrogates by mechanism here is the shift against the direct physics-to-logit MARS fits, which use the invariant mass.', None),
 ]
 
+B5_EXPLAINER = [
+ ('Question', 'Can a short hinge formula (at most 50 terms) on observables measured about the jet axis reproduce how JEDI-linear\'s calls change when the jet is shifted or re-axised, and does a formula of equal length on axis-free (translation-invariant) observables fail to?', None),
+ ('Background',
+  'The network\'s mass variable is formed about the given axis, close to $\\sqrt{M_0 M_2}$ with $M_0 = \\sum_i p_{T,i}$ and $M_2 = \\sum_i p_{T,i} r_i^2$, rather than the invariant mass $m$ (A4). A shift of every particle by 0.06 rad in $\\Delta\\eta$ leaves $m$ unchanged and turns 75 % of W calls into Z. '
+  'The nested 3,824-term program (E11) reproduces 94 % of calls, but B4 showed it is not more compact than standard surrogates. $m$ and the energy-flow polynomials (EFPs) depend only on pairwise angles $\\Delta R_{ij}$, so they do not change under a shift or a re-axis.', None),
+ ('Method',
+  'Each of the 5 logits is a sum of hinge terms $(x-t)_+$, $(t-x)_+$ and products of two hinges, added one at a time by forward-stepwise MARS; one budget of $T \\in \\{5, 10, 20, 30, 50\\}$ terms is shared over the 5 logits (each new term goes to the logit with the largest dev-MSE gain), then refitted by least squares. '
+  'Pools: P_axis (347 inputs: pT sums, observables about the stored axis, $M_0M_2$, $|\\vec M_1|^2$, rank-window sums), P_inv (158: pT sums, $m$, $m/M_0$, 32 EFPs), P_all (both). Splits as B4: fit 20,000, dev 10,000 (seed 0), test 8,848 (seed 11), confirmation 8,519 (seed 91). '
+  'Edits on test jets with the physics inputs recomputed: +0.06 $\\Delta\\eta$ shift (trans) and a random per-particle 0.06 rad displacement (trans_c); 45° rotation; WTA and hardest-particle re-axis with random-direction re-axis of equal length (wta_c, hardest_c); the X4 axis jump with its null; the rank-13/14 swap. '
+  '"Reproduces" = the program\'s 95 % interval of calls changed overlaps the network\'s and the paired difference interval contains 0 (jet bootstrap, 1,000; McNemar; Holm over 253 cells).', None),
+ ('Result',
+  'Network: trans 55.8 % [54.8, 56.8] of calls changed, wta 30.5 %, hardest 32.0 %, axis jump 4 of 212 vs null 7 of 212 (p 0.375). '
+  'P_axis: same call 83.2 % at $T$ = 20 and 89.5 % at $T$ = 50; trans 51.2 / 68.1 %, wta 26.8 / 32.5 %; W → Z under trans 22.5 / 40.9 % (network 75.4 %). '
+  'P_inv: same call 88.8 % at $T$ = 50 and 0.0 % calls changed under trans, wta and hardest (by construction). P_all $T$ = 50: trans 44.6 %, W → Z 78.0 %. mars30 (3,824 terms): trans 59.7 % (+3.8 [3.0, 4.6] points), wta 29.8 % (within interval), W → Z 77.5 %. '
+  'No program of 50 terms or fewer meets the criterion on trans, wta and the jump together; mars30 also fails it on trans. '
+  'The 20-term P_axis program, with $\\langle\\Delta R^2\\rangle_{[w]} = \\sum_{i\\in w} p_{T,i}\\Delta R_i^2 / \\sum_{i\\in w} p_{T,i}$ over pT ranks $w$: '
+  '$\\ell_q = 0.469 + 0.000915\\,(6361 - M_0M_2)_+ - 0.354\\,(7.371 - \\Sigma r)_+$, '
+  '$\\ell_W = -2.992 + 0.727\\,(10.26 - \\Sigma r)_+ - 0.0154\\,(1008 - \\Sigma p_{T[0\\text{-}49]})_+ - 621.8\\,(0.003486 - \\langle\\Delta R^2\\rangle_{[0\\text{-}49]})_+$, '
+  '$\\ell_t = 4.175 - 254.1\\,(0.02557 - \\langle\\Delta R^2\\rangle)_+ + 0.620\\,(0.02557 - \\langle\\Delta R^2\\rangle)_+(1017 - M_0)_+$; $\\ell_g$ (7 terms) and $\\ell_Z$ (6 terms, including $(120.4 - \\sqrt{M_0M_2})_+$) are listed in inbox/merged/B5_report.md.', 'results/jedi/b5_summary.png'),
+ ('Checks',
+  'The recomputed physics matches the stored values to $5.7\\times10^{-8}$; splits have no overlap; network test accuracy 80.42 % [79.63, 81.22]. A 40-leaf boosted-tree model matches the network\'s trans rate (55.5 %) with W → Z 1.7 %. '
+  'Verification (B5v, seed 23, 8,218 jets, programs not refit): rates reproduce within 0.6 points. The network\'s response depends on the sign and direction of the shift: W → Z 77.9 / 43.3 / 62.7 % for $+\\Delta\\eta$ / $-\\Delta\\eta$ / random direction, calls changed 55.5 / 62.1 / 59.1 % ($p = 5\\times10^{-54}$ for + vs −), and 3.7 % of calls change under the 45° rotation; '
+  'every program (mars30 included) gives the same response for every direction (within 0.5 points) and 0–1.8 % under the rotation (P_axis 0.0 %). mars30 under $-\\Delta\\eta$: W → Z 73.1 % (+29.8 points). '
+  'A random re-axis matched per jet to the WTA re-axis in $\\Delta M_2$ changes 33.6 % of network calls against 29.8 % for WTA ($p = 1.3\\times10^{-27}$), so that gap depends on the re-axis direction, not on $M_2$. Per-jet agreement with the network\'s changed calls is 3.3–3.6 points below the never-flip reference at $T$ = 20.', None),
+ ('Why it matters',
+  'Same call on unedited jets does not separate a program built on axis-relative observables from one built on invariant observables (≤ 1.2 points apart); the shift and re-axis edits separate them (51–68 % vs 0 %). '
+  'A compact program that reproduces the shift response was not found at 50 terms with this fitter, and the network carries a direction-dependent term (sign of the shift, rotation) that none of the fitted radial programs has.', None),
+]
+
+E23_EXPLAINER = [
+ ('Question',
+  'On unedited jets whose stored axis is off the pT centroid, does JEDI-linear\'s mass read-out follow $\\sqrt{M_0 M_2}$ about the stored axis or the invariant mass $m$? '
+  'This answers the objection to the rigid-shift test (E6, E6v): that edit creates off-centre jets, while on most data $m$ and $\\sqrt{M_0M_2}$ coincide.', None),
+ ('Background',
+  'About the stored axis, with $M_0 = \\sum_i p_{T,i}$, $\\vec M_1 = \\sum_i p_{T,i}(\\Delta\\eta_i, \\Delta\\phi_i)$, $M_2 = \\sum_i p_{T,i} r_i^2$, the small-angle mass is '
+  '$m^2 \\approx M_0 M_2 - |\\vec M_1|^2$. Define $q = |\\vec M_1|^2/(M_0 M_2)$ and the centroid offset $d = |\\vec M_1|/M_0$; then $\\log\\sqrt{M_0M_2} - \\log m \\approx -\\tfrac12\\log(1-q)$. '
+  'Moving every particle by $-\\vec M_1/M_0$ (recentring) sets $\\vec M_1 = 0$, leaves $m$ unchanged (a longitudinal boost plus an azimuthal rotation), and lowers $M_2$ to $M_2 - M_0 d^2$. '
+  'The prediction for the read-out change is $\\tfrac12\\Delta\\log(M_0M_2) = \\tfrac12\\log(1-q)$ if the network uses $\\sqrt{M_0M_2}$ about the stored axis (H1), and 0 if it uses $m$ (H0). '
+  'On the 100,000-jet sample the median $q$ is 0.00035 and the median $d$ 1.5 mrad; the top 5 % by $q$ have $q \\ge 0.0032$ ($d$ median 11 mrad), and 72 % of them are top jets, 0.4 % W or Z.', None),
+ ('Method',
+  '100,000 test jets (sample(20000, 101)); ridge read-out of $\\log m$ on $z$ fitted on 6,177 disjoint jets (seed 103; held-out $R^2$ 0.942). Tail sets: top 1/2/5 % of $q$, of $d$, and of $q$ within each class; bulk: $q$ below the median. '
+  '(A) Each tail jet of class W, Z or t matched to a bulk jet of the same class with $|\\Delta\\log m|$, $|\\Delta\\log M_0| \\le 0.02$ (H1 predicts a read-out difference, H0 none), and separately on $\\log\\sqrt{M_0M_2}$, $\\log M_0$. '
+  '(B) Recentring of every tail jet; matched real change: all offsets scaled by $k = e^{\\rm prediction}$, which changes $m$ and $\\sqrt{M_0M_2}$ by the same amount. '
+  'Controls: recentring of 5,000 bulk jets (c1); the reflected move $+\\vec M_1/M_0$, which raises $M_2$ by $3M_0d^2$ (c2); a rotation about the axis with the same mean particle displacement, $M_2$ unchanged (c3); recentring with the nine angle-only P units frozen (c4). '
+  '(C) 20,000 bulk jets shifted in a random direction by the median, 90th and 99th percentile of $d$ (1.5, 5.8, 13.1 mrad), plus a zero-size identity run. 95 % bootstrap intervals over jets (1,000), sign-flip permutation tests, exact McNemar tests for paired call changes, Holm over 37 set-by-edit tests.', None),
+ ('Result',
+  'Top 5 % by $q$ (5,000 jets): recentring changes the read-out by $-4.2\\times10^{-3}$ [$-5.1$, $-3.4$] against a prediction of $-2.4\\times10^{-3}$ and a matched real change of $-2.7\\times10^{-3}$; '
+  'ratio to the matched real change 1.56 [1.23, 1.91] (1.50–2.01 over the nine tail sets; H0 ratio 0 rejected, Holm-adjusted normal $p \\le 10^{-10.4}$). The reflected move gives $+7.9\\times10^{-3}$ (prediction $+7.3$; ratio to its matched change 1.06 [0.94, 1.18]). '
+  'Rotation gives $-0.4\\times10^{-3}$ [$-1.1$, $0.4$]; bulk recentring $0.02\\times10^{-3}$ [$-0.25$, $0.30$]; freezing the angle-only P units keeps 57–80 % of the recentring response. '
+  'Calls: recentring changes 1.6–3.2 % of tail calls, rotation 0.9–2.5 %, the matched real change 0.2–0.5 %; Z → W vs W → Z counts are 10 vs 5 on the 2,000 tail W/Z jets (McNemar $p$ 0.30). '
+  'Random shifts of natural size change 1.4 % (1.5 mrad), 2.2 % (5.8 mrad) and 3.8 % (13.1 mrad) of bulk calls, with W → Z 171 vs Z → W 22 at 13.1 mrad ($p = 9\\times10^{-30}$); the identity run changes none.', 'results/jedi/e23_tail.png'),
+ ('Checks',
+  'Unedited accuracy 80.92 %. Recentring: $|\\vec M_1|/M_0 \\le 7\\times10^{-9}$ after the edit, $|\\Delta\\log m| \\le 4\\times10^{-8}$; pT and padded slots unchanged; rotation leaves $M_2$ unchanged to $7\\times10^{-8}$. '
+  'The observational match (A) gives tail − bulk read-out differences of $-5$ to $+10\\times10^{-3}$ with intervals of about $\\pm 6$–$13\\times10^{-3}$, against predicted differences of 2–4$\\times10^{-3}$: it does not separate H0 from H1 at this sample size. '
+  'The particles beyond the training 99 % angle range change from 2.46 % to 2.53 % of particles under recentring (top 5 % $q$).', None),
+ ('Verification (E23v, fresh sample, confidence 0.6)',
+  'Rerun on sample(20000, 211), 100,000 jets (accuracy 80.86 %; read-out held-out $R^2$ 0.944). Recentring over the matched real change: Tq1 2.50 [1.91, 3.27], Tq5 2.08 [1.67, 2.49], Td5 2.03, Tq5c 2.26; over both samples 1.5–2.5. '
+  'Added control: a translation by $\\vec t \\perp \\vec M_1$ with the same per-particle displacement, which raises $M_2$ by $M_0|\\vec t|^2$ and leaves $\\vec c\\cdot\\vec M_1 = 0$. It raises the read-out by $+1.5$ to $+2.2\\times10^{-3}$, 0.46–0.80 of its matched real change, so a generic translation does not lower the read-out. '
+  'For a shift $\\vec c$, $\\Delta M_2 = 2\\vec c\\cdot\\vec M_1 + M_0|\\vec c|^2$. From recentre ($\\vec c = -\\vec M_1/M_0$) and reflect ($+\\vec M_1/M_0$) per jet, the part quadratic in $\\vec c$ is 0.62–0.71 of its prediction (equal to the perpendicular response within the intervals) and the part linear in $\\vec c\\cdot\\vec M_1$ is 1.34–1.82 (intervals exclude 1). '
+  'The rotation (c3) leaves every radial quantity unchanged, so its null is expected for radial objects whatever the mechanism; bulk recentring (c1) moves particles by 0.65 mrad against 8–15 mrad on the tails. '
+  'Calls: recentring and the perpendicular translation change the same share of calls (Tq5 −0.11 points [−0.49, +0.24]), although one lowers and one raises the predicted mass. Arm C W → Z excess reproduced (p90 76 vs 37, p99 175 vs 22).', None),
+ ('Why it matters',
+  'Under an edit that keeps $m$ fixed and moves unedited off-centre jets toward the centred configuration, the read-out changes with the sign of $\\tfrac12\\Delta\\log(M_0M_2)$ about the stored axis, and it changes with that sign for the reflected move and the perpendicular translation as well, so the axis dependence is not limited to the off-centre jets made by the rigid shift. '
+  'The read-out is not a single function of $\\sqrt{M_0M_2}$: the part quadratic in the shift enters at 0.6–0.8 of the prediction and the part linear in $\\vec M_1$ at 1.3–1.8. '
+  'Natural centroid offsets are 1–13 mrad, so the predicted change for tail W and Z jets is below $10^{-3}$ in $\\log m$ and the call changes on natural jets at this size are mostly not mass-specific (rotation changes a similar fraction).', None),
+]
+
 # per-paper explainers, rendered inside the paper's tab (title, steps)
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
@@ -647,13 +753,16 @@ PAPER_EXPLAINERS = {
           ('Result 10 explained: the class neurons as formulas on the objects (claim A5; E7; cross-reference Paper B, B3)', E7_EXPLAINER, False),
           ('Result 11 explained: is the mass a product of the moments? (claims A4, A9; E21)', E21_EXPLAINER, False),
           ('Result 12 explained: the same tests on other official JEDI-linear checkpoints (claims A1, A3, A4; X6)', X6_EXPLAINER, False),
-          ('Result 13 explained: interchange interventions on the if-statement program (claim A5; E22; cross-reference Paper B)', E22_EXPLAINER, False)],
+          ('Result 13 explained: interchange interventions on the if-statement program (claim A5; E22; cross-reference Paper B)', E22_EXPLAINER, False),
+          ('Result 14 explained: naturally off-centre jets and recentring with the mass fixed (claims A4, D4; E23)', E23_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True),
           ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False),
           ('Result explained: interchange interventions, per variable (claim B2; E22)', E22_EXPLAINER, False),
-          ('Result explained: the if-statement program vs standard surrogates of the same size (claims B3, B4; B4)', B4_EXPLAINER, False)],
+          ('Result explained: the if-statement program vs standard surrogates of the same size (claims B3, B4; B4)', B4_EXPLAINER, False),
+          ('Result explained: a 50-term formula on axis-relative vs invariant observables under shift and re-axis edits (claims B3, B5c; B5)', B5_EXPLAINER, False)],
     'c': [('Result explained: ParT\'s mass comes mostly through the axis-relative inputs, not the pair features (claim C3)', C3_EXPLAINER, True),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
+          ('Result explained: the axis-convention response in both directions, with invariant and rotation controls (claims D4, A12; X7)', X7_EXPLAINER, False),
           ('Earlier results in brief (claims D1, D2)', EARLIER_D, False)],
 }

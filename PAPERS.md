@@ -40,6 +40,18 @@ Status after round 3 (2026-10-17):
   per-variable causal statement.
 - Paper B baselines (B4/B4v): the program is not more compact; its shift lead over boosted trees is not shift-specific.
 
+Status after round 4 (2026-10-17; tests of the proposed thesis v3 against review weaknesses 1–3):
+- step 5 on natural jets (E23/E23v, two samples of 100,000 jets): on unedited off-centre jets, recentring with m fixed lowers the z
+  read-out of log m by 1.5–2.5 times a matched real mass change; the reflected move raises it (1.06–1.26); a perpendicular translation of
+  equal displacement raises it (0.46–0.80); rotation leaves it unchanged. The read-out follows the sign of ½Δlog(M0M2) about the stored
+  axis, with gain 0.6–0.8 on the part quadratic in the shift and 1.3–1.8 on the part linear in M1. Natural centroid offsets are 1–13 mrad;
+  at those sizes the call changes on tail jets follow the translation size, not the predicted mass change.
+- axis convention (X7/X7v): W/Z call flow follows the sign of Δ about each model's training axis in both directions. For stored-trained
+  models a translation with Δ held at 0 changes 0.30–0.42 as many calls, with no W → Z flow; for hardest-particle-trained models it
+  changes 23–31 % of calls with a W → Z flow, so those models also read a translation-invariant spread.
+- compact program (B5/B5v): no ≤ 50-term program reproduces the shift response; the network's shift and re-axis responses depend on
+  direction, which no radial program reproduces.
+
 Scale requirement (user 2026-10-16: "it can't JUST be a trigger tagger"): the small model is where the program is complete
 and exact; the paper's claim is about taggers in general, so ParT (and ParticleNet) are a main section, not an appendix. For
 every JEDI stage there is a ParT counterpart, run with the same edits:
@@ -85,7 +97,9 @@ first. Checklist applied to every unit we name:
 | "Objects is a relabelling of sum pooling / EFN filter plots" | rank-window masks and cut ∧ window membership are not in EFN; causal edits that move one particle across a cut change the call as the identity predicts; untrained control. E20/E20v (2026-10-17): swapping the angles of ranks 13 and 14 changes S43/S52/S63 by 0.056–0.084 per jet, 2–5 % of that with the window masks removed, 0 with the window shifted to 0–10; the peak follows shifted masks (13 → 10 / 16); masks permuted across slots: 32–36 % accuracy vs 80.7 %. Open: S0/S19 windows (pT-only objects; node E20b) |
 | "Probes show readability, not use" | every probe claim paired with an intervention (translation, iso-mass, freeze S0/g) |
 | "One dataset" | hls4ml + JetClass; top tagging / QG when weights exist |
-| "Off-manifold edits" | on-manifold check: |M1|²/(M0M2) median 3.5e-4, so the two mass definitions coincide on data; the edit isolates which one is computed |
+| "Off-manifold edits" (weakness 1) | on-manifold check: |M1|²/(M0M2) median 3.5e-4, so the two mass definitions coincide on data; the edit isolates which one is computed. E23/E23v (2026-10-17): on unedited off-centre jets, recentring (m fixed, toward the centred configuration) lowers the read-out at 1.5–2.5 of a matched real change, a perpendicular translation of equal displacement raises it (0.46–0.80); sign of ½Δlog(M0M2) followed, two gains (even 0.6–0.8, M1-linear 1.3–1.8); call changes at natural offsets follow translation size. Open: E23w (fit both gains per stage) |
+| "Axis dependence is covariate shift any non-invariant model fails" (weakness 2) | X7/X7v: W/Z flow follows the sign of Δ in both directions (stored-trained 865–2230 W → Z vs 1–45; axhard 337–1997 Z → W vs 0–233); the M2-preserving translation (Δ = 0) changes 0.30–0.42 as many calls for stored-trained models with no W → Z flow, and 23–31 % for axhard models with a W → Z flow (886–1207 vs 1–68). Rotation is not an adequate control (radial objects). Open: X7w (name the axhard models' invariant spread) |
+| "Where is the compact formula" (weakness 3) | B5/B5v: axis-relative programs of 20–50 terms bracket the network's marginal call-change rates; invariant programs change none at equal same call; no ≤ 50-term program meets the strict criterion; the network's direction dependence (±Δη, rotation 3.7 %) is absent from every fitted program. Open: B5w (add odd, half-plane observables) |
 | "Prior work: Rai & Ganguly, Wang et al." | they trace a top-tagging circuit / attention sparsity; here: stage-wise formulas, exact identity, cross-architecture comparison |
 | "Single model / seed" (round-2 weakness 1) | X6/X6v: four official checkpoints; cut types, radial objects, shift response recur; window strength model dependent (2.4–5.4× at the hard-particle edge, ≤ 1 at five other edges) |
 | "Program fidelity is correlational (no causal abstraction)" (weakness 4) | E22/E22v: effective IIA per unit 0.19–0.88; above permuted alignment; above a swap-free predictor at z only |
@@ -93,15 +107,17 @@ first. Checklist applied to every unit we name:
 | "Quantisation specifics" | float + masks reproduces 95.5 % of calls; results reported on the float program with the fixed-point network as the reference |
 
 ## Claim confidence (0–1; from all evidence and the verifiers; updated by the ledger step each round)
-Last update: 2026-10-17, round 3 (X6/X6v, E22/E22v, B4/B4v). Change from the previous value in parentheses.
-Round 2 values: A1 0.9, A3 0.8, A4 0.85, A5 0.5, B2 0.85, B3 0.6, B4 0.0.
+Last update: 2026-10-17, round 4 (E23/E23v, X7/X7v, B5/B5v). Change from the previous value in parentheses.
+Round 3 values: A12 0.6, B3 0.6 (others below unchanged unless marked). Round 2 values: A1 0.9, A3 0.8, A4 0.85, A5 0.5, B2 0.85, B3 0.6, B4 0.0.
 | claim | confidence | basis |
 |---|---|---|
 | A1 statements = cuts; objects = cut ∧ rank window (n64) | 0.85 (−0.05) | E1–E3m, E9, R2; E20/E20v causal window test (0.75) for six angular objects; X6v: in n32/n128 the window effect holds at the hard-particle edge only (2.4–5.4×), 0.27–1.00 or ≈ 0 at five other edges; half or more of the n64 mask-removal cost is padded slots (real slots only: 18.4 points, not 37.7) |
 | A1x program elements across official JEDI-linear checkpoints (X6) | 0.55 (new) | X6/X6v (0.45): cut types, ≥ 0.977 within-pT radial share (11/12 units), shift W → Z 0.45–0.76 in 4 checkpoints; pure cuts at the level random placement gives at the observed sparsity (p 0.16–0.48); perminv has no rank windows |
 | A2 context through four objects | 0.85 (=) | E4, E5v; R2: S58 replaceable |
 | A3 second-round objects = (pT, r) hinges over rank windows | 0.8 (=) | X6v: radial objects recur in 4 checkpoints above a combination-of-cuts null (11/12); perminv shows they do not require rank windows; E5, E5v, E14/E14v, R2 (5 radial under every edit); E20 windows |
-| A4 un-recentred M2-like mass variable | 0.9 (+0.05) | E6, E6v, R1, E14v, E17; separate S units for M0, M2; X6v: 0.06 rad shift W → Z 0.45–0.76 vs rotation 0.02–0.03 in all four official checkpoints (log10 p ≤ −147) |
+| A4 un-recentred M2-like mass variable | 0.9 (=) | E6, E6v, R1, E14v, E17; separate S units for M0, M2; X6v: 0.06 rad shift W → Z 0.45–0.76 vs rotation 0.02–0.03 in all four official checkpoints (log10 p ≤ −147); E23/E23v: on unedited off-centre jets recentring with m fixed lowers the read-out (1.5–2.5 of a matched real change, Holm p ≤ 1e-10 to 1e-27 on two samples) |
+| A4n on natural off-centre jets the read-out follows ½Δlog(M0M2) about the stored axis (sign; quadratic part at 0.6–0.8, M1-linear part at 1.3–1.8 of prediction) | 0.6 (new) | E23 (seed 101), E23v (seed 211, 0.6): recentre / reflect / perpendicular translation give the predicted sign at matched displacement; single-gain √(M0M2) excluded (odd-part CIs exclude 1); arm A (observational matching) underpowered |
+| A4d the read-out carries a direction-dependent term (odd in the shift) | 0.6 (new) | E6v odd term 12–20 %; E14/E14v per-particle maps 0.96–1.05; E23v odd part 1.34–1.82 of the M1-linear prediction; B5v: +Δη vs −Δη shift W → Z 77.9 vs 43.3 % (p 5e-54), rotation 3.7 % of calls |
 | A4 product of M0 and M2 / stage where it forms | 0.35 (new) | E15 withdrawn (0.2); E21 R test uninformative; E21v gradient ratio product-like at the read-out, not reviewed by the verifier, stage open |
 | A5 neurons = formulas on the S objects | 0.45 (−0.05) | E7/E7v (0.55): 9.2–10.4 % calls, edit slopes 0.41–0.58; E22/E22v (0.55): effective IIA z 0.37–0.88 (mean 0.66, swap-free 0.52, jet CI of the difference [0.07, 0.23]); S, h4, h5 not separated from a swap-free predictor at stage level |
 | A6 classes = window rules on z, effect via additive margin | 0.6 (=) | E8, E8v |
@@ -109,14 +125,16 @@ Round 2 values: A1 0.9, A3 0.8, A4 0.85, A5 0.5, B2 0.85, B3 0.6, B4 0.0.
 | A9 depth ordering of readability | 0.55 (−0.05) | E10, R2 (ρ 0.51), X2 (ρ 0.85–0.90); D2 not causal; mass product step not located |
 | A10 v2 generality across small architectures | 0.6 (=) | X2 (not skeptic-rerun) |
 | A11 one main job per unit | 0.65 (=) | E16 (not skeptic-rerun) |
-| A12 mass formula follows the training axis | 0.6 (=) | E18, X4 (not skeptic-rerun) |
+| A12 mass formula follows the training axis | 0.5 (−0.1) | E18, X4 (not skeptic-rerun); X7/X7v (0.4): hardest-trained models evaluated on the stored axis move Z → W (337–1997 vs 0–233) as ½Δlog(M0M2) about their own axis predicts, with read-out 0.16–0.62 of a matched real change (not "mostly recentred" outside the X4 axis-jump edit); a translation with that quantity held fixed changes 23–31 % of their calls with a W → Z flow, so they also read a translation-invariant spread |
 | B1 exact pooled identity | 0.9 (=) | E3, E3m, E9 |
 | B2 nested if-statement program reproduces the network's calls (94 %) | 0.85 (=) | E11, E11v, R2, B4v (94.06 % fresh) |
 | B2m the program's variables are the network's causal variables (IIA) | 0.4 (new) | E22/E22v: effective IIA stage means 0.52–0.66 vs permuted 0.22–0.35; above swap-free at z only; no named unit ≥ 0.8; random multi-stage swaps 0.78–0.83 vs 0.944 without swap |
-| B3 same call on data ≠ same mechanism (direct surrogate fails edits) | 0.6 (=) | E11v; E7/E7v basis-dependent; B4v: direct physics-to-logit MARS (92.9 % same call) reproduces 18–23 % of the shift's call changes with 0 % W → Z, 56–57 % of a random displacement's; GBDT on logits follows the shift (W → Z 74.5–76.3 %); E22v: the probe-vs-formula IIA contrast tracks fit quality (not matched) |
-| B4 the nested program beats compact baselines at equal DL | 0.25 (new value; was 0.0, not started) | B4/B4v (0.55): not more compact (baselines 4.6–19× lower DL for K ≤ 16); same call within 1 point at K 16, 30; shift lead over GBDT +2.8–3.3 points equals its lead on a random mass-raising displacement (difference +0.13 [−1.29, 1.52], −1.95 [−3.41, −0.41]) |
+| B3 same call on data ≠ same mechanism (direct surrogate fails edits) | 0.65 (+0.05) | B5/B5v (0.5): axis vs invariant programs of equal size differ by ≤ 1.2 points of same call and by 51–68 vs 0 % of calls under the shift (the invariant zero holds by construction); every fitted program, mars30 included, misses the network's direction dependence (−Δη W → Z +29.8 points);  E11v; E7/E7v basis-dependent; B4v: direct physics-to-logit MARS (92.9 % same call) reproduces 18–23 % of the shift's call changes with 0 % W → Z, 56–57 % of a random displacement's; GBDT on logits follows the shift (W → Z 74.5–76.3 %); E22v: the probe-vs-formula IIA contrast tracks fit quality (not matched) |
+| B5c a program of ≤ 50 terms on axis-relative observables reproduces the shift and re-axis responses (thesis v3 compact form) | 0.15 (new) | B5/B5v (0.5): marginal rates bracketed at T 20–50 (51–68 % vs 56 %; 27–33 % vs 30 %), strict criterion not met, W → Z 23–64 % vs 75 %, per-jet agreement at or below the never-flip reference at T 20, no direction dependence |
+| B4 the nested program beats compact baselines at equal DL | 0.25 (=; was 0.0, not started, before round 3) | B4/B4v (0.55): not more compact (baselines 4.6–19× lower DL for K ≤ 16); same call within 1 point at K 16, 30; shift lead over GBDT +2.8–3.3 points equals its lead on a random mass-raising displacement (difference +0.13 [−1.29, 1.52], −1.95 [−3.41, −0.41]) |
 | C1 / C2 / C3 / C4 | 0.8 / 0.7 / 0.85 / 0.0 (=) | G107/G108; G21–G22; P1, P1v, P2, P2v, R1 |
-| D1 / D2 / D3 / D4 | 0.8 / 0.7 / 0.0 / 0.8 (=) | J26–J30; G194, G202–G204; —; P1v, E17, E19, R1 |
+| D1 / D2 / D3 / D4 | 0.8 / 0.7 / 0.0 / 0.8 (=) | J26–J30; G194, G202–G204; —; P1v, E17, E19, R1; X7/X7v: JEDI-linear about the hardest particle 30.98 % / 31.66 % of calls on two fresh samples (E17 30.3 %) |
+| D4m the axis-convention response follows each model's own mass formula, not generic sensitivity to shifted inputs | 0.45 (new) | X7/X7v (0.4): W/Z flow follows the sign of Δ in both directions; stored-trained models: a Δ = 0 translation of equal size changes 0.30–0.42 as many calls with no W → Z flow, a random-direction translation with the same Δ the same calls (JEDI 35.4 vs 31.7 %); hardest-trained models: Δ = 0 translation 1.1–3.0× the edit; E23v: at natural offsets (6–15 mrad) recentring and a perpendicular translation change calls at the same rate (−0.11 [−0.49, +0.24] points) |
 
 ## Proposed thesis revision after the round-2 review (2026-10-17; pending the user's decision)
 The external-style review (round 2: soundness 6, presentation 4, contribution 5, overall 5) finds the statistically strongest and most
@@ -126,6 +144,25 @@ edits identify which one: JEDI-linear, ParT and small taggers read the jet mass 
 not the invariant mass; this makes their decisions depend on the jet-axis convention by an amount the formula predicts; training with
 an off-centre axis largely removes it." Statements/objects, the neuron atlas and the if-statement program become the method and
 supporting sections (Paper B keeps the faithfulness result). Keep v1/v2 above until the user decides.
+
+Round-4 tests of thesis v3 (2026-10-17; E23/E23v, X7/X7v, B5/B5v). Clause by clause, as measured:
+- "read the jet mass as the momentum-weighted spread about the given axis, not the invariant mass": JEDI-linear on unedited off-centre
+  jets, recentring with m fixed lowers the read-out (H0 invariant mass excluded, Holm p ≤ 1e-10); the read-out follows the sign of
+  ½Δlog(M0M2) for three edits (recentre, reflect, perpendicular translation) but with two gains (0.6–0.8 and 1.3–1.8), so it is not a
+  single function of √(M0M2) (E23v). ParT and small taggers: unchanged from P1/X2.
+- "decisions depend on the axis convention by an amount the formula predicts": stored-trained models, direction of the W/Z flow follows
+  the sign of Δ (X7, X7v), and the share of calls changed is 0.96–1.21 of a matched real change; 0.30–0.42 of the calls also change under
+  a Δ = 0 translation (X7v m2t), so the size is not set by the formula alone. At natural centroid offsets (1–13 mrad) call changes follow
+  translation size (E23v).
+- "training with an off-centre axis largely removes it": hardest-trained models change 10–22 % of calls on the stored axis (read-out
+  0.16–0.62 of a matched real change) and respond to a translation-invariant spread at Δ = 0 (23–31 % of calls, W → Z) (X7v).
+- compact form (review weakness 3): no ≤ 50-term program reproduces the shift response (B5/B5v).
+Proposed v3.1 wording (2026-10-17, pending the user; v3 above kept): "Jet taggers compute a formula that is correct on their training
+data, and causal edits identify which one. JEDI-linear, ParT and small taggers trained with the centred axis read the jet mass through
+pT-weighted moments about the given axis, not through the invariant mass: on unedited off-centre jets an edit that keeps the invariant
+mass fixed moves JEDI-linear's mass read-out with the sign of ½Δlog(M0M2), and under a change of axis convention the W/Z calls move in the
+direction this quantity predicts. Models trained about the hardest particle follow the same quantity about their own axis together with a
+translation-invariant spread." 
 
 ## Main results, A vs B (and the merge rule)
 
@@ -196,7 +233,19 @@ Claims to establish:
   iso-sum changes 23.5 % of calls vs 7.0 % iso-product (controls −0.5 to +2.8 points). Rank p with 20 draws is floored at 0.095.
   Reading: the read-out depends on S0 and S50 approximately as on a product (stronger for the affine moments), with large per-jet
   scatter; where this forms (h4, h5 or z) is not measured; the untrained control is degenerate (one live S unit). The E21v rerun
-  numbers come from a job that completed after the verifier's session and were not reviewed by the verifier.] v2: "√(M0·M2) about
+  numbers come from a job that completed after the verifier's session and were not reviewed by the verifier.]
+  [2026-10-17, E23/E23v (verifier confidence 0.6): natural off-centre jets, no off-manifold edit. Samples sample(20000, 101) and
+  sample(20000, 211), N 100,000 each; read-out = ridge of log m on z (held-out R² 0.942 / 0.944). Tail sets = top 1–5 % of q =
+  |M1|²/(M0M2) or of d = |M1|/M0 (d p50 1.46, p99 13.1 mrad); 72 % top, 0.4 % W/Z in the top 5 %. Recentring (particles moved by −M1/M0;
+  |Δlog m| ≤ 4e-8) changes the read-out by 1.50–2.01 (seed 101) and 2.03–2.50 (seed 211) times a matched real change of the predicted
+  size (Tq5 −4.2e-3 [−5.1, −3.4] vs prediction −2.4e-3); the reflected move +M1/M0 by 1.06–1.26; a perpendicular translation of equal
+  displacement (+, raises M2) by +0.46–0.80; a rotation of equal displacement by 0 within CI; bulk recentring by 0. Per-jet even/odd
+  split: the part quadratic in the shift is 0.62–0.71 of its prediction (equal to the perpendicular response), the part linear in M1
+  is 1.34–1.82 (CIs exclude 1). Freezing the angle-only P units keeps 57–80 % of the response. Calls: recentring changes 1.6–3.4 % of
+  tail calls, the same as the perpendicular translation (Tq5 −0.11 [−0.49, +0.24] points), no Z → W excess (8–10 vs 5–6). Reading:
+  on natural jets the read-out follows the sign of ½Δlog(M0M2) about the stored axis; H0 (invariant mass) and H2 (generic translation
+  lowers it) are excluded for the read-out; a single gain on √(M0M2) is excluded; the M1-linear term is over-weighted. Observational
+  matching of tail and bulk jets is underpowered (half-widths 0.005–0.013 vs predicted 0.002–0.004).] v2: "√(M0·M2) about
   the given axis" (exact form overstated). v1 read "m² ≈ 2·ΣpT·Σ pT r² − 2|Σ pT r⃗|²": the factor 2 was an error.
 - A5 (v2, 2026-10-17, E7 + E7v; verifier confidence 0.55). Each of the 16 z neurons written as K = 32 hinge terms on the 19 live
   S objects, substituted all at once (the network's own last layer makes the call), changes 9.2–10.4 % of calls on fresh jets
@@ -247,6 +296,13 @@ Claims to establish:
 - A12 (2026-10-17, E18/X4): the un-recentred mass follows from the training data: models retrained with off-centre (hardest-particle)
   axes mostly recentre (axis-jump response 0.13–0.41 of a matched real change; both pure hypotheses rejected); residual W → Z 7–22 % for
   soft-prong-axis jets. Narrative: a network learns the simplest formula that is correct on its training distribution.
+  [2026-10-17, X7/X7v (verifier confidence 0.4): reverse direction. Deep Sets / Linformer trained about the hardest particle, evaluated
+  on stored-axis inputs (20,000 and 10,000 jets, two seeds): 10.1–11.1 % / 17.6–21.6 % of calls change, Z → W 337–1997 vs W → Z 0–233,
+  true Z called W 5 → 19 % (Deep Sets), 4.5–4.8 → 45–50 % (Linformer); read-out 0.16–0.62 of a matched real change. A translation of the
+  same size with ½log(M0M2) about the hardest particle held fixed changes 23–31 % of their calls with W → Z 886–1207 vs 1–68 (true W
+  called Z 2.5–2.8 → 42.6–56.5 %). Reading: these models read ½log(M0M2) about their own axis and also a translation-invariant spread;
+  the reverse response is the net of the two. "Mostly recentre (0.13–0.41)" holds for the X4 axis-jump edit; under the stored-axis edit
+  the read-out ratio is 0.16–0.62. Wording before this date: "models retrained with off-centre (hardest-particle) axes mostly recentre".]
 - A10 note (2026-10-17, X6/X6v): across four official JEDI-linear checkpoints (n32, n64, n128, perminv n64) the pure pT-only /
   angle-only cuts are not separated from random placement at HGQ sparsity (p 0.16–0.48), so the "sparse cuts come from HGQ training"
   hypothesis gains a sparsity explanation for purity; X5 (Deep Sets with HGQ / L1) still tests it across architectures.
@@ -374,6 +430,16 @@ Round 3 (2026-10-17), E22/E22v, B4/B4v (verifier confidence 0.55 each):
 - Merge rule: B's stand-alone case after round 3 rests on (i) the 94 % call reproduction, (ii) the direct-MARS shift failure, (iii)
   per-variable IIA above permuted/swap-free baselines at z. Compactness and a mechanism-specific lead over GBDT are not supported.
   The ≥ 3-architecture condition is still open. No merge decision taken (user gate).
+- Round 4 (2026-10-17), B5/B5v (verifier confidence 0.5): shared-budget MARS programs (T = 5–50 terms over the 5 logits) on three
+  pools. Axis-relative pool: same call 83.2 % (T 20) / 89.5 % (T 50); calls changed under the +0.06 Δη shift 51 / 68 % and under the
+  WTA re-axis 27 / 33 % (network 56 / 30 %). Invariant pool (m, EFPs, pT sums): same call 88.8 % at T 50 and 0 % calls changed under
+  shift and re-axis (by construction). No program of ≤ 50 terms meets the strict reproduction criterion on the shift; mars30 also fails
+  it (+3.8 [3.0, 4.6] points). B5v (seed 23): the network's shift response depends on its sign and direction (W → Z 77.9 / 43.3 /
+  62.7 % for +Δη / −Δη / random; −Δη vs +Δη calls changed +6.6 points, p 5e-54) and it changes 3.7 % of calls under a 45° rotation;
+  every fitted program (mars30 included) gives the same response for every direction and 0–1.8 % under the rotation. The direction
+  match of mars30 and P_all T 50 (W → Z within 3 points) holds for +Δη only (mars30 under −Δη +29.8 points). For B3 this is a
+  further case where same call on unedited jets does not separate two programs (invariant vs axis pools ≤ 1.2 points apart) and the
+  edits do. For thesis v3's compact form: not met at ≤ 50 terms with this fitter.
 
 ## Datasets
 - hls4ml jets (5 classes g, q, W, Z, t): JEDI-linear family, small transformers / Linformers.
@@ -397,6 +463,14 @@ of the response disappears); ParT_kin's through dphi (0.65) and deltaR (0.35); t
 P2 (2026-10-17; statistics pending P2v): under real mass changes the per-particle axis-relative route carries 93–101 % of ParT's
 mass read-out change, the pair route 1–6 % (and 10–21 % of the W → Z change for mass increases).
 Physical consequence (Paper D, D4): inputs about the winner-take-all axis change 11.7 % (ParT_full) and 34.1 % (ParT_kin) of calls.
+D4 note (2026-10-17, X7/X7v, verifier confidence 0.4): JEDI-linear evaluated about the hardest particle changes 30.98 [30.39, 31.63] % /
+31.66 [30.89, 32.35] % of calls on two fresh samples (W → Z 865–2230 vs Z → W 1–45). Against covariate shift: a rotation of equal mean
+displacement changes 0.9–3.3 % (not adequate: the models' objects are radial); a translation of equal displacement with Δ = ½Δlog(M0M2)
+held at 0 changes 9.8–18.0 % (JEDI 11.4 %) with no W → Z flow; a random-direction translation of the same length (same Δ) changes the same
+share as the edit (35.4 vs 31.7 %). So the W/Z direction and about 2/3 of the call changes of stored-trained models require the change
+of Δ. E23v: at natural centroid offsets (6–15 mrad) the call changes follow translation size; a W → Z excess appears for random shifts of
+5.8–13 mrad (p90–p99 of the natural offset; 76 vs 37, 175 vs 22). D4 wording kept; its decision-level statement is scoped to axis changes
+of this size or larger (WTA, hardest particle).
 
 ## Paper C: circuits (ParT)
 
