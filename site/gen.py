@@ -4,6 +4,18 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'site'))
 import content as C
 import explain as X
+try:
+    import conclusions as CC
+except ImportError:
+    CC = None
+CLAIM_CONC = getattr(CC, 'CLAIM', {}) if CC else {}
+EXPL_CONC = getattr(CC, 'EXPLAINER', {}) if CC else {}
+KEY_CONC = getattr(CC, 'KEY_RESULT', {}) if CC else {}
+EXPL_NAME = {id(v): k for k, v in vars(X).items() if isinstance(v, list) and (k.endswith('_EXPLAINER') or k.startswith('EARLIER'))}
+
+
+def concl(t, cls='concl'):
+    return f'<p class="{cls}"><b>Conclusion in plain terms.</b> {e(t)}</p>' if t else ''
 
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'results' / 'site' / 'index.html'
 e = html.escape
@@ -33,6 +45,7 @@ def claim(c):
     figs = ''.join(f'<figure>{img(f)}<figcaption>{e(cap)}</figcaption></figure>' for f, cap in d.get('figures', []))
     return f'''<details class="claim"><summary><span class="cid">{e(c['id'])}</span> {e(c['statement'])}
 <span class="plain">{e(xp.get('plain', ''))}</span>
+{('<span class="concl"><b>Conclusion:</b> ' + e(CLAIM_CONC[c['id']]) + '</span>') if CLAIM_CONC.get(c['id']) else ''}
 <span class="meta">{e(c['status'])} · confidence {conf} · {e(c['evidence'])}</span></summary>
 <div class="body">
 <h4>Background</h4><p>{e(xp.get('background', '—'))}</p>
@@ -51,7 +64,7 @@ def paper(p):
     claims = ''.join(claim(c) for c in p['claims'])
     log = ''.join(f'<li><b>{e(v)}</b> — {e(t)}</li>' for v, t in p['thesis_log'])
     opens = ''.join(f'<li>{e(o)}</li>' for o in p['open'])
-    explainers = ''.join(f'<details class="explainer"{" open" if op else ""}><summary>{e(t)}</summary>' + ''.join(f'<h4 class="step">{e(h)}</h4><p>{e(x)}</p>' + (f'<figure>{img(f)}</figure>' if f else '') for h, x, f in steps) + '</details>' for t, steps, op in X.PAPER_EXPLAINERS.get(p['key'], []))
+    explainers = ''.join(f'<details class="explainer"{" open" if op else ""}><summary>{e(t)}</summary>' + concl(EXPL_CONC.get(EXPL_NAME.get(id(steps), ''), '')) + ''.join(f'<h4 class="step">{e(h)}</h4><p>{e(x)}</p>' + (f'<figure>{img(f)}</figure>' if f else '') for h, x, f in steps) + '</details>' for t, steps, op in X.PAPER_EXPLAINERS.get(p['key'], []))
     explainers = (f'<h3>Results explained (open each)</h3>{explainers}' if explainers else '')
     return f'''<section id="tab-{p['key']}" class="tab" hidden>
 <h2>{e(p['title'])}</h2>
@@ -67,7 +80,7 @@ def paper(p):
 ov = C.OVERVIEW
 overview = f'''<section id="tab-overview" class="tab">
 <h2>{e(ov['title'])}</h2><p>{e(ov['intro'])}</p>
-<h3>Main results, explained</h3>{''.join(f'<h4>{e(t)}</h4><p>{e(x)}</p><figure>{img(f)}</figure>' for t, x, f in X.KEY_RESULTS)}
+<h3>Main results, explained</h3>{''.join(f'<h4>{e(t)}</h4>{concl(KEY_CONC.get(t, ""))}<p>{e(x)}</p><figure>{img(f)}</figure>' for t, x, f in X.KEY_RESULTS)}
 <h3>Background</h3>{''.join(f'<h4>{e(t)}</h4><p>{e(x)}</p>' for t, x in X.BACKGROUND)}
 <details><summary>Glossary</summary>{table(['term', 'meaning'], X.GLOSSARY)}</details>
 <h3>Running</h3>{table(['what', 'state'], ov['status'])}
@@ -98,6 +111,7 @@ th,td{{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);verti
 h4.step{{text-transform:none;letter-spacing:0;color:var(--fg);font-size:1rem;margin-top:22px}} details.explainer{{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 14px;margin:14px 0}} details.explainer>summary{{font-weight:600;color:var(--acc)}} .mut{{color:var(--mut)}} details{{margin:6px 0}} summary{{cursor:pointer;color:var(--acc)}} ul{{padding-left:20px}} li{{margin:3px 0}}
 details.claim{{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:8px 0}} details.claim summary{{color:var(--fg);list-style:none;display:block}}
 details.claim summary::before{{content:'▸ ';color:var(--acc)}} details.claim[open] summary::before{{content:'▾ '}}
+.concl{{display:block;margin:8px 0;padding:8px 12px;border-left:3px solid var(--acc);background:var(--bg);color:var(--fg);font-size:.93rem;max-width:90ch}} details.claim summary .concl{{margin:6px 0 2px}}
 .cid{{font-weight:700;color:var(--acc);margin-right:4px}} .plain{{display:block;margin-top:4px;color:var(--fg);font-size:.92rem;max-width:90ch}} .meta{{display:block;font-size:.82rem;color:var(--mut);margin-top:2px}}
 details.claim .body{{border-top:1px solid var(--line);margin-top:8px;padding-top:4px}} h4{{font-size:.82rem;margin:14px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}}
 </style>
