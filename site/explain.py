@@ -374,6 +374,12 @@ D4_EXPLAINER = [
   'an 80 GeV W jet reads 80–113 GeV, which crosses the Z window. The hardest single particle can sit in the softer prong ($z < 0.5$), which gives larger factors. For the example jet: $106/81.3 = 1.30$ ($z = 0.59$, WTA on the harder prong) '
   'and $125/81.3 = 1.53$ ($z = 0.43$, hardest particle in the softer prong). One-prong jets (light quarks, gluons) have their WTA axis close to the centre (median 0.030 rad for QCD jets on JetClass), so their reading changes little; '
   'this is why the changed decisions are mostly W → Z and Z → q.', None),
+ ('Three-prong jets (top) and why they change less',
+  'The same algebra applies to a top jet with three prongs: about an axis on one prong, $M_0 M_2$ includes the full squared distances to the other two prongs, so the reading grows. For a symmetric three-prong jet '
+  '(equal momentum fractions, equal separations) $m^2 = \\tfrac13 p_T^2\\theta^2$ while $M_0 M_2$ about one prong is $\\tfrac23 p_T^2\\theta^2$, a factor $\\sqrt2$ in the reading. '
+  'Measured decisions (WTA axis): JEDI-linear changes 68 % of W calls and 44 % of Z calls but only 14 % of top calls, although top jets have the largest axis displacement (median 0.084 rad); top accuracy stays at 82–83 %. '
+  'ParT_full: top (t → bqq\') 95.4 → 92.8 %; ParT_kin: 90.4 → 55.9 %, and H → gg 72 → 24 %. One candidate explanation for JEDI-linear: its top neuron is a one-sided threshold (mass above about 143 GeV) with no heavier class, '
+  'so a heavier reading keeps the top call, while the W and Z windows are bounded on both sides and next to each other. Being tested (E19): per-class mass-reading changes against the prediction, and the top neuron\'s on/off state.', None),
  ('Where these axes are used',
   'The standard (E-scheme) axis is the direction of the summed four-momentum and is how anti-$k_T$ jets are usually defined. The winner-take-all recombination scheme was proposed so that the axis is not moved by soft radiation '
   '(recoil-free); it is used, for example, for the axes of N-subjettiness, and the angle between the standard and WTA axes has itself been studied as an observable of soft radiation. Trigger-level jet finding can build jets around a seed particle. '
