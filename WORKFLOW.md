@@ -56,6 +56,20 @@ stage is limited to keeping PAPERS.md (theses, claims, confidence per claim) cur
 - It lists the weaknesses and the experiments that would address them.
 - Each weakness becomes a node in TREE.md, at stage 2–4.
 
+## Statistics and rigour (user 2026-10-17: "always do hypothesis testing to see how likely it is that it's just luck")
+Every claim and result reports:
+- the effect size with a 95 % interval (bootstrap over jets; seeds where models are trained);
+- the matching null or control (an edit or intervention that should not produce the effect: random units, rotation, untrained
+  network, shuffled labels) with its own interval, and a test of effect vs null (permutation or bootstrap p-value; McNemar for paired
+  call changes); state H0 and H1 explicitly;
+- when one hypothesis is compared with alternatives (e.g. invariant mass vs √(M0·M2) vs Σ pT r), the prediction of each and which
+  are excluded at what significance;
+- read-out calibration: a probe fitted on ordinary jets shrinks toward the mean, so any "observed / predicted" ratio from a probe is
+  also reported relative to the probe's response to a real change of the same predicted size (matched calibration edit);
+- multiple comparisons: when many units or observables are scanned, Holm or Benjamini–Hochberg correction, and the number tested;
+- N (jets), seeds, and which jets were used for fitting vs testing.
+Verifiers check these and rerun with a different seed.
+
 ## Documents (user 2026-10-16)
 - Math in LaTeX: `$...$` in Markdown files (GitHub renders it) and on the results page (MathJax); no Unicode pseudo-math in documents.
 - Explain and motivate everything: every claim, figure and table on the page has background (what the reader needs to know),
