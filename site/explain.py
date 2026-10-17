@@ -137,6 +137,10 @@ KEY_RESULTS_HOW = (
     'not an exact copy of any one formula.')
 
 KEY_RESULTS = [
+    ('Statistics for the claims (R1, R2, P2v)',
+     'Every claim now carries a statistics line in its drop-down: effect with a 95 % bootstrap interval on fresh jets, a null or control, the hypotheses tested with Holm-corrected p-values, and the corrections that followed. '
+     'The table summarises the claims of Papers A and B; the mass and axis statistics are in the Paper A and Paper C tabs.',
+     'results/site/T14_claim_stats.png'),
     ('The networks\' mass is not the invariant mass',
      'Summary (step-by-step explanation in the Paper A tab, "Main result explained"): JEDI-linear and ParT compute the jet mass as the momentum-weighted spread of the particles about the given axis, '
      '$\\sqrt{M_0 M_2}$, not as the invariant mass $m$. On every training jet the two are equal; when all particles are shifted together (true mass unchanged), the networks\' mass rises '
