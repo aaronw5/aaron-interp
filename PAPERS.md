@@ -20,7 +20,18 @@ one jet through the network and sees, at each stage, a quantity with a name:
 6. the 16 neurons are windows on that variable (W window peaks at 75 GeV, Z at 94–98, top at 135–148);
 7. the classes are conjunctions of the windows.
 The worked variable (mass) is the proof of the layer-ordering claim (A9): sum → context → product → window. Each step
-has a substitution test and a causal edit. ParT/ParticleNet then show the same stages in a different arithmetic.
+has a substitution test and a causal edit.
+Status of the steps after round 2 (2026-10-17):
+- step 2 (rank windows): causal edit with matched control for six angular objects (E20/E20v): an angle swap across the
+  0–13 edge changes S43/S52/S63 by 0.056–0.084 per jet, the adjacent inside swap by 0.0014–0.0043, and the peak moves with
+  shifted masks; S0, S19 untested by this edit; S1, S20, S51, S56 show no edge peak.
+- step 5 ("the dense layers multiply them"): E15 withdrawn (E15v); E21's iso-product/iso-sum ratio does not locate a product
+  stage (arm A inside the random-pair band). E21v's per-jet gradient-ratio test gives product-like dependence on (S0, S50) at
+  z7 (slope 0.94), z0 (0.80) and the W − Z margin (0.64), above every random-pair draw (≤ 0.66) and random ReLU layer (≤ 0.01),
+  with per-jet Spearman 0.21–0.43; the stage where it forms is not measured. Step 5 now reads "the read-out depends on S0 and
+  S50 approximately as on their product; stage open".
+- step 6 (neurons on the objects): K = 32 hinge formulas on the 19 S objects change 9.2–10.4 % of calls and follow the
+  network's edit responses at 0.42–0.58 of their size (E7/E7v); stated as approximate. ParT/ParticleNet then show the same stages in a different arithmetic.
 
 Scale requirement (user 2026-10-16: "it can't JUST be a trigger tagger"): the small model is where the program is complete
 and exact; the paper's claim is about taggers in general, so ParT (and ParticleNet) are a main section, not an appendix. For
@@ -64,12 +75,35 @@ first. Checklist applied to every unit we name:
 | objection | answer / experiment |
 |---|---|
 | "A 16-neuron FPGA model is a toy" | same stages shown on ParT (2M-parameter transformer) and ParticleNet; the points where exactness stops are stated |
-| "Objects is a relabelling of sum pooling / EFN filter plots" | rank-window masks and cut ∧ window membership are not in EFN; causal edits that move one particle across a cut change the call as the identity predicts; untrained control |
+| "Objects is a relabelling of sum pooling / EFN filter plots" | rank-window masks and cut ∧ window membership are not in EFN; causal edits that move one particle across a cut change the call as the identity predicts; untrained control. E20/E20v (2026-10-17): swapping the angles of ranks 13 and 14 changes S43/S52/S63 by 0.056–0.084 per jet, 2–5 % of that with the window masks removed, 0 with the window shifted to 0–10; the peak follows shifted masks (13 → 10 / 16); masks permuted across slots: 32–36 % accuracy vs 80.7 %. Open: S0/S19 windows (pT-only objects; node E20b) |
 | "Probes show readability, not use" | every probe claim paired with an intervention (translation, iso-mass, freeze S0/g) |
 | "One dataset" | hls4ml + JetClass; top tagging / QG when weights exist |
 | "Off-manifold edits" | on-manifold check: |M1|²/(M0M2) median 3.5e-4, so the two mass definitions coincide on data; the edit isolates which one is computed |
 | "Prior work: Rai & Ganguly, Wang et al." | they trace a top-tagging circuit / attention sparsity; here: stage-wise formulas, exact identity, cross-architecture comparison |
 | "Quantisation specifics" | float + masks reproduces 95.5 % of calls; results reported on the float program with the fixed-point network as the reference |
+
+## Claim confidence (0–1; from all evidence and the verifiers; updated by the ledger step each round)
+Last update: 2026-10-17, round 2 (E20/E20v, E7/E7v, E21/E21v). Change from the previous value in parentheses.
+| claim | confidence | basis |
+|---|---|---|
+| A1 statements = cuts; objects = cut ∧ rank window | 0.9 (=) | E1–E3m, E9, R2; E20/E20v causal window test (0.75) for six angular objects |
+| A2 context through four objects | 0.85 (=) | E4, E5v; R2: S58 replaceable |
+| A3 second-round objects = (pT, r) hinges over rank windows | 0.8 (=) | E5, E5v, E14/E14v, R2 (5 radial under every edit); E20 windows |
+| A4 un-recentred M2-like mass variable | 0.85 (+0.1) | E6, E6v, R1, E14v, E17; separate S units for M0, M2 |
+| A4 product of M0 and M2 / stage where it forms | 0.35 (new) | E15 withdrawn (0.2); E21 R test uninformative; E21v gradient ratio product-like at the read-out, not reviewed by the verifier, stage open |
+| A5 neurons = formulas on the S objects | 0.5 (+0.05) | E7/E7v (0.55): 9.2–10.4 % calls, edit slopes 0.41–0.58 |
+| A6 classes = window rules on z, effect via additive margin | 0.6 (=) | E8, E8v |
+| A8 ParT follows the same stages | 0.35 (new) | C3, P1v, P2v cover the mass row only |
+| A9 depth ordering of readability | 0.55 (−0.05) | E10, R2 (ρ 0.51), X2 (ρ 0.85–0.90); D2 not causal; mass product step not located |
+| A10 v2 generality across small architectures | 0.6 (=) | X2 (not skeptic-rerun) |
+| A11 one main job per unit | 0.65 (=) | E16 (not skeptic-rerun) |
+| A12 mass formula follows the training axis | 0.6 (=) | E18, X4 (not skeptic-rerun) |
+| B1 exact pooled identity | 0.9 (=) | E3, E3m, E9 |
+| B2 nested if-statement program reproduces the network | 0.85 (=) | E11, E11v, R2 |
+| B3 same call on data ≠ same mechanism (direct surrogate fails edits) | 0.6 (−0.15) | E11v; E7: holds for the 87-observable basis; E7v: without the mass family the hand fit follows the translation (W → Z 75.7 %) at slope 0.37 |
+| B4 baselines | 0.0 | not started |
+| C1 / C2 / C3 / C4 | 0.8 / 0.7 / 0.85 / 0.0 (=) | G107/G108; G21–G22; P1, P1v, P2, P2v, R1 |
+| D1 / D2 / D3 / D4 | 0.8 / 0.7 / 0.0 / 0.8 (=) | J26–J30; G194, G202–G204; —; P1v, E17, E19, R1 |
 
 ## Main results, A vs B (and the merge rule)
 
@@ -127,9 +161,31 @@ Claims to establish:
   −0.01 to 1.14 for random ReLU layers on S, so β does not separate the rules. Holds: M0 (S0) and M2 (S50) are separate S units; the
   read-out's gain-normalised M0 response matches the product within 0.06 for M2 > 8.1 GeV from S onward (random ReLU layers on S
   do the same). Open: where, or whether, a product forms. Wording before this date: "M0 = ΣpT and M2 = Σ pT r² are read separately at
-  S and multiplied in h4/h5".] v2: "√(M0·M2) about
+  S and multiplied in h4/h5".]
+  [2026-10-17, E21/E21v: S-level patches of S0 (M0) with S50 (M2), seed 47 and seed 91, N 10,000 each, no input edit. (i) Ratio
+  R = Σ|ΔU| along iso-product / along iso-sum: W − Z margin 0.44 / 0.43, z7 0.40 / 0.39; random S-unit pairs with the same
+  displacements 0.36–1.38 (5–95 %), and the two directions are only ≈ 32° apart, so this ratio does not separate product from
+  additive dependence (verifier geometry). Per-unit R at h4, h5, z matches random ReLU layers on S; no product stage is located.
+  An exact function of S0·S50 or of M0·M2 at the read-out is excluded (margin R 0.39–0.47 in three θ bins). (ii) Per-jet gradient
+  ratio, slope of log(g50/g0) on log(S0/S50) (product 1, fixed additive rule 0): margin 0.64 [0.59, 0.68], z7 0.94 [0.90, 0.99], z0
+  0.80 [0.75, 0.85], z10 0.59; with the affine moments M0 = 21·S0 + 658 GeV, M2 = 2.6·S50 + 2.8 the margin slope is 1.02 [0.95,
+  1.08]; random S pairs (20 draws) −0.59 to 0.66, random ReLU layers on S −0.41 to +0.01, synthetic sum 0, product 1; per-jet
+  Spearman 0.21–0.43. (iii) With S29 as a second M2 carrier: margin R 0.275, below all 20 three-unit control draws (0.34–1.75);
+  iso-sum changes 23.5 % of calls vs 7.0 % iso-product (controls −0.5 to +2.8 points). Rank p with 20 draws is floored at 0.095.
+  Reading: the read-out depends on S0 and S50 approximately as on a product (stronger for the affine moments), with large per-jet
+  scatter; where this forms (h4, h5 or z) is not measured; the untrained control is degenerate (one live S unit). The E21v rerun
+  numbers come from a job that completed after the verifier's session and were not reviewed by the verifier.] v2: "√(M0·M2) about
   the given axis" (exact form overstated). v1 read "m² ≈ 2·ΣpT·Σ pT r² − 2|Σ pT r⃗|²": the factor 2 was an error.
-- A5. The 16 neurons are statements on A3's objects. Replacing each stage by its formula keeps the network's calls. [E7]
+- A5 (v2, 2026-10-17, E7 + E7v; verifier confidence 0.55). Each of the 16 z neurons written as K = 32 hinge terms on the 19 live
+  S objects, substituted all at once (the network's own last layer makes the call), changes 9.2–10.4 % of calls on fresh jets
+  (accuracy −3.2 points); random hinge terms on S change 21.6–23.0 %, a random-init S basis 38.7 %. Under three edits without refit
+  the S formulas' neuron changes have the network's sign and ordering at 0.57–0.58 (0.06 rad translation; 0.65 after read-out
+  calibration; the same inside and outside the fit range), 0.42 (45° rotation) and 0.41 (a32 crossing) of its size; the slope rises
+  with K (0.29, 0.39, 0.49, 0.58 for K 4–32). The rotation flips of the S formula cover 20–24 % of the network's flips (random S terms
+  12–19 %). Post-translation W → Z (S 87.6–88.5 %, network 76–77 %) is also reproduced by random terms on S (72–86 %), so it reflects
+  the S inputs, not the fitted formula. Negative poles (most negative 1 %): z1 W 67–69 %, z6 W 85 %, z8 W 98 %; z0, z2, z3, z11, z15
+  t 85–91 %; z4, z14 q 84–86 %. The neuron stage is approximately, not exactly, a function of the objects at this term budget.
+  v1 (2026-10-16): "The 16 neurons are statements on A3's objects. Replacing each stage by its formula keeps the network's calls. [E7]"
 - A6 (v2, 2026-10-17, E8 + E8v; verifier confidence 0.6). Each class's calls are described by a rule of 2–3 neuron windows on z
   (precision 96–98 %, coverage 70–82 % on fresh jets; rules of similar quality exist in random rotations of z: 87–99 %, 46–82 %).
   Setting the rule's neurons to the class's in-rule medians moves 26–62 % of jets called otherwise into the class (g 54, q 32, W 41,
@@ -149,6 +205,10 @@ Claims to establish:
   rises with its algebraic depth. [E10; E6 for mass]
   [2026-10-17, E15v: the product step for mass (sum at S → product in h4/h5) is not located by E15's test; the mass example of A9
   stays open until a read-out-free test separates the combination rule from the pT-threshold features.]
+  [2026-10-17, E21/E21v: the S-level patch test (no input edit, so no pT-threshold features move) does not locate a product stage:
+  per-unit iso-product/iso-sum ratios at h4, h5, z match random ReLU layers on S. The per-jet gradient-ratio test gives a
+  product-like dependence of z0, z7 and the W − Z margin on (S0, S50) (slopes 0.64–0.94; random pairs ≤ 0.66), measured on the
+  read-outs only. The mass example of A9 therefore has "sum at S" and "product-like dependence by z", without the stage of the product.]
 - A8. ParT follows the same scheme: pair-bias statements, head routing, messages, class-token neurons, and combinations. [P-series]
 - A11 (user, 2026-10-16: "similar to the Goodfire post, look at neurons too"). Most live units have one main job that can be
   stated as a physical pattern (jet images + observables), with weak activations that are neighbours of the main pattern and a
@@ -174,6 +234,17 @@ Refinement 2 (2026-10-16, E3w/E3m): the right float program keeps HGQ's zero-bit
 slot × channel entries in the second round). Float + masks scores 80.68 % (fixed point 81.29 %, 4.49 % calls changed); fully
 float 43.7 %. So an object is a cut AND a pT-rank window (e.g. u0: the 14 hardest particles; u19: ranks 13–63). Claim A1 now
 reads: statement = cut on (pT, Δη, Δφ); object = particles passing the cut within a fixed rank window, read by count and sums.
+
+Refinement 3 (2026-10-17, E20 + E20v; verifier confidence 0.75): the rank windows act causally on the network's own objects.
+Edit: swap only (Δη, Δφ) of two adjacent pT ranks (pT order kept). Across the 13|14 edge S43, S52, S63 change by 0.0841 [0.0813,
+0.0871], 0.0560, 0.0838 per jet (seed 77); at the adjacent inside pair 12|13 by 0.0014–0.0043; at 14|15 by 0 (DiD +0.055 to +0.081,
+Holm p ≤ 4e-162). With the masks shifted by −3 / +3 the peak moves to 10|11 / 16|17 (0.052–0.088). The same edge peak appears at
+each unit's own qs1 edge for S13 (10|11), S17 (9|10) and S62 (4|5); not for S1 at 0|1, S20, S51, S56. The 0–13 window is written
+three times (add-layer zero-bit mask on s, l3 input mask, qs1); any one alone keeps the peak; qs and l2 do not set it. Removing l3 and
+qs1 masks (with the add masks also absent) removes 95–98 % of the response and costs 26.6 points. Masks permuted across slots at
+fixed density: 32–36 % accuracy. Inside-window swaps are not null (above 1 LSB for up to 27 % of jets): in the float program from
+the non-separable (pT, r) hinge, plus a part absent from the float program (rounding, not separately tested). S0 and S19 (pT-only)
+are not tested by angle swaps. Wording before this date: "an object is a cut AND a pT-rank window" (from masks, no causal test).
 
 A3 v3 (2026-10-16, E5v, verified on a fresh sample): rigid rotations and reflections of whole jets change 3.7–4.1 % of calls. Ten of
 the 17 particle objects (S0, S19, S20, S29, S30, S40, S43, S50, S51, S60 — the five costliest among them) move ≤ 0.1 SD; S13, S17,
@@ -231,6 +302,15 @@ R2: program W rejection 1.13× [0.96, 1.42] on fresh jets (E11v's 0.70× not rep
 
 Open questions for B: does the MARS fit on hand observables match the network on substitution tests as well as the object
 formula does? If yes, B is one section of A. Which if-statement form transfers across architectures?
+[2026-10-17, E7 + E7v, answer for z at K = 32 terms: on ordinary jets the hand-observable fit (87 observables) changes fewer calls
+than the fit on the 19 S objects (7.4–7.5 % vs 9.2–10.4 %). Under the 0.06 rad translation its neuron changes are 0.12–0.16 of the
+network's and it sends 1.7–4.3 % of W jets to Z (network 76–77 %); under the 45° rotation its slope is ≤ 0.011. The 87-observable
+formulas put 37 % of their weight on the invariant mass. With the mass family removed (77 observables) the hand fit changes 9.05 % of
+calls (S 9.23 %, difference −0.17 [−0.71, 0.37]), sends 75.7 % of W to Z, and its translation slope is 0.37 (S 0.57, difference +0.20,
+p < 0.001, 16/16 neurons after Holm); under the rotation it does not respond (0.006). So whether a direct surrogate follows a
+mechanism-separating edit depends on which correlated observable the fit selects; the same-call rate on ordinary jets does not detect
+this, the edit does. This qualifies B3 (E11v's direct surrogate) as basis-dependent. Merge rule: no change yet; B's stand-alone test
+(≥ 3 architectures or 2 datasets) is still open.]
 
 ## Datasets
 - hls4ml jets (5 classes g, q, W, Z, t): JEDI-linear family, small transformers / Linformers.

@@ -521,6 +521,58 @@ E14_EXPLAINER = [
   'It completes the step from directional cuts to near-radial objects with an explicit formula per unit, and it explains the part of the mass response that a function of $r$ alone cannot: the objects are polygons, not circles, and a shifted jet moves particles across their uneven edges.', None),
 ]
 
+E20_EXPLAINER = [
+ ('Question', 'Are the pT-rank windows of the second-round objects causal, or would a plain sum over all particles (as in sum pooling or energy-flow networks) respond the same way?', None),
+ ('Background',
+  'Each second-round object is $S_c = \\tfrac1{16}\\sum_i m_{ic}\\,u_c(x_i)$, where $u_c$ is the unit\'s response to one particle and $m_{ic}\\in\\{0,1\\}$ is fixed per slot $i$ (slots ordered by $p_T$) by the zero-bit entries of the fixed-point format. '
+  'For example, $S_{43}$, $S_{52}$ and $S_{63}$ use only the 14 hardest particles (ranks 0–13). A sum-pooling network has $m_{ic}=1$ everywhere. '
+  'Swapping only the angles $(\\Delta\\eta,\\Delta\\phi)$ of the particles at ranks $k$ and $k+1$ keeps the $p_T$ order, so the jet stays a valid input, and changes $S_c$ by $\\tfrac1{16}[m_{kc}(u_c(x_k\')-u_c(x_k)) + m_{k+1,c}(u_c(x_{k+1}\')-u_c(x_{k+1}))]$. '
+  'Inside a window the two terms partly cancel; at an edge ($m_{kc}\\neq m_{k+1,c}$) one particle\'s full change survives.', None),
+ ('Method',
+  'On 10,000 jets (seed 41) and again on 9,861 fresh jets (seed 77): swap the angles of ranks $k, k+1$ for $k = 0,\\dots,16$ and record the mean $|\\Delta S_c|$ in the network and in the float program with the trained masks, with the masks shifted by $\\pm3$ slots, and with the masks removed. '
+  'Controls: the adjacent swap inside the window (12/13) as the matched edit; masks permuted across slots at the same density; a random-weight network with the trained masks.', None),
+ ('Result',
+  'For $S_{43}$ the response is 0.084 per jet at the 13/14 edge, 0.004 at 12/13 and 0 at 14/15. With the masks shifted by $-3$ or $+3$ the peak moves to 10/11 or 16/17 (0.088). With the masks removed it falls by 95–98 %. $S_{52}$ and $S_{63}$ give the same pattern (0.056, 0.084), and $S_{13}$, $S_{17}$, $S_{62}$ show it at their own edges. '
+  'Permuting the masks across slots lowers accuracy from 80.7 % to 32–36 %.', 'results/jedi/e20_verify_profiles.png'),
+ ('Checks',
+  'The network\'s $\\Delta S$ equals the window sum of its own per-particle responses ($R^2$ 0.99–1.00 for $S_{43}$, $S_{63}$). The 0–13 window is written three times in the network (the add-layer mask on $s$, the l3 input mask and qs1); any one of them reproduces the peak, which is why removing one layer\'s masks costs at most 1.1 points. '
+  'Swaps inside a window still change hinge objects for up to 27 % of jets, because the hinge in $(p_T, r)$ is not a sum of a $p_T$ part and an $r$ part, and through fixed-point rounding. '
+  'Not covered: $S_0$ and $S_{19}$ depend on $p_T$ only, so angle swaps do not test their windows; $S_1$ (edge 0/1), $S_{20}$, $S_{51}$, $S_{56}$ show no edge peak.', 'results/jedi/e20_rank_windows.png'),
+ ('Why it matters', 'It tests with an input edit and a matched control what distinguishes the program\'s objects from sum pooling: whether a particle counts depends on its $p_T$ rank as well as on its cut, and the response follows the mask edge wherever it is placed.', None),
+]
+
+E7_EXPLAINER = [
+ ('Question', 'Are the 16 class neurons $z_k$ functions of the network\'s own second-round objects $S$, and does a formula on $S$ respond to input edits the way the network does, where a formula on hand-chosen jet observables does not?', None),
+ ('Background',
+  'A formula can match a neuron on ordinary jets because it computes what the neuron computes, or because its inputs are correlated with the neuron on the data. '
+  'A rigid shift of all particles by $\\delta$ leaves the invariant mass unchanged but raises $M_2=\\sum_i p_{T,i} r_i^2$ about the axis; the network responds (77 % of W jets become Z). Such an edit separates the two cases.', None),
+ ('Method',
+  'Each neuron is fitted on 20,000 jets as $\\hat z_k = c_0+\\sum_{m=1}^{K} c_m\\,h_m(X)$ with hinge terms $h_m$ on $X$ = the 19 $S$ units or 87 jet observables. The network\'s $z$ is replaced by $\\max(0,\\hat z)$ and its own last layer makes the call on 13,000 other jets. '
+  'Then the jets are edited (shift 0.06 rad, rotation 45°, one particle 10 → 12 GeV across the $a_{32}$ cut) without refitting, and the formula\'s change $\\Delta\\max(0,\\hat z_k)$ is regressed on the network\'s change $\\Delta\\max(0,z_k)$ (slope 1 = same size). Controls: random hinge terms on $S$, and $S$ of a random-weight network.', None),
+ ('Result',
+  'At $K=32$ the $S$ formula changes 9.2–10.4 % of calls and the observable formula 7.4–7.5 %. Under the shift the $S$ formula\'s slope is 0.57–0.58 and the observable formula\'s 0.12–0.16 (it sends 2–4 % of W jets to Z, the network 77 %). Under the rotation the slopes are 0.42 and $\\le 0.011$.', 'results/jedi/e7_z_objects.png'),
+ ('Checks (E7v, fresh seeds)',
+  'Substituting the network\'s own $z$ changes 0 calls. The $S$ slope is the same for jets inside and outside the fit range (0.572 / 0.567). Random hinge terms on $S$ also send 72–86 % of shifted W jets to Z, so that number reflects the $S$ inputs; the slope separates the fitted formula (0.57) from random terms (0.25). '
+  'The observable formula puts 37 % of its weight on the invariant mass; without the mass observables it changes 9.05 % of calls, sends 75.7 % of shifted W jets to Z and has slope 0.37.', 'results/jedi/e7_verify_z_objects.png'),
+ ('Why it matters', 'The class neurons are approximately, not exactly, formulas on the objects: the $S$ formula keeps the sign and ordering of the network\'s responses at about half their size. The same-call rate on ordinary jets does not tell which formula follows the network; an input edit does.', None),
+]
+
+E21_EXPLAINER = [
+ ('Question', 'Does the network combine the $M_0$ carrier $S_0$ and the $M_2$ carrier $S_{50}$ as a product $M_0 M_2$ (as the invariant mass needs), and at which layer?', None),
+ ('Background',
+  'An earlier test with a read-out probe was withdrawn because the probe gives similar values for sums and products. Here the second-round objects are set directly, with no input edit. '
+  'Along the curve $S_0 S_{50}=$ const a unit that depends only on the product does not change; along the line where a standardised sum is constant a unit that depends only on that sum does not change. '
+  'A second test uses the gradient: for $f(S_0 S_{50})$ the ratio of derivatives is $\\partial f/\\partial S_{50} \\,/\\, \\partial f/\\partial S_0 = S_0/S_{50}$, so regressing $\\log(g_{50}/g_0)$ on $\\log(S_0/S_{50})$ over jets gives slope 1 for a product and 0 for a fixed-weight sum.', None),
+ ('Method',
+  'On 10,000 jets (seed 47; repeated on seed 91), move $(S_0, S_{50})$ by 0.15–0.5 sd along each curve and record the ratio $R = \\sum|\\Delta U|_{\\text{product}}/\\sum|\\Delta U|_{\\text{sum}}$ for every unit of h4, h5, z and for the W − Z score difference. '
+  'Compute the per-jet gradient slope for z0, z7, z10 and the W − Z difference. Controls: the same steps on 20 random pairs or triples of $S$ units, random ReLU layers on $S$, and synthetic product and sum units.', None),
+ ('Result',
+  'The ratio $R$ is 0.43–0.44 for the W − Z difference, but random $S$ pairs give 0.36–1.38: the two step directions are only about 32° apart, so $R$ mostly measures how much a read-out uses $S_{50}$ relative to $S_0$. Per-unit $R$ is the same at h4, h5 and z and the same as for random ReLU layers, so this test does not locate a layer. '
+  'The gradient slope is 0.64 [0.59, 0.68] for the W − Z difference, 0.94 for z7 and 0.80 for z0, against $-0.59$ to $0.66$ for random pairs and $\\le 0.01$ for random ReLU layers; per jet the scatter is large (Spearman 0.21–0.43).', 'results/jedi/e21_isoproduct.png'),
+ ('Checks', 'Setting the objects to their own values reproduces the network exactly. The patch steps are 6–40 times the input quantizer step of the next layer. The untrained network has only one live second-round unit, so it cannot serve as a control here. The seed-91 numbers come from a job that completed after the verifier\'s session and were not reviewed by the verifier.', None),
+ ('Why it matters', 'The narrative step "the dense layers multiply the moments" is replaced by a measured statement: the class neurons depend on $S_0$ and $S_{50}$ approximately as on their product, with large per-jet scatter; the layer where this forms is the next test.', None),
+]
+
 # per-paper explainers, rendered inside the paper's tab (title, steps)
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
@@ -531,8 +583,12 @@ PAPER_EXPLAINERS = {
           ('Result 5 explained: small comparison models trained on the same inputs (claims A8/A10)', SMALL_EXPLAINER, False),
           ('Result 6 explained: the neuron atlas, one card per unit (claim A11)', ATLAS_EXPLAINER, False),
           ('Result 7 explained: how round two turns half-planes into near-radial objects (claims A3, A4; E14)', E14_EXPLAINER, False),
-          ('Result 8 explained: classes as window rules on the class neurons, imposed (claim A6; E8)', E8_EXPLAINER, False)],
-    'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True)],
+          ('Result 8 explained: classes as window rules on the class neurons, imposed (claim A6; E8)', E8_EXPLAINER, False),
+          ('Result 9 explained: the pT-rank windows act causally (claims A1, A3; E20)', E20_EXPLAINER, False),
+          ('Result 10 explained: the class neurons as formulas on the objects (claim A5; E7; cross-reference Paper B, B3)', E7_EXPLAINER, False),
+          ('Result 11 explained: is the mass a product of the moments? (claims A4, A9; E21)', E21_EXPLAINER, False)],
+    'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True),
+          ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False)],
     'c': [('Result explained: ParT\'s mass comes mostly through the axis-relative inputs, not the pair features (claim C3)', C3_EXPLAINER, True),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
