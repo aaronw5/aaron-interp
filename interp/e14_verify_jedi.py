@@ -14,8 +14,9 @@ V2  map vs sample: odd part of the fixed-point network (g free; g frozen at g(x)
     sample's asymmetry (B equals the point-symmetrized counterfactual's odd part).
 V3  baselines for the Part-2 contour controls: best circle, Fourier m ≤ 1, m ≤ 2, m ≤ 4 fits of r_c(θ) (rms relative error),
     and the number of half-plane directions with nonzero Part-1 weight per unit.
-Run:  python -m interp.e14_verify_jedi [--quick]
-Out:  $AI_RESULTS/jedi/e14_verify.json (e14_verify_quick.json with --quick)
+V4  (--head) why the point-symmetrized counterfactual depends on the head: see head_main.
+Run:  python -m interp.e14_verify_jedi [--quick] [--head | --ci]   (--ci: 95 % bootstrap intervals, e14_verify_ci.json)
+Out:  $AI_RESULTS/jedi/e14_verify.json (e14_verify_quick.json with --quick); --head: e14_verify_head.json
 """
 import json, os, sys, time
 from pathlib import Path
@@ -311,5 +312,135 @@ def main():
     log(f'wrote {JSON_PATH} ({time.time()-t0:.0f}s)')
 
 
+def head_main():
+    """--head: why the point-symmetrized counterfactual depends on the head (follow-up to V1/V2).  Same sample (seed 31).
+    All with g frozen at the unedited jet's g.  S_x' = fixed-point S of x', ΔS_x = S(x+δd) − S(x), ΔS_−x = S(−x−δd) − S(−x),
+    S_sym(x') = ½[S(x') + S(−x')].  Mass read-out = the same ridge on fixed h5.  Variants (head: fx = fixed-point via S override,
+    pg = float + mask program head):
+      hybrid_fx / hybrid_pg   head(S_x + ½[ΔS_x + ΔS_−x]) − head(S_x)            (E14's construction)
+      transplant_fx / _pg     head(S_x + ΔS_−x) − head(S_x)                       (reflected jet's ΔS on the original base)
+      symnet_fx / symnet_pg   head(S_sym(x+δd)) − head(S_sym(x))                  (network with point-symmetrized per-particle maps)
+      prog_symnet             program, g at mean: head(S_sym(x+δd)) − head(S_sym(x)) with the program's S
+    plus the S-level odd/even of ½[ΔS_x + ΔS_−x] for all live units."""
+    from interp.jedi_core import Jedi, sample
+    t0 = time.time(); OUT.mkdir(parents=True, exist_ok=True); np.seterr(all='ignore')
+    x, y, Q = sample(PER, seed=SEED); x = np.asarray(x, np.float32); J = len(x); del Q
+    net = Jedi(64); LO, HI = E.range_tables(net); prog = E.Program(net)
+    R0 = E.fixed(net, x, keep=('g', 'S', 'logits', 'h5')); g0 = R0['g']; sdS = R0['S'].std(0); live = [int(c) for c in np.flatnonzero(sdS > 1e-9)]
+    lm = np.log(np.maximum(E.inv_mass(x), 1e-3)); half = np.random.default_rng(SEED + 1).permutation(J) < J // 2
+    rd = E.ridge(R0['h5'][half], lm[half])
+    gmf = prog.run(x, keep=('g',))['g'].mean(0)
+    xR = preflect(x); BR = E.fixed(net, xR, keep=('S',), g_jet=g0)['S']; S0 = R0['S']
+    Ssym0 = 0.5 * (S0 + BR)
+    QS0 = prog.run(x, gov=gmf, keep=('S',))['S']; QSR0 = prog.run(xR, gov=gmf, keep=('S',))['S']; Qsym0 = 0.5 * (QS0 + QSR0)
+
+    def mfx(S): return rd(head_fixed(net, x, S)['h5'])
+    def mpg(S): return rd(prog.head(S)[1])
+    base = dict(hybrid_fx=mfx(S0), hybrid_pg=mpg(S0), symnet_fx=mfx(Ssym0), symnet_pg=mpg(Ssym0), prog_symnet=mpg(Qsym0))
+    log(f'E14 verify --head: {J} jets (seed {SEED}); fixed head on S0 vs program head on S0: mean |Δ log m̂| {np.abs(base["hybrid_fx"] - base["hybrid_pg"]).mean():.4f} ({time.time()-t0:.0f}s)')
+    rec = {}
+    for dd in DELTAS:
+        for name, (de, dp) in DIRS.items():
+            key = f'{dd}_{name}'; xe = E.shift(x, de * dd, dp * dd); xeR = preflect(xe)
+            ok = E.in_range(net, xe, LO, HI) & E.in_range(net, xeR, LO, HI)
+            Se = E.fixed(net, xe, keep=('S',), g_jet=g0)['S']; SeR = E.fixed(net, xeR, keep=('S',), g_jet=g0)['S']
+            dSx = Se - S0; dSmx = SeR - BR; dcf = 0.5 * (dSx + dSmx)
+            QSe = prog.run(xe, gov=gmf, keep=('S',))['S']; QSeR = prog.run(xeR, gov=gmf, keep=('S',))['S']
+            m = dict(frozen_fx=mfx(S0 + dSx) - base['hybrid_fx'], frozen_pg=mpg(S0 + dSx) - base['hybrid_pg'],
+                     hybrid_fx=mfx(S0 + dcf) - base['hybrid_fx'], hybrid_pg=mpg(S0 + dcf) - base['hybrid_pg'],
+                     transplant_fx=mfx(S0 + dSmx) - base['hybrid_fx'], transplant_pg=mpg(S0 + dSmx) - base['hybrid_pg'],
+                     symnet_fx=mfx(0.5 * (Se + SeR)) - base['symnet_fx'], symnet_pg=mpg(0.5 * (Se + SeR)) - base['symnet_pg'],
+                     prog_symnet=mpg(0.5 * (QSe + QSeR)) - base['prog_symnet'])
+            rec[key] = dict(dir_minus_x=OPP[name], mass={k: float(v[ok].mean()) for k, v in m.items()},
+                            S_cf_sd={c: float(dcf[ok, c].mean() / sdS[c]) for c in live})
+            log(f'{key:11s} ' + ' '.join(f'{k} {v:+.4f}' for k, v in rec[key]['mass'].items()) + f'  ({time.time()-t0:.0f}s)')
+    summ = {}
+    for dd in DELTAS:
+        s_ = dict(mass={}, S_cf={})
+        for k in rec[f'{dd}_+eta']['mass']:
+            by = {n: rec[f'{dd}_{n}']['mass'][k] for n in DIRS}; s_['mass'][k] = dict(by_dir=by, eo=eo(by))
+        # transplant: the response of −x moved along OPP(name), placed on x's base; label by the −x direction
+        for k in ('transplant_fx', 'transplant_pg'):
+            by = {OPP[n]: rec[f'{dd}_{n}']['mass'][k] for n in DIRS}; s_['mass'][k + '_by_minus_x_dir'] = dict(by_dir=by, eo=eo(by))
+        for c in live:
+            by = {n: rec[f'{dd}_{n}']['S_cf_sd'][c] for n in DIRS}; s_['S_cf'][c] = eo(by)
+        summ[str(dd)] = s_
+        log(f'\nδ = {dd}: Δlog m̂ by direction ' + ' '.join(DIRS) + ' | odd/even η φ diag | odd η φ diag')
+        for k, v in s_['mass'].items():
+            log(f'  {k:28s} ' + ' '.join(f"{v['by_dir'][n]:+.4f}" for n in DIRS) + ' | ' + ' '.join(E.fmt(v['eo'][a]['odd_over_even'], '{:+.3f}') for a in AXES) +
+                ' | ' + ' '.join(f"{v['eo'][a]['odd']:+.4f}" for a in AXES))
+        log('  S-level ½[ΔS_x + ΔS_−x], odd part / sd(S) (η, φ, diag) and even part: ' +
+            '; '.join(f"S{c} " + ' '.join(f"{s_['S_cf'][c][a]['odd']:+.3f}" for a in AXES) + f" (even {s_['S_cf'][c]['eta']['even']:+.3f})" for c in live))
+    out = OUT / ('e14_verify_head_quick.json' if QUICK else 'e14_verify_head.json')
+    out.write_text(json.dumps(E.clean(dict(N=J, seed=SEED, per_class=PER, records=rec, summary=summ, log=_LOG, elapsed_s=time.time() - t0))))
+    log(f'wrote {out} ({time.time()-t0:.0f}s)')
+
+
+def ci_main():
+    """--ci: 95 % bootstrap intervals (1000 resamples over jets, paired) for the odd part of Δlog m̂ (h5 ridge) per axis:
+    measured g free / g frozen (fixed point), maps (program, g at mean, E14 construction), E14's point-symmetrized hybrid
+    (program), the reflected-sample responses (V2: A, B), and the symmetrized network (fixed head and program head);
+    ratios maps/frozen, frozen/free, maps/free; H0 for B: B = 0 (two-sided bootstrap p)."""
+    from interp.jedi_core import Jedi, sample
+    t0 = time.time(); OUT.mkdir(parents=True, exist_ok=True); np.seterr(all='ignore')
+    x, y, Q = sample(PER, seed=SEED); x = np.asarray(x, np.float32); J = len(x); del Q
+    net = Jedi(64); LO, HI = E.range_tables(net); prog = E.Program(net)
+    R0 = E.fixed(net, x, keep=('g', 'S', 'logits', 'h5')); g0 = R0['g']
+    lm = np.log(np.maximum(E.inv_mass(x), 1e-3)); half = np.random.default_rng(SEED + 1).permutation(J) < J // 2
+    rd = E.ridge(R0['h5'][half], lm[half]); lm0 = rd(R0['h5'])
+    Pf = prog.run(x, keep=('g', 'S', 'h5')); gmf = Pf['g'].mean(0); lmp0 = rd(Pf['h5'])
+    xR = preflect(x); BfR = E.fixed(net, xR, keep=('S', 'h5')); BzR = E.fixed(net, xR, keep=('S', 'h5'), g_jet=g0)
+    QS0 = prog.run(x, gov=gmf, keep=('S',))['S']; QSR0 = prog.run(xR, gov=gmf, keep=('S',))['S']
+    Ssym0 = 0.5 * (R0['S'] + BzR['S']); mfx_sym0 = rd(head_fixed(net, x, Ssym0)['h5']); mpg_sym0 = rd(prog.head(Ssym0)[1])
+    V = ('free', 'frozen', 'maps', 'hybrid_point_prog', 'refl_free', 'refl_frozen', 'symnet_fx', 'symnet_pg')
+    D = {dd: {v: {} for v in V} for dd in DELTAS}; okall = np.ones(J, bool)
+    for dd in DELTAS:
+        for name, (de, dp) in DIRS.items():
+            xe = E.shift(x, de * dd, dp * dd); xeR = preflect(xe)
+            okall &= E.in_range(net, xe, LO, HI) & E.in_range(net, xeR, LO, HI)
+            Rf = E.fixed(net, xe, keep=('h5',)); Rz = E.fixed(net, xe, keep=('S', 'h5'), g_jet=g0)
+            FfR = E.fixed(net, xeR, keep=('h5',)); FzR = E.fixed(net, xeR, keep=('S', 'h5'), g_jet=g0)
+            QSe = prog.run(xe, gov=gmf, keep=('S',))['S']; QSeR = prog.run(xeR, gov=gmf, keep=('S',))['S']
+            d = D[dd]
+            d['free'][name] = rd(Rf['h5']) - lm0; d['frozen'][name] = rd(Rz['h5']) - lm0
+            d['maps'][name] = rd(prog.head(Pf['S'] + QSe - QS0)[1]) - lmp0
+            d['hybrid_point_prog'][name] = rd(prog.head(Pf['S'] + 0.5 * (QSe + QSeR) - 0.5 * (QS0 + QSR0))[1]) - lmp0
+            d['refl_free'][OPP[name]] = rd(FfR['h5']) - rd(BfR['h5']); d['refl_frozen'][OPP[name]] = rd(FzR['h5']) - rd(BzR['h5'])
+            Ssym = 0.5 * (Rz['S'] + FzR['S'])
+            d['symnet_fx'][name] = rd(head_fixed(net, x, Ssym)['h5']) - mfx_sym0; d['symnet_pg'][name] = rd(prog.head(Ssym)[1]) - mpg_sym0
+        log(f'δ = {dd}: per-jet responses done ({time.time()-t0:.0f}s)')
+    idx_ok = np.flatnonzero(okall); n = len(idx_ok); rng = np.random.default_rng(SEED + 7); NB = 50 if QUICK else 1000
+    BI = rng.integers(0, n, size=(NB, n))
+    res = dict(N=J, n_used=int(n), seed=SEED, n_boot=NB, per_axis={})
+    for dd in DELTAS:
+        res['per_axis'][str(dd)] = {}
+        for ax in AXES:
+            od = {v: (0.5 * (D[dd][v][f'+{ax}'] - D[dd][v][f'-{ax}']))[idx_ok] for v in V}
+            ev = {v: (0.5 * (D[dd][v][f'+{ax}'] + D[dd][v][f'-{ax}']))[idx_ok] for v in V}
+            q = dict(od, **{f'even_{v}': ev[v] for v in V})
+            boot = {k: np.array([a[b].mean() for b in BI]) for k, a in q.items()}
+            pt = {k: float(a.mean()) for k, a in q.items()}
+            der = dict(A_free=lambda s: 0.5 * (s['free'] + s['refl_free']), B_free=lambda s: 0.5 * (s['free'] - s['refl_free']),
+                       A_frozen=lambda s: 0.5 * (s['frozen'] + s['refl_frozen']), B_frozen=lambda s: 0.5 * (s['frozen'] - s['refl_frozen']),
+                       maps_over_frozen=lambda s: s['maps'] / s['frozen'], maps_over_free=lambda s: s['maps'] / s['free'],
+                       frozen_over_free=lambda s: s['frozen'] / s['free'], odd_over_even_free=lambda s: s['free'] / s['even_free'],
+                       odd_over_even_maps=lambda s: s['maps'] / s['even_maps'])
+            out = {}
+            for k in q:
+                out[f'odd_{k}' if not k.startswith('even_') else k] = dict(value=pt[k], ci95=[float(np.percentile(boot[k], 2.5)), float(np.percentile(boot[k], 97.5))])
+            for k, f in der.items():
+                b = f(boot); v = f(pt)
+                out[k] = dict(value=float(v), ci95=[float(np.percentile(b, 2.5)), float(np.percentile(b, 97.5))])
+                if k.startswith('B_'): out[k]['p_two_sided_H0_zero'] = float(min(1.0, 2 * min((b <= 0).mean(), (b >= 0).mean())))
+            res['per_axis'][str(dd)][ax] = out
+            log(f'δ = {dd} {ax}: ' + '; '.join(f"{k} {v['value']:+.4f} [{v['ci95'][0]:+.4f}, {v['ci95'][1]:+.4f}]" + (f" p {v['p_two_sided_H0_zero']:.3f}" if 'p_two_sided_H0_zero' in v else '')
+                                               for k, v in out.items() if not k.startswith('even_')))
+    res['log'] = _LOG; res['elapsed_s'] = time.time() - t0
+    out_p = OUT / ('e14_verify_ci_quick.json' if QUICK else 'e14_verify_ci.json'); out_p.write_text(json.dumps(E.clean(res)))
+    log(f'wrote {out_p} ({time.time()-t0:.0f}s)')
+
+
 if __name__ == '__main__':
-    main()
+    if '--head' in sys.argv: head_main()
+    elif '--ci' in sys.argv: ci_main()
+    else: main()

@@ -73,7 +73,7 @@ Results: `results/jedi/e8_verify.json` (also at `$AI_RESULTS/jedi/e8_verify.json
 - **Which windows are E6 neurons.** z0 and z7 are E6's W and Z window neurons. z8 is not an E6 window: E6's top window is z10 (135–148 GeV).
 
 ## B. E8's tree procedure refit on the fresh fit jets
-- **S level.** All five rules use the same units as E8, with thresholds within 0.2 of E8's:
+- **S level.** All five rules use the same units as E8, with nearby thresholds (g: S0 ≥ 22.6, S19 < 5.52, S60 ≥ 6.78, against E8's 22.4 / 5.92 / 7.38):
 
   | class | precision (%) | coverage (%) | switched (%) |
   |---|---|---|---|

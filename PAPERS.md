@@ -210,6 +210,8 @@ Physical consequence under test (P1v): the taggers' dependence on the axis conve
 C3 v1 ("ParT's mass is the invariant mass, unlike JEDI's") refuted by P1.
 P1v (verified, confidence 0.9): ParT_full's response enters only through the per-particle deltaR input (fed unedited: 92–100 %
 of the response disappears); ParT_kin's through dphi (0.65) and deltaR (0.35); the pair features are invariant to float32 noise.
+P2 (2026-10-17; statistics pending P2v): under real mass changes the per-particle axis-relative route carries 93–101 % of ParT's
+mass read-out change, the pair route 1–6 % (and 10–21 % of the W → Z change for mass increases).
 Physical consequence (Paper D, D4): inputs about the winner-take-all axis change 11.7 % (ParT_full) and 34.1 % (ParT_kin) of calls.
 
 ## Paper C: circuits (ParT)

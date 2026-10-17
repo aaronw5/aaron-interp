@@ -283,29 +283,33 @@ def fmt(v):
 
 
 def pattern_line(desc, negate=False, zero=False):
-    """the range of the best observable where the response is above half its span (zero: where it is > 0, if it crosses
-    0 — the on-region of a pre-ReLU neuron; negate: where it is most negative / < 0); the peak when it is interior;
-    + the second observable's direction"""
+    """the ranges of the best observable where the response is high: above half its span, or (zero: pre-ReLU neuron)
+    above 0 + 5 % of its span when it crosses 0; negate: where it is most negative / below 0.  Each contiguous run of
+    response-curve bins is one range ('< x', '> x' or 'a–b'); the peak is added when it is interior.  Then the second
+    observable's direction when the pair adds >= 0.03 R²."""
     b = desc['best1']; q = np.array(b['curve']['q']); f = np.array(b['curve']['f']); lab = b['label']; un = unit_of(b['name'])
     if negate: f = -f
     if len(f) < 2 or f.max() - f.min() < 1e-9: return f'flat in {lab}'
-    above = f > 0 if (zero and f.max() > 0 > f.min()) else f >= f.min() + 0.5 * (f.max() - f.min())
-    i = np.flatnonzero(above); n = len(f)
+    span = f.max() - f.min()
+    above = f > 0.05 * span if (zero and f.max() > 0 > f.min()) else f >= f.min() + 0.5 * span
+    n = len(f)
     edge = lambda k: 0.5 * (q[k] + q[k + 1])
-    pk = fmt(q[int(np.argmax(f))])
-    if i[-1] - i[0] + 1 == len(i):
-        ia = int(np.argmax(f)); interior = 1 < ia < n - 2
-        if i[0] == 0 and i[-1] == n - 1: s = f'flat in {lab}'
-        elif i[-1] == n - 1: s = f'{lab} > {fmt(edge(i[0] - 1))}{un}' + (f' (peak {pk})' if interior else '')
-        elif i[0] == 0: s = f'{lab} < {fmt(edge(i[-1]))}{un}' + (f' (peak {pk})' if interior else '')
-        else: s = f'{lab} {fmt(edge(i[0] - 1))}–{fmt(edge(i[-1]))}{un} (peak {pk})'
-    else:
-        lo_seg = above[0]; hi_seg = above[-1]
-        if lo_seg and hi_seg and not above[n // 2]:
-            j = np.flatnonzero(~above)
-            s = f'{lab} < {fmt(edge(j[0] - 1))} or > {fmt(edge(j[-1]))}{un}'
+    runs, k = [], 0
+    while k < n:
+        if above[k]:
+            j = k
+            while j + 1 < n and above[j + 1]: j += 1
+            runs.append((k, j)); k = j + 1
         else:
-            s = f'{lab}, non-monotone, highest at {pk}{un}'
+            k += 1
+    if len(runs) == 1 and runs[0] == (0, n - 1): return f'flat in {lab}'
+    parts = []
+    for a, c in runs:
+        if a == 0: parts.append(f'< {fmt(edge(c))}')
+        elif c == n - 1: parts.append(f'> {fmt(edge(a - 1))}')
+        else: parts.append(f'{fmt(edge(a - 1))}–{fmt(edge(c))}')
+    ia = int(np.argmax(f)); interior = 1 < ia < n - 2
+    s = f'{lab} ' + ' or '.join(parts) + un + (f' (peak {fmt(q[ia])})' if interior else '')
     b2 = desc.get('best2')
     if b2 and not negate and desc['R2_2'] - desc['R2_1'] >= 0.03:
         s += f'; {"higher" if b2["second_sign"] > 0 else "lower"} {b2["labels"][1]}'

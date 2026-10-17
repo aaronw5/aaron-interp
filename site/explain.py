@@ -350,10 +350,14 @@ C3_EXPLAINER = [
   'Feeding the shifted jets but keeping the per-particle $\\Delta R$ at its unshifted value removes 92–100 % of ParT_full\'s response: the response comes through that one input, not through the pair features.',
   'results/site/F3_part_translation.png'),
  ('Where it enters', 'The figure shows the same test with individual inputs held fixed.', 'results/site/F5_part_input_location.png'),
+ ('Test 2 (P2): which input route carries a real mass change',
+  'We make a real mass change (all angles × $k$, or all pT × $c$) and feed it to ParT through one route at a time: (a) both routes; (b) pair features from the edited jet with every per-particle input from the unedited jet; '
+  '(c) per-particle inputs from the edited jet with pair features from the unedited jet. For angles × 1.1 (true mass +9.4 %), ParT_full\'s mass read-out rises by +0.076 in (a), +0.001 in (b) and +0.075 in (c); '
+  'W → Z goes from 0.12 to 0.37 in (a), 0.14 in (b) and 0.33 in (c). Over all edits the per-particle route carries 93–101 % of the read-out change and the pair route 1–6 % (ParT_kin 5–6 %); the pair route alone moves 10–21 % of the W → Z change for mass increases and 26–42 % for decreases, '
+  'with almost no change in the read-out. The two routes add up: (b) + (c) matches (a) to within 0.008 in the read-out. One row is unusual: ParT_kin with pT × 0.8 through the pair route alone sends 54 % of W jets to H → bb̄, which is being checked as a possible input-range effect.', 'results/site/T12_part_routes.png'),
  ('What this does and does not show',
   'ParT can compute the invariant mass from its pair features: the pairwise masses $m_{ij}^2$ sum to the jet mass. The shift leaves every pair feature unchanged, so any response to the shift must come through the axis-relative per-particle inputs; the response shows that ParT uses that route. '
-  'It does not show that ParT ignores the pair route. Both routes give the same answer on ordinary jets; under the shift they disagree, and ParT follows the axis-relative one by 0.66–0.77 of its full size (ParT_full). '
-  'The next test (P2) changes the true mass and feeds the change to only one route at a time, to measure how much of ParT\'s ordinary mass response goes through each.', None),
+  'Test 2 answers the remaining question: ParT does use the pair route, but for a small part of its response (about a tenth to a fifth of the W → Z change and a few percent of the mass read-out). Its mass sense comes mostly from the per-particle inputs measured from the axis, as in JEDI-linear, which has only that route. Bootstrap intervals and p-values are being computed (P2v).', None),
  ('Why it matters', 'JEDI-linear has only the axis-relative route. ParT has both and its decisions still move when only the axis-relative route changes. The share of each route (P2) decides whether ParT\'s mass is mainly the invariant mass with an axis-dependent part, or mainly the moment mass. The full explanation of the mass variable is in the Paper A tab.', None),
 ]
 
@@ -430,7 +434,7 @@ PAPER_EXPLAINERS = {
           ('Result 4 explained: variables appear over the layers in order of complexity (claim A9)', A9_EXPLAINER, False),
           ('Result 5 explained: small comparison models trained on the same inputs (claims A8/A10)', SMALL_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True)],
-    'c': [('Result explained: ParT\'s decisions depend on the axis-relative inputs (claim C3)', C3_EXPLAINER, True),
+    'c': [('Result explained: ParT\'s mass comes mostly through the axis-relative inputs, not the pair features (claim C3)', C3_EXPLAINER, True),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
           ('Earlier results in brief (claims D1, D2)', EARLIER_D, False)],

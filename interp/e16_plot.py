@@ -174,7 +174,7 @@ def flow_panel(ax, s, title):
     ax.set_xticks(range(5)); ax.set_xticklabels(CL); ax.set_yticks(range(5)); ax.set_yticklabels(CL)
     ax.set_xlabel('call after', fontsize=9); ax.set_ylabel('call before', fontsize=9); ax.tick_params(labelsize=9, length=0)
     for sp in ax.spines.values(): sp.set_visible(False)
-    ax.set_title(title, fontsize=9.5, loc='left', color=INK)
+    ax.set_title(title, fontsize=8.6, loc='left', color=INK)
 
 
 def hinge_panel(ax, u):
@@ -292,17 +292,17 @@ def card(u, imgs, labs, path, cut=None):
     text_block(fig, xd, ytop, dl, size=9.3, title='downstream')
     ax = fig.add_axes([xd + 0.015, 0.035, 0.15, 0.095]); dlogit_panel(ax, u)
     s = u['steer']; c = u.get('control', {})
-    xs = 0.855
+    xs = 0.842
     if st == 'z' and 'steer_neg' in u:
         ax = fig.add_axes([xs, 0.165, 0.11, 0.075])
-        flow_panel(ax, s, f'steer to p99 = {fmt(s["value"])}, {s["n"]} off jets:\n{pct(s["changed"])} change; control {c.get("unit", "-")} {pct(c.get("changed", 0))}')
+        flow_panel(ax, s, f'steer to p99 = {fmt(s["value"])} ({s["n"]} off jets)\nchanged {pct(s["changed"])} (control {c.get("unit", "-")} {pct(c.get("changed", 0))})')
         sn = u['steer_neg']; cn = u.get('control_neg', {})
         ax = fig.add_axes([xs, 0.03, 0.11, 0.075])
-        flow_panel(ax, sn, f'steer to p1 = {fmt(sn["value"])}, {sn["n"]} on-jets:\n{pct(sn["changed"])} change; control {cn.get("unit", "-")} {pct(cn.get("changed", 0))}')
+        flow_panel(ax, sn, f'steer to p1 = {fmt(sn["value"])} ({sn["n"]} on-jets)\nchanged {pct(sn["changed"])} (control {cn.get("unit", "-")} {pct(cn.get("changed", 0))})')
     else:
         ax = fig.add_axes([xs, 0.035, 0.12, 0.195])
-        flow_panel(ax, s, f'steer to p99 = {fmt(s["value"])} on {s["n"]} {"off jets" if s["rule"] == "off jets" else "jets < p10"}:\n'
-                          f'{pct(s["changed"])} change; control {c.get("unit", "-")} {pct(c.get("changed", 0))}')
+        flow_panel(ax, s, f'steer to p99 = {fmt(s["value"])} ({s["n"]} {"off jets" if s["rule"] == "off jets" else "jets < p10"})\n'
+                          f'calls changed {pct(s["changed"])} (control {c.get("unit", "-")} {pct(c.get("changed", 0))})')
     fig.savefig(path, dpi=80)
     plt.close(fig)
 
@@ -366,19 +366,21 @@ def summary_png(res, path):
             ('main\nshare', 0.045), ('category', 0.07), ('offshoot clusters (share: shift vs main)', 0.19), ('negative pole (z)', 0.12),
             ('steering (p99 on off jets)', 0.155)]
     nrow = len(rows) + 1
-    H = 0.19 * nrow + 2.6
+    H = 0.19 * nrow + 2.8
     fig = plt.figure(figsize=(30, H), dpi=72)
-    top = 1 - 1.6 / H; rh = 0.19 / H
+    top = 1 - 1.75 / H; rh = 0.19 / H
     T = res['total']; Tf = res['total_forced_k2']; n = sum(T.values())
     fig.text(0.005, 1 - 0.25 / H, 'E16 neuron atlas, JEDI-linear 3-feature n64: one row per live unit (20,000 test jets)', fontsize=18,
              fontweight='bold', color=INK, va='top')
     tl = '; '.join(f'{st}: {t["one main job"]} one / {t["related jobs"]} related / {t["unrelated jobs"]} unrelated / {t["unexplained"]} unexplained'
                    for st, t in res['tally'].items())
-    fig.text(0.005, 1 - 0.7 / H, f'all {n} units: one main job {T["one main job"]}, related jobs {T["related jobs"]}, unrelated jobs {T["unrelated jobs"]}, '
-             f'unexplained {T["unexplained"]}  (k ≥ 2 forced: {Tf["one main job"]} / {Tf["related jobs"]} / {Tf["unrelated jobs"]} / {Tf["unexplained"]}).   ' + tl,
-             fontsize=12, color=INK, va='top')
+    fig.text(0.005, 1 - 0.62 / H, f'all {n} units: one main job {T["one main job"]}, related jobs {T["related jobs"]}, unrelated jobs {T["unrelated jobs"]}, '
+             f'unexplained {T["unexplained"]}  (k ≥ 2 forced: {Tf["one main job"]} / {Tf["related jobs"]} / {Tf["unrelated jobs"]} / {Tf["unexplained"]}).',
+             fontsize=12.5, color=INK, va='top', fontweight='bold')
+    fig.text(0.005, 1 - 0.88 / H, 'per stage (one / related / unrelated / unexplained): ' + tl.replace(' one / ', '/').replace(' related / ', '/').replace(' unrelated / ', '/').replace(' unexplained', ''),
+             fontsize=11.5, color=INK, va='top')
     th = res['thresholds']
-    fig.text(0.005, 1 - 1.05 / H, f'thresholds: unexplained = {th["unexplained"]}; one main job = {th["one_main_job"]}; related = {th["related"]}.',
+    fig.text(0.005, 1 - 1.15 / H, f'thresholds: unexplained = {th["unexplained"]}; one main job = {th["one_main_job"]}; related = {th["related"]}.',
              fontsize=10.5, color=MUTED, va='top')
     x = 0.005
     xs = []
