@@ -157,6 +157,10 @@ Claims to establish:
 - A12 (2026-10-17, E18/X4): the un-recentred mass follows from the training data: models retrained with off-centre (hardest-particle)
   axes mostly recentre (axis-jump response 0.13–0.41 of a matched real change; both pure hypotheses rejected); residual W → Z 7–22 % for
   soft-prong-axis jets. Narrative: a network learns the simplest formula that is correct on its training distribution.
+- A10 v2 (2026-10-17, X2): general across small architectures: axis-relative mass (invariant mass rejected) and layer ordering by
+  complexity (ρ 0.85–0.90). Not general: JEDI-linear's sparse 13-cut first layer (Deep Sets uses 63–64 mixed units) and the size of the
+  axis-moment response (0.07–2.0 of √(M0M2) across architectures and seeds). Hypothesis to test: the sparse cuts come from HGQ fixed-point
+  training. Thesis A impact: "statements and objects" are exact for sum-pooled networks, but their readability depends on training.
 - A10 (user, 2026-10-16). The same stages exist in other architectures: ParticleNet (EdgeConv: statements on particle pairs
   in k-NN graphs, pooled), L-GATr (Lorentz-equivariant tokens), and small transformers / Linformers trained on hls4ml. [X-series]
 

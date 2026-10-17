@@ -445,6 +445,11 @@ SMALL_EXPLAINER = [
   'At 64 particles the 2-block Linformer reaches 80.91 ± 0.15 % and Deep Sets 80.73 ± 0.09 %, against JEDI-linear\'s 80.92 %. The plain transformers reach 69–76 %; '
   'their best epoch is the last one, so longer training is running (100 epochs, width 64). At 32 particles the ranking is the same (Linformer 78.37 %, Deep Sets 77.79 %, JEDI 78.00 %).',
   'results/site/T7_small_models.png'),
+ ('Result of the same tests (X2)',
+  'Deep Sets has the exact cut-and-count identity, but its first layer is not sparse: 63–64 of 64 units matter and most mix pT and angle, while JEDI-linear has 13 cuts that are either pT-only or angle-only. '
+  'JEDI-linear\'s clean first layer is therefore a property of JEDI-linear (possibly of its fixed-point training, which prunes inputs), not of sum-pooling networks in general. '
+  'Every model\'s mass sense is axis-relative, but how strongly it follows $\\sqrt{M_0 M_2}$ varies from 0.07 to 2.0 of the prediction between architectures and even between two seeds of the same model. '
+  'Variables appear over the layers in order of complexity in every model (Spearman 0.85–0.90), partly because sums over particles are readable from the sum layers even without training.', 'results/site/T8_small_mass_shift.png'),
  ('Why it matters',
   'Two architectures with JEDI-linear\'s accuracy are available: one built on sums over particles (Deep Sets) and one on attention over pT-rank mixtures (Linformer). Running the same tests on them '
   '(first-layer cuts and objects, the mass shift test, variables over layers) shows which findings belong to JEDI-linear and which to models of this kind in general. All runs saved a checkpoint after every epoch, '

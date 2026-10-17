@@ -567,7 +567,7 @@ def main_model(a):
     torch.set_num_threads(int(os.environ.get('OMP_NUM_THREADS', '1')))
     t0 = time.time(); OUT.mkdir(parents=True, exist_ok=True)
     name = f'{a.model}-n{a.n}{a.tag}'
-    fout = OUT / (f'x2_{name}' + ('' if a.per_class == 4000 and not a.skip_units else f'_smoke{a.per_class}') + '.json')
+    fout = OUT / (f'x2_{name}' + ('' if a.per_class == 4000 and not a.skip_units else f'_smoke{a.per_class}') + a.part + '.json')
     log(f'X2 {name}: seeds {a.seeds}, {a.per_class} jets per class; torch {torch.__version__}, threads {torch.get_num_threads()}')
     x, y, O, idx = load_sample(a.per_class, 0); J = len(x)
     M = moments(x)
@@ -581,6 +581,14 @@ def main_model(a):
         net, arch = load_net(run_dir)
         runner = DSRunner(net) if arch['spec']['arch'] == 'dsets' else TFRunner(net)
         log(f'seed {s}: {run_dir}; {arch["n_params"]} params; best epoch {arch.get("best", {}).get("epoch")}')
+        if a.untrained_units == 'only':
+            netu, _ = load_net(run_dir, 'ckpt/epoch_0.pt'); ru = DSRunner(netu) if isinstance(runner, DSRunner) else TFRunner(netu)
+            R0u = run(ru, x, arch, want=('logits',) + tuple(ru.jet_layers)); c0u = R0u['logits'].argmax(1)
+            stu = unit_stats(ru, x, arch); log('  untrained units:'); U = dict(test2=test2(ru, x, arch, y, c0u, stu))
+            if isinstance(ru, DSRunner):
+                U['test3'] = test3(netu, arch, x, np.array(U['test2']['phi1']['cost']), R0u['J_phi1'])
+            res['seeds'][str(s)] = dict(untrained_units_only=True, untrained=U); fout.write_text(json.dumps(res, indent=1))
+            log(f'seed {s} untrained units done [{time.time() - t0:.0f}s]'); continue
         # identity of the explicit forward with the module's own forward
         xn, mask = normalise(x[:500], arch)
         with torch.no_grad():
@@ -612,7 +620,7 @@ def main_model(a):
         log(f'  untrained: acc {U["acc"]:.4f}, calls per class {U["class_fractions"]}; read-out log m R² '
             + ', '.join(f'{l} {v:.3f}' for l, v in U['readout_r2_logm'].items()))
         U['test5'] = test5(R0u, O, ru.jet_layers, tr, te, bidx)
-        if not a.skip_units and s == a.seeds[0]:
+        if not a.skip_units and a.untrained_units == 'first' and s == a.seeds[0]:
             stu = unit_stats(ru, x, arch); log('  untrained units:')
             U['test2'] = test2(ru, x, arch, y, c0u, stu)
             if isinstance(ru, DSRunner):
@@ -624,6 +632,22 @@ def main_model(a):
     res['elapsed_s'] = float(time.time() - t0)
     fout.write_text(json.dumps(res, indent=1))
     log(f'wrote {fout} ({time.time() - t0:.0f}s)')
+
+
+def load_x2(r, suffix=''):
+    """x2_<run><suffix>.json, merged with any part files x2_<run>__*.json (per-seed jobs; untrained-unit-only jobs)"""
+    f = OUT / f'x2_{r}{suffix}.json'
+    X = json.loads(f.read_text()) if f.exists() else None
+    parts = [json.loads(q.read_text()) for q in sorted(OUT.glob(f'x2_{r}__*.json'))] if not suffix else []
+    for P_ in [q for q in parts if not any(S.get('untrained_units_only') for S in q['seeds'].values())]:
+        if X is None: X = dict(P_, seeds={})
+        X['seeds'].update(P_['seeds'])
+    for P_ in [q for q in parts if any(S.get('untrained_units_only') for S in q['seeds'].values())]:
+        if X is None: continue
+        for sd, S in P_['seeds'].items():
+            if sd in X['seeds']: X['seeds'][sd].setdefault('untrained', {}).update(S['untrained'])
+    if X is not None: X['seeds'] = dict(sorted(X['seeds'].items()))
+    return X
 
 
 # ============================================================================================================ plot
@@ -663,9 +687,8 @@ def _table(fname, title, cols, rows, widths, note=None, fs=8.0, line_in=0.15, pa
 def plot(suffix='', only=None):
     J6v = json.loads((RES / 'jedi' / 'e6_verify.json').read_text()); J6 = json.loads((RES / 'jedi' / 'e6_mass.json').read_text())
     J10 = json.loads((RES / 'jedi' / 'e10_layers.json').read_text())
-    runs = [r for r in ('dsets-d64-n64', 'linf-2b-d32-k8-n64', 'tf-2b-d32-n64', 'tf-2b-d32-n64-e100')
-            if (OUT / f'x2_{r}{suffix}.json').exists() and (not only or r in only)]
-    X = {r: json.loads((OUT / f'x2_{r}{suffix}.json').read_text()) for r in runs}
+    X = {r: load_x2(r, suffix) for r in ('dsets-d64-n64', 'linf-2b-d32-k8-n64', 'tf-2b-d32-n64', 'tf-2b-d32-n64-e100') if not only or r in only}
+    X = {r: v for r, v in X.items() if v is not None and v['seeds']}; runs = list(X)
     pc = lambda v: f'{100 * v:.0f}' if v is not None else '–'
     f2 = lambda v: f'{v:.2f}' if v is not None else '–'
     # ---------------------------------------------------------------- T8
@@ -696,7 +719,7 @@ def plot(suffix='', only=None):
                          f'{f2(C["eta0.03"][lt]["ratio_matched"])} / {f2(C["eta0.06"][lt]["ratio_matched"])}\n'
                          f'[{C["eta0.06"][lt]["ratio_matched_ci"][0]:.2f}, {C["eta0.06"][lt]["ratio_matched_ci"][1]:.2f}]',
                          f'{f2(q("phi0.06"))} / {f2(C["phi0.06"][lt]["ratio_matched"])}',
-                         f'{nr["dlogmhat"][lt]:+.3f}\n[{nr["dlogmhat_ci"][lt][0]:+.3f}, {nr["dlogmhat_ci"][lt][1]:+.3f}]',
+                         f'{round(nr["dlogmhat"][lt], 3) + 0.0:+.3f}\n[{round(nr["dlogmhat_ci"][lt][0], 3) + 0.0:+.3f}, {round(nr["dlogmhat_ci"][lt][1], 3) + 0.0:+.3f}]',
                          f'{e["angle1.1"]["dlogmhat"][lt] / np.log(1.1):.2f}; {pc(e["angle1.1"]["W_to_Z"])}'])
     note = ('Edit: every real particle moved by δ rad along Δη (φ column: along Δφ), padding untouched, axis fixed; invariant mass unchanged (|Δlog m| < 1e-6). '
             'Read-out: ridge fit of log m on the last hidden layer of unedited jets (train half),\nmean shift on the test half (10,000 jets); 95 % intervals: bootstrap over jets (1,000 resamples). '
@@ -726,7 +749,7 @@ def plot(suffix='', only=None):
         Ls = groups[[g for g, _, _ in groups].index(SHORT.get(r, r))][1]
         for l in Ls:
             ucol.append([float(np.mean([S['untrained']['test5'][oid]['R2'][l] for S in X[r]['seeds'].values()])) for oid, _, _ in OBS12])
-    rows.append(['untrained: median R²', '']); rows[-1] += [f'{np.median(c) + 0.0:.2f}' for c in ucol]
+    rows.append(['untrained: median R²', '']); rows[-1] += [f'{round(float(np.median(c)), 2) + 0.0:.2f}' for c in ucol]
     rows.append(['untrained: R² ≥ 0.9', '']); rows[-1] += [str(sum(1 for v in c if v >= 0.9)) for c in ucol]
     hw = max(max((S['test5'][oid]['R2_ci'][l][1] - S['test5'][oid]['R2_ci'][l][0]) / 2 for oid, _, _ in OBS12
                  for l in S['test5'][OBS12[0][0]]['R2']) for r in runs for S in X[r]['seeds'].values())
@@ -749,12 +772,52 @@ def plot(suffix='', only=None):
 # ============================================================================================================ report
 def report(only=None, suffix=''):
     """Markdown tables of tests 1-5 from the JSONs (printed; the source of inbox/X2_small_models.md)"""
-    runs = [r for r in ('dsets-d64-n64', 'linf-2b-d32-k8-n64', 'tf-2b-d32-n64', 'tf-2b-d32-n64-e100')
-            if (OUT / f'x2_{r}{suffix}.json').exists() and (not only or r in only)]
-    X = {r: json.loads((OUT / f'x2_{r}{suffix}.json').read_text()) for r in runs}
+    X = {r: load_x2(r, suffix) for r in ('dsets-d64-n64', 'linf-2b-d32-k8-n64', 'tf-2b-d32-n64', 'tf-2b-d32-n64-e100') if not only or r in only}
+    X = {r: v for r, v in X.items() if v is not None and v['seeds']}; runs = list(X)
     J1 = json.loads((RES / 'jedi' / 'e1_e3.json').read_text())
     P = lambda *a: print(*a)
     pc = lambda v, d=1: f'{100 * v:.{d}f}'
+    # ---- summary tables (the contents of T8 and T9)
+    P('## Summary: mass shift at the last hidden layer (T8 contents)\n')
+    P('| run (seed), layer | R² log m [CI] | W → Z % δ = 0/.03/.06/.09 (η) | Z → W % δ = 0/.06 | calls changed % η .03/.06 | Δlog m̂ η .06 [CI] | raw ratio η .01/.02/.03/.045/.06/.09 | '
+      'calibrated ratio η .03/.06/.09 [CI at .06] | φ .06 raw / calibrated | rot 90°: Δlog m̂ [CI]; calls % | × 1.1: Δlog m̂ ÷ log 1.1; W → Z % | exponent η (δ ≤ .06) |')
+    P('|---|---|---|---|---|---|---|---|---|---|---|---|')
+    for r in runs:
+        for sd, S in X[r]['seeds'].items():
+            T = S['test4']; e = T['edits']; lt = T['last']; C = T['calibrated']; ci_ = T['readout_r2_logm_ci'][lt]
+            f2 = lambda v: f'{v:.2f}' if v is not None else '–'
+            ex = T['dose_exponent']['eta'].get(lt)
+            P(f'| {r} ({sd}), {lt} | {T["readout_r2_logm"][lt]:.3f} [{ci_[0]:.3f}, {ci_[1]:.3f}] | '
+              + '/'.join(pc(e[k]['W_to_Z'], 0) for k in ('0', 'eta0.03', 'eta0.06', 'eta0.09')) + f' | {pc(e["0"]["Z_to_W"], 0)}/{pc(e["eta0.06"]["Z_to_W"], 0)} | '
+              f'{pc(e["eta0.03"]["calls_changed"], 1)}/{pc(e["eta0.06"]["calls_changed"], 1)} | {e["eta0.06"]["dlogmhat"][lt]:.3f} [{e["eta0.06"]["dlogmhat_ci"][lt][0]:.3f}, {e["eta0.06"]["dlogmhat_ci"][lt][1]:.3f}] | '
+              + '/'.join(f2(e[f'eta{d}']['ratio'][lt]) for d in DOSE) + ' | '
+              + '/'.join(f2(C[f'eta{d}'][lt]['ratio_matched']) for d in (0.03, 0.06, 0.09)) + f' [{C["eta0.06"][lt]["ratio_matched_ci"][0]:.2f}, {C["eta0.06"][lt]["ratio_matched_ci"][1]:.2f}] | '
+              f'{f2(e["phi0.06"]["ratio"][lt])} / {f2(C["phi0.06"][lt]["ratio_matched"])} | '
+              f'{round(e["null_rot90"]["dlogmhat"][lt], 4) + 0.0:+.4f} [{round(e["null_rot90"]["dlogmhat_ci"][lt][0], 4) + 0.0:+.4f}, {round(e["null_rot90"]["dlogmhat_ci"][lt][1], 4) + 0.0:+.4f}]; {pc(e["null_rot90"]["calls_changed"], 1)} | '
+              f'{e["angle1.1"]["dlogmhat"][lt] / np.log(1.1):.2f}; {pc(e["angle1.1"]["W_to_Z"], 1)} | {ex if ex is None else round(ex, 2)} |')
+    P('\nCalibrated ratio at η + 0.06 by layer (shift response ÷ matched angle-scale response):\n')
+    P('| run (seed) | ' + ' | '.join(['layer: ratio [CI]']) + ' |'); P('|---|---|')
+    for r in runs:
+        for sd, S in X[r]['seeds'].items():
+            C = S['test4']['calibrated']['eta0.06']
+            P(f'| {r} ({sd}) | ' + '; '.join(f'{LABEL.get(l, l)} {C[l]["ratio_matched"]:.2f} [{C[l]["ratio_matched_ci"][0]:.2f}, {C[l]["ratio_matched_ci"][1]:.2f}]'
+                                          for l in C if not l.startswith('J_emb')) + ' |')
+    P('\n## Summary: held-out linear R² by layer, mean of seeds (T9 contents)\n')
+    J10 = json.loads((RES / 'jedi' / 'e10_layers.json').read_text()); JL = ['P', 'g', 'S', 'h4', 'h5', 'z']
+    for r in [None] + runs:
+        Ls = JL if r is None else list(next(iter(X[r]['seeds'].values()))['test5'][OBS12[0][0]]['R2'].keys())
+        val = (lambda oid, l: J10['obs'][oid]['R2']['trained'][l]['lin']) if r is None else \
+            (lambda oid, l, rr=r: float(np.mean([S['test5'][oid]['R2'][l] for S in X[rr]['seeds'].values()])))
+        unt = (lambda oid, l: J10['obs'][oid]['R2']['untrained'][l]['lin']) if r is None else \
+            (lambda oid, l, rr=r: float(np.mean([S['untrained']['test5'][oid]['R2'][l] for S in X[rr]['seeds'].values()])))
+        P(f'\n{"JEDI-linear (E10)" if r is None else r}\n')
+        P('| observable | depth | ' + ' | '.join(LABEL.get(l, l) for l in Ls) + ' |'); P('|---|---|' + '---|' * len(Ls))
+        for oid, d, lab in OBS12:
+            P(f'| {lab} | {d} | ' + ' | '.join(f'{val(oid, l):.2f}' for l in Ls) + ' |')
+        P('| R² ≥ 0.9 (of 12) | | ' + ' | '.join(str(sum(val(o, l) >= 0.9 for o, _, _ in OBS12)) for l in Ls) + ' |')
+        P('| untrained: median R² | | ' + ' | '.join(f'{round(float(np.median([unt(o, l) for o, _, _ in OBS12])), 2) + 0.0:.2f}' for l in Ls) + ' |')
+        P('| untrained: R² ≥ 0.9 | | ' + ' | '.join(str(sum(unt(o, l) >= 0.9 for o, _, _ in OBS12)) for l in Ls) + ' |')
+
     P('## Test 1: accuracy on the 20,000-jet sample\n')
     P('| model | seed | acc (sample) | test.json acc (260k) | balanced expectation ± s.e. | z | max abs Δp vs test_probs | argmax agreement |')
     P('|---|---|---|---|---|---|---|---|')
@@ -843,6 +906,15 @@ def report(only=None, suffix=''):
                   f'{c["ratio_matched"]:.2f} [{c["ratio_matched_ci"][0]:.2f}, {c["ratio_matched_ci"][1]:.2f}] | {ex if ex is None else round(ex, 2)} |')
             P(f'\nPrediction exponent (½Δlog(M0M2), η): {T["dose_exponent"]["eta"]["pred"]:.2f}.')
     P('\n## Test 5: variables over layers (held-out linear R², per seed, [95 % CI]; untrained in the last column group)\n')
+    try:
+        from scipy.stats import spearmanr
+        J10 = json.loads((RES / 'jedi' / 'e10_layers.json').read_text())
+        f9 = [J10['obs'][k]['first_lin_0.9'] for k, _, _ in OBS12]; f7 = [J10['obs'][k]['first_lin_0.7'] for k, _, _ in OBS12]
+        d = [dd for _, dd, _ in OBS12]
+        P(f'JEDI-linear (E10 numbers, these 12 observables; stages P g S h4 h5 z = 0..5, never = 6): first stage R² ≥ 0.9 {f9}, ≥ 0.7 {f7}; '
+          f'Spearman(depth, first ≥ 0.9) {list(map(float, spearmanr(d, f9)))}, (≥ 0.7) {list(map(float, spearmanr(d, f7)))}\n')
+    except Exception as ex:  # noqa: BLE001
+        P(f'JEDI Spearman not computed: {ex}')
     for r in runs:
         Ss = X[r]['seeds']; L = list(next(iter(Ss.values()))['test5'][OBS12[0][0]]['R2'].keys())
         P(f'\n### {r}\n')
@@ -868,6 +940,9 @@ if __name__ == '__main__':
     ap.add_argument('--seeds', type=int, nargs='+', default=[0, 1])
     ap.add_argument('--per_class', type=int, default=4000)
     ap.add_argument('--skip_units', action='store_true', help='skip tests 2-3 (smoke runs)')
+    ap.add_argument('--untrained_units', choices=('first', 'none', 'only'), default='first',
+                    help="unit ablation of the untrained network: for the first seed (default), never, or only that (no other test)")
+    ap.add_argument('--part', default='', help="output suffix for split jobs, e.g. '__s0' (report / plot merge x2_<run>__*.json)")
     ap.add_argument('--plot', action='store_true')
     ap.add_argument('--report', action='store_true', help='print the Markdown tables of tests 1-5 from the JSONs')
     ap.add_argument('--runs', nargs='*', help='--plot: restrict to these run names')
