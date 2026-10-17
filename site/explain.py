@@ -320,8 +320,14 @@ B2_EXPLAINER = [
  ('What the fits say about the layers',
   'Counting which kinds of quantity each layer\'s formulas use: radial moments dominate the second-round objects (70 % of formula weight); mass terms appear in h4 (13 %) and grow to 28 % at the class neurons; '
   'N-subjettiness, energy correlators and subjet variables stay at 4 % or less everywhere.', 'results/site/F4_e11_evolution.png'),
- ('Open checks', 'A skeptic is checking: that no network activation leaks into the program; a fresh sample; background rejection per class (an earlier ParT formula kept accuracy but lost rejection); the 6 % of jets where program and network disagree; whether the program responds to the shift and pT edits like the network.', None),
- ('Why it matters', 'If the checks pass, a trigger network can be stated as a readable program with the same decisions, which is the central claim of the method paper.', None),
+ ('Checks by a second agent (E11v)',
+  'No network value enters the program: with every unfitted unit set to a constant it makes exactly the same decisions (94.02 %). On 17,011 fresh jets it agrees with the network on 94.2 % and its accuracy is 0.3 points lower (80.44 % vs 80.74 %); '
+  'the small accuracy lead seen first does not hold. Background rejection for W jets at 50 % efficiency is 0.70× the network\'s; for the other classes it is within the uncertainty. The 6 % of disagreements are jets where the network itself is close to a tie.', None),
+ ('The important test: edited jets',
+  'Agreement on ordinary jets does not show that the program computes what the network computes. Under the rigid shift of all particles (invariant mass unchanged), the network calls 74.5 % of W jets Z. The nested program calls 77.6 % of them Z, because it builds the mass the same way '
+  '(sums of $p_T r^2$ at S, then a product). A formula for the 16 class neurons fitted directly on physics observables, which agrees with the network on 92.5 % of ordinary jets, calls 0.1 % of shifted W jets Z: it uses the invariant mass. '
+  'So the nested program agrees with the network in mechanism, the direct formula only in outcome on ordinary jets.', 'results/site/T11_e11_faithfulness.png'),
+ ('Why it matters', 'A trigger network can be stated as a readable program that makes the same decisions on 94 % of jets and fails in the same way on edited jets. The comparison with the direct formula gives the method paper its test for when a rewrite reproduces the reasons and not only the outcome.', None),
 ]
 
 C3_EXPLAINER = [

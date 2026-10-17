@@ -183,6 +183,11 @@ if-statements, 211 physics inputs; each stage fitted on the previous stage's fit
 network's calls on 8,848 held-out jets (94.6 % with half-plane sums) at 80.72 % accuracy vs 80.42 %. Fitted on physics inputs,
 mass-family terms first appear at h4 and carry 0 → 3 → 3 → 13 → 21 → 28 % of formula weight from P to z (independent of E10).
 
+E11v (verified, 2026-10-17): no leakage; standalone program identical (94.02 %); fresh 17,011 jets 94.23 % same call, accuracy
+−0.31 ± 0.17 points; W rejection 0.70×. Under the 0.06 rad shift the nested program reproduces the network (W → Z 77.6 % vs 74.5 %);
+a formula fitted directly on physics observables (92.5 % agreement on ordinary jets) does not (0.1 %). This is Paper B's central
+result: compositional fits are faithful under mechanism-separating edits, direct surrogates are not.
+
 Open questions for B: does the MARS fit on hand observables match the network on substitution tests as well as the object
 formula does? If yes, B is one section of A. Which if-statement form transfers across architectures?
 

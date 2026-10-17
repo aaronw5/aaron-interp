@@ -88,3 +88,11 @@ table('T6_axis_convention.png', 'ParT under a change of jet-axis convention (P1v
  [3.6, 1.9, 1.5, 2.4, 2.4, 2.1],
  note='Input location (P1v): for ParT_full the response enters only through the per-particle deltaR input (fed unedited, 92–100 % of Δlog m̂ and 98–100 % of the W → Z change disappear);\n'
       'for ParT_kin through dphi (0.65) and deltaR (0.35). The pair features (ln kT, ln z, ln ΔR, ln m²) are unchanged to within float32 noise. Caveat: 2.6 % of jets change the sign of the axis η under WTA.')
+table('T11_e11_faithfulness.png', 'If-statement programs vs JEDI-linear on ordinary and on edited jets (E11v; inputs recomputed from the edited particles)',
+ ['program', 'same call as the network\n(17,011 fresh jets)', 'accuracy\n(network 80.74 %)', 'rigid shift 0.06 rad: W → Z\n(network 74.5 %)', 'rigid shift: same call\nas the network', 'pT × 0.8: Z → t\n(network 62.5 %)', 'pT × 0.8: same call\nas the network'],
+ [['nested program (each layer fitted on the previous layer\'s formulas)', '94.23 %', '80.44 %', '77.6 %', '73.9 %', '71.2 %', '88.1 %'],
+  ['nested program + half-plane sums as inputs', '94.84 %', '80.52 %', '81.5 %', '81.9 %', '63.8 %', '90.3 %'],
+  ['class neurons fitted directly on physics observables', '92.50 %', '80.25 %', '0.1 %', '51.8 %', '61.3 %', '83.9 %']],
+ [4.6, 2.2, 1.8, 2.4, 2.1, 2.1, 2.1],
+ note='All three programs agree with the network on 92.5–94.8 % of ordinary jets. Under the rigid shift (invariant mass unchanged) only the nested programs reproduce the network\'s W → Z response:\n'
+      'they compute the mass the way the network does (radial sums at P and S, then a product). The direct formula uses the invariant mass and does not respond. W rejection at 50 % efficiency: program 0.70× the network\'s [0.50, 0.95].')
