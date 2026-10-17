@@ -92,7 +92,7 @@ Verifiers check these and rerun with a different seed.
   paper it belongs to (site/explain.py PAPER_EXPLAINERS), with cross-references from other papers' claims; the Overview holds only
   short summaries that point to the paper tab.
 
-- Conclusion in plain terms (user, 2026-10-17: "For each result you should at least write a conclusion description of what the result is in plain terms"): every result — claim drop-down, explainer, key result, round table row, report, chat summary — carries 2–4 plain sentences: what was found, what it means for the question, what is still uncertain. At most two numbers; unit IDs only with what they compute; terms defined. Stored in site/conclusions.py (CLAIM, EXPLAINER, KEY_RESULT) and rendered by site/gen.py at the top of each drop-down.
+- Conclusion (user, 2026-10-17; label it just "Conclusion": "For each result you should at least write a conclusion description of what the result is in plain terms"): every result — claim drop-down, explainer, key result, round table row, report, chat summary — carries 2–4 plain sentences: what was found, what it means for the question, what is still uncertain. At most two numbers; unit IDs only with what they compute; terms defined. Stored in site/conclusions.py (CLAIM, EXPLAINER, KEY_RESULT) and rendered by site/gen.py at the top of each drop-down.
 
 ## Writing rule (all text: ledger, reports, later papers)
 No mannered prose: no metaphor or flourish in place of a direct statement ("a dial worth turning" → "a parameter worth

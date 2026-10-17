@@ -15,7 +15,7 @@ EXPL_NAME = {id(v): k for k, v in vars(X).items() if isinstance(v, list) and (k.
 
 
 def concl(t, cls='concl'):
-    return f'<p class="{cls}"><b>Conclusion in plain terms.</b> {e(t)}</p>' if t else ''
+    return f'<p class="{cls}"><b>Conclusion.</b> {e(t)}</p>' if t else ''
 
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'results' / 'site' / 'index.html'
 e = html.escape
