@@ -45,12 +45,14 @@ def paper(p):
     claims = ''.join(claim(c) for c in p['claims'])
     log = ''.join(f'<li><b>{e(v)}</b> — {e(t)}</li>' for v, t in p['thesis_log'])
     opens = ''.join(f'<li>{e(o)}</li>' for o in p['open'])
+    explainers = ''.join(f'<details class="explainer" open><summary>{e(t)}</summary>' + ''.join(f'<h4 class="step">{e(h)}</h4><p>{e(x)}</p>' + (f'<figure>{img(f)}</figure>' if f else '') for h, x, f in steps) + '</details>' for t, steps in X.PAPER_EXPLAINERS.get(p['key'], []))
     return f'''<section id="tab-{p['key']}" class="tab" hidden>
 <h2>{e(p['title'])}</h2>
 <p>{e(X.PAPER_MOTIVATION.get(p['key'], ''))}</p>
 <h3>Thesis (current)</h3><p class="thesis">{e(p['thesis'])}</p>
 <details><summary>Thesis history</summary><ul>{log}</ul></details>
-<h3>Claims (open each for procedure, numbers, tables, figures)</h3>{claims}
+{explainers}
+<h3>Claims (open each for background, motivation, procedure, numbers, tables, figures)</h3>{claims}
 <h3>Open</h3><ul>{opens}</ul>
 </section>'''
 
@@ -66,7 +68,7 @@ overview = f'''<section id="tab-overview" class="tab">
 <h3>Papers</h3>{table(['tab', 'title', 'claims verified / total'], [(p['tab'], p['title'], f"{sum(1 for c in p['claims'] if c['status'].startswith('verified'))} / {len(p['claims'])}") for p in C.PAPERS])}
 </section>'''
 
-tabs = [('overview', 'Overview'), ('explained', 'Explained: the mass result')] + [(p['key'], p['tab']) for p in C.PAPERS]
+tabs = [('overview', 'Overview')] + [(p['key'], p['tab']) for p in C.PAPERS]
 nav = ''.join(f'<button data-tab="{k}" role="tab">{e(t)}</button>' for k, t in tabs)
 page = f'''<title>Tagger Interp Results</title>
 <style>
@@ -86,7 +88,7 @@ figcaption{{font-size:.88rem;color:var(--mut);margin-top:8px;max-width:90ch}}
 table{{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums}} .tw{{overflow-x:auto;margin:6px 0}}
 th,td{{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}} th{{color:var(--mut);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}}
 .bar{{display:inline-block;width:60px;height:8px;background:var(--bar);border-radius:4px;vertical-align:middle;margin-right:4px}} .bar i{{display:block;height:100%;background:var(--acc);border-radius:4px}}
-h3.step{{text-transform:none;letter-spacing:0;color:var(--fg);font-size:1.02rem;margin-top:26px}} .mut{{color:var(--mut)}} details{{margin:6px 0}} summary{{cursor:pointer;color:var(--acc)}} ul{{padding-left:20px}} li{{margin:3px 0}}
+h4.step{{text-transform:none;letter-spacing:0;color:var(--fg);font-size:1rem;margin-top:22px}} details.explainer{{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 14px;margin:14px 0}} details.explainer>summary{{font-weight:600;color:var(--acc)}} .mut{{color:var(--mut)}} details{{margin:6px 0}} summary{{cursor:pointer;color:var(--acc)}} ul{{padding-left:20px}} li{{margin:3px 0}}
 details.claim{{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:8px 0}} details.claim summary{{color:var(--fg);list-style:none;display:block}}
 details.claim summary::before{{content:'▸ ';color:var(--acc)}} details.claim[open] summary::before{{content:'▾ '}}
 .cid{{font-weight:700;color:var(--acc);margin-right:4px}} .plain{{display:block;margin-top:4px;color:var(--fg);font-size:.92rem;max-width:90ch}} .meta{{display:block;font-size:.82rem;color:var(--mut);margin-top:2px}}
@@ -97,7 +99,6 @@ details.claim .body{{border-top:1px solid var(--line);margin-top:8px;padding-top
 <p class="sub">Updated {e(C.UPDATED)}. Measurements, figures and claim status per paper; theses change only with a dated entry.</p>
 <nav role="tablist">{nav}</nav>
 {overview}
-<section id="tab-explained" class="tab" hidden><h2>The mass result, explained step by step</h2><p>What the networks compute when they use the jet mass, where it is computed, and how we know. JEDI-linear numbers unless stated.</p>{''.join(f'<h3 class="step">{e(t)}</h3><p>{e(x)}</p>' + (f'<figure>{img(f)}</figure>' if f else '') for t, x, f in X.MASS_EXPLAINER)}</section>
 {''.join(paper(p) for p in C.PAPERS)}
 </main>
 

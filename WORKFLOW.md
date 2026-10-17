@@ -61,6 +61,9 @@ stage is limited to keeping PAPERS.md (theses, claims, confidence per claim) cur
 - Explain and motivate everything: every claim, figure and table on the page has background (what the reader needs to know),
   motivation (why it is tested), the physics meaning and why it matters, and a plain one-line summary (site/explain.py).
 - Use explanatory figures (diagrams on real jets) where a result is not obvious from numbers (site/explain_figs.py).
+- Organisation (user 2026-10-17): tabs are Overview + one per paper, nothing else. A result's explanation lives in the tab of the
+  paper it belongs to (site/explain.py PAPER_EXPLAINERS), with cross-references from other papers' claims; the Overview holds only
+  short summaries that point to the paper tab.
 
 ## Writing rule (all text: ledger, reports, later papers)
 No mannered prose: no metaphor or flourish in place of a direct statement ("a dial worth turning" → "a parameter worth

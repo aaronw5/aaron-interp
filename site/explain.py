@@ -137,7 +137,7 @@ KEY_RESULTS_HOW = (
 
 KEY_RESULTS = [
     ('The networks\' mass is not the invariant mass',
-     'Summary (full step-by-step explanation in the Explained tab): JEDI-linear and ParT compute the jet mass as the momentum-weighted spread of the particles about the given axis, '
+     'Summary (step-by-step explanation in the Paper A tab, "Main result explained"): JEDI-linear and ParT compute the jet mass as the momentum-weighted spread of the particles about the given axis, '
      '$\\sqrt{M_0 M_2}$, not as the invariant mass $m$. On every training jet the two are equal; when all particles are shifted together (true mass unchanged), the networks\' mass rises '
      'and W jets are called Z (JEDI-linear 77 %, ParT_full 31 %).',
      'results/site/X1_mass_shift.png'),
@@ -206,3 +206,9 @@ MASS_EXPLAINER = [
   'For physics: the jet axis is a convention (summed momentum, winner-take-all, or a seed particle in a trigger). The invariant mass does not depend on it; the networks\' mass variable does. '
   'With the winner-take-all axis, ParT_full changes 11.7 % of its decisions and ParT_kin 34.1 %; JEDI-linear under the same test is running (E17).', 'results/site/X2_axis.png'),
 ]
+
+
+# per-paper explainers, rendered inside the paper's tab (title, steps)
+PAPER_EXPLAINERS = {
+    'a': [('Main result explained: the network\'s mass variable (claim A4; cross-model row with Paper C, claim C3; axis consequence in Paper D, claim D4)', MASS_EXPLAINER)],
+}
