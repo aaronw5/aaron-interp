@@ -154,6 +154,9 @@ Claims to establish:
   stated as a physical pattern (jet images + observables), with weak activations that are neighbours of the main pattern and a
   readable negative pole; units without one are listed. Tally per stage, analogous to Goodfire's 90 / 7 / 2–4 %. [E16 neuron atlas;
   later the same on the small transformers' MLP neurons and heads across training checkpoints]
+- A12 (2026-10-17, E18/X4): the un-recentred mass follows from the training data: models retrained with off-centre (hardest-particle)
+  axes mostly recentre (axis-jump response 0.13–0.41 of a matched real change; both pure hypotheses rejected); residual W → Z 7–22 % for
+  soft-prong-axis jets. Narrative: a network learns the simplest formula that is correct on its training distribution.
 - A10 (user, 2026-10-16). The same stages exist in other architectures: ParticleNet (EdgeConv: statements on particle pairs
   in k-NN graphs, pooled), L-GATr (Lorentz-equivariant tokens), and small transformers / Linformers trained on hls4ml. [X-series]
 

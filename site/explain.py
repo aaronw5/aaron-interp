@@ -395,6 +395,11 @@ D4_EXPLAINER = [
   'ParT_full keeps its top calls (95.5 → 92.1 %); ParT_kin loses 42 % of them, mostly to t → bℓν, while its top mass reading rises only 0.45 of the prediction, so that change does not follow the mass reading. '
   'Caveat: ParT_full\'s read-out fits top jets poorly (per-class $R^2$ 0.37).', 'results/site/F9_top_axis.png'),
  ('Per-class numbers', 'Read-out change vs prediction, calibrated ratio, calls changed and accuracy per class for the three models (E19).', 'results/site/T16_axis_by_class.png'),
+ ('Does training with an off-centre axis fix it? (E18, X4)',
+  'Deep Sets and the Linformer were retrained with every particle measured from the hardest particle, so the axis is never at the centre during training (accuracy 80.15 % and 80.90 %, close to the originals). '
+  'When the axis is moved to the other prong of a W or Z jet (the invariant mass changes by 0.3 %), these models\' mass reading moves only 0.13–0.41 of a real mass change of the predicted size, and their calls change in 6–9 % of jets, against 58–64 % for a real mass change of that size. '
+  'They are neither pure invariant-mass nor pure axis-moment computers (both rejected, p ≤ $10^{-27}$), but much closer to recentred than the networks trained with a centred axis. So the un-recentred mass of JEDI-linear and ParT follows from their training data, where the axis is always the centre. '
+  'A residual remains: on natural W jets whose hardest particle sits in a soft prong ($z < 0.3$), they call Z 7–22 % of the time, against 1–4 % for the original models.', 'results/site/F11_axis_jump.png'),
  ('Where these axes are used',
   'The standard (E-scheme) axis is the direction of the summed four-momentum and is how anti-$k_T$ jets are usually defined. The winner-take-all recombination scheme was proposed so that the axis is not moved by soft radiation '
   '(recoil-free); it is used, for example, for the axes of N-subjettiness, and the angle between the standard and WTA axes has itself been studied as an observable of soft radiation. Trigger-level jet finding can build jets around a seed particle. '
