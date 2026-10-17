@@ -203,6 +203,9 @@ from 12 to 31 % (full) and 16 to 37 % (kin); the class-token read-out mass rises
 JetClass, 3.5e-4 on hls4ml) because the stored axis is the pT centroid; the edit identifies which formula each network computes.
 Physical consequence under test (P1v): the taggers' dependence on the axis convention (winner-take-all vs centroid axis).
 C3 v1 ("ParT's mass is the invariant mass, unlike JEDI's") refuted by P1.
+P1v (verified, confidence 0.9): ParT_full's response enters only through the per-particle deltaR input (fed unedited: 92–100 %
+of the response disappears); ParT_kin's through dphi (0.65) and deltaR (0.35); the pair features are invariant to float32 noise.
+Physical consequence (Paper D, D4): inputs about the winner-take-all axis change 11.7 % (ParT_full) and 34.1 % (ParT_kin) of calls.
 
 ## Paper C: circuits (ParT)
 

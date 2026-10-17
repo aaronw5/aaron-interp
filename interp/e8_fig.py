@@ -29,13 +29,14 @@ for ax, stage, ttl in zip(axs[:2], ('z', 'S'), ('a  imposed on the 16 neurons z'
     rlo = [I[c]['random']['mean'] - I[c]['random']['min'] for c in CL]; rhi = [I[c]['random']['max'] - I[c]['random']['mean'] for c in CL]
     ceil_key = list(I[CL[0]]['ceiling'])[0]; ceil = [I[c]['ceiling'][ceil_key] for c in CL]
     un = [untr(I[c]) if untr(I[c]) is not None else 0 for c in CL]
-    ax.bar(xs - 1.5 * w, rule, w, color=C['blue'], label=f'rule: 2-3 unit windows set to class medians')
-    ax.bar(xs - 0.5 * w, rnd, w, color=C['yellow'], yerr=[rlo, rhi], capsize=2, ecolor=INK2, label='same number of random units (10 draws, min-max)')
-    ax.bar(xs + 0.5 * w, un, w, color=C['magenta'], label='rule on the untrained network')
-    ax.bar(xs + 1.5 * w, ceil, w, color=GRID, edgecolor=INK2, label=f'ceiling: all {"16 neurons" if stage == "z" else "19 units"} set to class medians')
-    for xi, v in zip(xs, rule): ax.text(xi - 1.5 * w, v + 1, f'{v:.0f}', ha='center', va='bottom', fontsize=8, color=INK)
-    for xi, v in zip(xs, ceil): ax.text(xi + 1.5 * w, v + 1, f'{v:.0f}', ha='center', va='bottom', fontsize=8, color=INK2)
-    ax.set_xticks(xs); ax.set_xticklabels([f'{c}\n{R[stage]["description"][c]["n_units"]} units' for c in CL]); ax.set_ylim(0, 105)
+    w = 0.16; sing = [I[c]['and_test']['max_single'] for c in CL]
+    ax.bar(xs - 2 * w, rule, w, color=C['blue'], label='rule: its 2-3 units set to the in-rule medians')
+    ax.bar(xs - 1 * w, sing, w, color=C['aqua'], label='best single unit of the rule, alone')
+    ax.bar(xs, rnd, w, color=C['yellow'], yerr=[rlo, rhi], capsize=2, ecolor=INK2, label='same number of random units (10 draws, min-max)')
+    ax.bar(xs + 1 * w, un, w, color=C['magenta'], label='rule on the untrained network (trained values)')
+    ax.bar(xs + 2 * w, ceil, w, color=GRID, edgecolor=INK2, label=f'all {"16 neurons" if stage == "z" else "19 live units"} set to class medians')
+    for xi, v in zip(xs, rule): ax.text(xi - 2 * w, v + 1, f'{v:.0f}', ha='center', va='bottom', fontsize=8, color=INK)
+    ax.set_xticks(xs); ax.set_xticklabels([f'{c}\n{R[stage]["description"][c]["n_units"]} units' for c in CL]); ax.set_ylim(0, 125); ax.set_yticks(range(0, 101, 20))
     ax.set_ylabel('% of jets called otherwise now called the class'); ax.set_title(ttl, loc='left', fontsize=10, color=INK)
     ax.grid(axis='y', color=GRID, lw=0.8); ax.set_facecolor(BG); ax.legend(frameon=False, fontsize=7.5, loc='upper left', labelcolor=INK2)
 ax = axs[2]; doses = [0.0] + [float(d) for d in R['doses']]
@@ -54,7 +55,10 @@ fig.tight_layout(); out = OUT / 'e8_conjunctions.png'; fig.savefig(out, dpi=150,
 
 # ------------------------------------------------------------------ rule table (site/tables.py style)
 def table(fname, title, cols, rows, widths, note=None, h=0.42):
-    fig, ax = plt.subplots(figsize=(sum(widths), 0.9 + h * len(rows) + (0.5 if note else 0)), dpi=160); ax.axis('off')
+    import textwrap
+    if note: note = '\n'.join(textwrap.wrap(note, int(sum(widths) * 15)))
+    nl = note.count('\n') + 1 if note else 0
+    fig, ax = plt.subplots(figsize=(sum(widths), 0.9 + h * len(rows) + 0.2 * nl), dpi=160); ax.axis('off')
     t = ax.table(cellText=rows, colLabels=cols, colWidths=[w / sum(widths) for w in widths], loc='upper center', cellLoc='left', colLoc='left')
     t.auto_set_font_size(False); t.set_fontsize(9); t.scale(1, 1.75)
     for (r, c), cell in t.get_celld().items():
@@ -73,7 +77,10 @@ def rule_text(stage, c):
     d = R[stage]['description'][c]; W = R[stage]['windows']; units = R['liveS'] if stage == 'S' else list(range(16)); parts = []
     for f, (lo, hi) in sorted(d['rule'].items(), key=lambda kv: int(kv[0])):
         nm = f'{"S" if stage == "S" else "z"}{units[int(f)]}'
-        cond = (f'{lo:.3g} ≤ {nm} < {hi:.3g}' if lo is not None and hi is not None else f'{nm} ≥ {lo:.3g}' if lo is not None else f'{nm} < {hi:.3g}')
+        on = 1e-6                       # the script's on/off threshold (unit >= 1e-6 <=> unit > 0)
+        if lo == on: cond = f'0 < {nm} < {hi:.3g}' if hi is not None else f'{nm} > 0'
+        elif hi == on: cond = f'{lo:.3g} ≤ {nm} ≤ 0' if lo is not None else f'{nm} ≤ 0'
+        else: cond = (f'{lo:.3g} ≤ {nm} < {hi:.3g}' if lo is not None and hi is not None else f'{nm} ≥ {lo:.3g}' if lo is not None else f'{nm} < {hi:.3g}')
         w = W.get(f'{c}:{nm}'); mq = w['mass_q'] if w else None
         parts.append(cond + (f'  [m {mq[0]:.0f}–{mq[2]:.0f}' + (f'; {KNOWN[nm]}' if nm in KNOWN else '') + ']' if mq else ''))
     return '\n'.join(parts)
@@ -84,13 +91,16 @@ for stage in ('z', 'S'):
     for c in CL:
         d, i = R[stage]['description'][c], R[stage]['intervention'][c]
         ceil = i['ceiling'][list(i['ceiling'])[0]]; u = untr(i)
+        ro = i['random_outside_rule']['mean'] if i.get('random_outside_rule') else None
         rows.append([c, stage, rule_text(stage, c), f'{d["precision"]*100:.0f} %', f'{d["coverage"]*100:.0f} %',
-                     f'{i["rule"]:.0f} %  /  {i["random"]["mean"]:.0f} %  /  {u if u is None else f"{u:.0f} %"}  /  {ceil:.0f} %',
+                     f'{i["rule"]:.0f} %', f'{i["and_test"]["max_single"]:.0f} %' + (f' / {i["and_test"]["max_pair"]:.0f} %' if i['and_test'].get('max_pair') is not None else ''),
+                     f'{i["random"]["mean"]:.0f} % ({"–" if ro is None else f"{ro:.0f} %"})', '–' if u is None else f'{u:.0f} %', f'{ceil:.0f} %',
                      f'{i["necessity"]["rule_to_other_med"]:.0f} %'])
 table(OUT / 'e8_rules_table.png', f'JEDI-linear: each class as a conjunction of unit windows (E8; {R["n_eval"]:,} evaluation jets, rules fit on {R["n_fit"]:,}; seed {R["seed"]})',
       ['class', 'level', 'rule (3-deep tree, best leaf); [mass 25–75 % of jets in the window, GeV; E6 window]', 'precision', 'coverage',
-       'other jets switched in: rule / random / untrained / ceiling', 'still the class after\nrule → other medians'],
-      rows, [0.6, 0.6, 5.6, 0.9, 0.9, 3.4, 1.6], h=0.95,
+       'switched in:\nrule', 'best single /\nbest pair', 'random units\n(outside rule)', 'untrained', 'all units', 'still the class after\nrule → other medians'],
+      rows, [0.6, 0.6, 5.4, 0.9, 0.9, 1.0, 1.2, 1.3, 0.9, 0.8, 1.6], h=0.95,
       note='precision = share of jets inside the rule the network calls the class; coverage = share of the network\'s calls inside the rule. '
-           'Switched: evaluation jets called otherwise, rule units set to the in-rule medians of jets called the class; random = same number of units (mean of 10); '
-           'ceiling = all 16 neurons (z) / 19 live units (S) set to class medians.')
+           'Switched in: share of evaluation jets called otherwise that the network calls the class after the rule units are set to the in-rule medians of fit jets called the class; '
+           'random = same number of units at class medians (mean of 10 draws from all units; in brackets drawn outside the rule); untrained = the rule imposed on the untrained network (trained values); '
+           'all units = all 16 neurons (z) / 19 live units (S) at class medians.')

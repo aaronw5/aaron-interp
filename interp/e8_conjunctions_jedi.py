@@ -28,6 +28,7 @@ Metrics: precision / coverage per class and level; % of other-called jets switch
   dose curves; sufficiency gap = ceiling - rule.  Output: $AI_RESULTS/jedi/e8_conjunctions.json (figure: interp/e8_fig.py).
 """
 import json, os, sys, time
+from itertools import combinations
 from pathlib import Path
 import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -156,14 +157,18 @@ for st in ('z', 'S'):
 from sklearn.tree import DecisionTreeClassifier
 
 
+ONOFF = 1e-6     # the on/off threshold: unit >= ONOFF  <=>  unit > 0 (relu(z) > 0; S > 0) on the fixed-point grid (step >= 2^-12)
+
+
 def grids(V, positive_part=False):
-    """per column: unique thresholds = 5-95 % quantiles (19 knots) + 0; positive_part (z): quantiles of the values > 0 only,
-    since d7 reads relu(z) and every threshold below 0 is the same state for the network"""
+    """per column: unique thresholds = 5-95 % quantiles (19 knots) + the on/off threshold ONOFF; positive_part (z):
+    quantiles of the values > 0 only, since d7 reads relu(z) and every threshold below 0 is the same state for the network"""
     G = []
     for j in range(V.shape[1]):
         v = V[:, j]
         if positive_part: v = v[v > 0] if (v > 0).sum() >= 50 else v
-        G.append(np.unique(np.concatenate([np.quantile(v, np.linspace(.05, .95, N_KNOTS)), [0.0]])))
+        q = np.quantile(v, np.linspace(.05, .95, N_KNOTS)); q = q[np.abs(q) > 2 * ONOFF]
+        G.append(np.unique(np.concatenate([q, [ONOFF]])))
     return G
 
 
@@ -204,7 +209,11 @@ def cond_str(cond, stage, G=None):
     units = UNITS[stage]; parts = []
     for f, (lo, hi) in sorted(cond.items()):
         nm = NAME[stage](units[f])
-        if lo is not None and hi is not None: parts.append(f'{lo:.3g} <= {nm} < {hi:.3g}')
+        if lo == ONOFF and hi is not None: parts.append(f'0 < {nm} < {hi:.3g}')
+        elif lo == ONOFF: parts.append(f'{nm} > 0')
+        elif hi == ONOFF and lo is not None: parts.append(f'{lo:.3g} <= {nm} <= 0')
+        elif hi == ONOFF: parts.append(f'{nm} <= 0')
+        elif lo is not None and hi is not None: parts.append(f'{lo:.3g} <= {nm} < {hi:.3g}')
         elif lo is not None: parts.append(f'{nm} >= {lo:.3g}')
         else: parts.append(f'{nm} < {hi:.3g}')
     return ' and '.join(parts)
@@ -280,14 +289,25 @@ def run_level(stage, D, all_units_sets):
         r['dose'] = dose
         # random controls
         K = len(cu); rg = np.random.default_rng(1000 + c)
-        rand_all, rand_out = [], []
+        rand_all, rand_out, units_all, units_out = [], [], [], []
         others = np.array([u for u in units_pool if u not in cu])
         for dd in range(N_RAND):
-            ua = rg.choice(units_pool, K, replace=False); rand_all.append(impose(stage, list(ua), med_c[ua], ce, c)[0])
+            ua = rg.choice(units_pool, K, replace=False); rand_all.append(impose(stage, list(ua), med_c[ua], ce, c)[0]); units_all.append([int(u) for u in ua])
             if len(others) >= K:
-                uo = rg.choice(others, K, replace=False); rand_out.append(impose(stage, list(uo), med_c[uo], ce, c)[0])
-        r['random'] = dict(mean=float(np.mean(rand_all)), min=float(np.min(rand_all)), max=float(np.max(rand_all)), draws=rand_all, K=K)
-        r['random_outside_rule'] = dict(mean=float(np.mean(rand_out)), min=float(np.min(rand_out)), max=float(np.max(rand_out)), draws=rand_out) if rand_out else None
+                uo = rg.choice(others, K, replace=False); rand_out.append(impose(stage, list(uo), med_c[uo], ce, c)[0]); units_out.append([int(u) for u in uo])
+        n_hit = sum(bool(set(u) & set(cu)) for u in units_all)
+        r['random'] = dict(mean=float(np.mean(rand_all)), min=float(np.min(rand_all)), max=float(np.max(rand_all)), draws=rand_all, units=units_all, K=K,
+                           n_draws_with_rule_unit=n_hit)
+        r['random_outside_rule'] = dict(mean=float(np.mean(rand_out)), min=float(np.min(rand_out)), max=float(np.max(rand_out)), draws=rand_out, units=units_out) if rand_out else None
+        # AND test: each single rule unit and each pair imposed alone (same in-rule medians); conjunction vs its parts
+        r['subsets'] = {}
+        for k_ in range(1, len(cu)):
+            for sub in combinations(range(len(cu)), k_):
+                us_ = [cu[j] for j in sub]
+                r['subsets'][' & '.join(NAME[stage](u) for u in us_)] = impose(stage, us_, med_in[list(sub)], ce, c)[0]
+        singles = [r['subsets'][NAME[stage](u)] for u in cu] if len(cu) > 1 else [r['rule']]
+        r['and_test'] = dict(sum_of_singles=round(float(sum(singles)), 2), max_single=round(float(max(singles)), 2),
+                             max_pair=(round(float(max(v for kk, v in r['subsets'].items() if kk.count('&') == 1)), 2) if len(cu) == 3 else None))
         # ceilings
         r['ceiling'] = {}
         for nm, us in all_units_sets.items():
@@ -306,6 +326,13 @@ def run_level(stage, D, all_units_sets):
                 mU = np.median(BASEU[stage][fit][callU[fit] == c], 0)
                 rU['own_medians'], _, _ = impose(stage, cu, mU[cu], cUe, c, nt=netU)
                 rU['own_ceiling'], _, _ = impose(stage, us, mU[us], cUe, c, nt=netU)
+            # rank-matched: each rule unit set to the untrained unit's own quantile at the rank the trained in-rule median
+            # has among the trained fit jets (same position in the distribution, the untrained network's scale)
+            qv = [float((bf[:, u] < med_in[j]).mean()) for j, u in enumerate(cu)]
+            vU = np.array([np.quantile(BASEU[stage][fit][:, u], q) for u, q in zip(cu, qv)])
+            rU['rank_matched'], _, _ = impose(stage, cu, vU, cUe, c, nt=netU)
+            rU['rank_matched_values'] = vU.tolist(); rU['rank_of_trained_median'] = qv
+            rU['trained_ceiling'], _, _ = impose(stage, us, med_c[us], cUe, c, nt=netU)    # all units at the trained class medians
         r['untrained'] = rU
         ceil0 = r['ceiling'][list(all_units_sets)[0]]
         r['gap'] = ceil0 - r['rule']
@@ -313,6 +340,7 @@ def run_level(stage, D, all_units_sets):
         log(f'  {stage} {CLASSES[c]}: imposed on {r["n_other"]} jets called otherwise -> called {CLASSES[c]}: rule {r["rule"]:.1f} % '
             f'(class medians {r["rule_classmed"]:.1f}); dose {[dose[str(f_)] for f_ in DOSES]}; random K={K}: {r["random"]["mean"]:.1f} % '
             f'[{r["random"]["min"]:.1f}-{r["random"]["max"]:.1f}] (outside rule {round(r["random_outside_rule"]["mean"], 2) if r["random_outside_rule"] else None}); '
+            f'subsets {r["subsets"]}; and_test {r["and_test"]}; '
             f'other leaves {[(l["rule"], round(l["precision"]*100), round(l["coverage"]*100), l["switched"]) for l in r["leaves_imposed"]]}; '
             f'ceiling {r["ceiling"]}; gap {r["gap"]:.1f}; necessity: {r["n_called_c_in_rule"]} jets, rule->other med still c '
             f'{r["necessity"]["rule_to_other_med"]:.1f} % (all units {r["necessity"]["all_units_to_other_med"]:.1f}); untrained {rU}; '

@@ -78,3 +78,13 @@ table('T5_e11_program.png', 'JEDI-linear written as if-statements, stage by stag
  note='Nested program: each stage fitted on the previous stage\'s fitted values, starting from physics quantities computed from the particles (no network activation enters).\n'
       'Size: 144 units, 3,824 terms (2,344 products), 6,064 if-statements, 211 physics inputs. Per class g/q/W/Z/t: program 78.0 / 70.7 / 87.1 / 85.0 / 82.8, network 77.8 / 70.9 / 87.0 / 83.4 / 82.9.\n'
       'Controls: untrained network R² S 0.08, h4 0.17, h5 0.18, z 0.14; shuffled S targets ≈ 0. Parentheses: with one-sided half-plane sums added to the inputs. Verification running.')
+table('T6_axis_convention.png', 'ParT under a change of jet-axis convention (P1v; 10,000 JetClass test jets; 4-vectors unchanged, only Δη, Δφ, ΔR recomputed)',
+ ['axis the inputs are measured from', 'axis displacement\n(median, rad)', '|M1|² / (M0·M2)\n(median)', 'ParT_full: accuracy;\ncalls changed; W → Z', 'ParT_kin: accuracy;\ncalls changed; W → Z', 'Δlog m̂ full / kin\n(prediction)'],
+ [['stored axis (the training convention)', '0', '0.0020', '85.9 %; 0; 0.117', '74.5 %; 0; 0.162', '0 / 0'],
+  ['E-scheme axis recomputed from the stored particles', '3e-4', '≈ 0.002', '0.08 % changed', '0.18 % changed', '—'],
+  ['winner-take-all (WTA) axis', '0.095 (W 0.075, QCD 0.030)', '0.22', '80.9 %; 11.7 %; 0.340', '56.0 %; 34.1 %; 0.377', '0.133 / 0.125 (0.138)'],
+  ['hardest-particle axis', '—', '—', '14.0 % changed', '38.0 % changed', '—'],
+  ['rigid φ shift by 0.06 (P1, for scale)', '0.06', '—', '8.1 % changed; 0.310', '19.6 % changed; 0.373', '0.052 / 0.095 (0.073)']],
+ [3.6, 1.9, 1.5, 2.4, 2.4, 2.1],
+ note='Input location (P1v): for ParT_full the response enters only through the per-particle deltaR input (fed unedited, 92–100 % of Δlog m̂ and 98–100 % of the W → Z change disappear);\n'
+      'for ParT_kin through dphi (0.65) and deltaR (0.35). The pair features (ln kT, ln z, ln ΔR, ln m²) are unchanged to within float32 noise. Caveat: 2.6 % of jets change the sign of the axis η under WTA.')
