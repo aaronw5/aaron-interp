@@ -15,7 +15,7 @@ OVERVIEW = dict(
         ('E5v', 'done: A2 verified; A3 verified in corrected form (10 of 17 objects radial, 3 directional)'),
         ('E11 / E11v', 'verified: the whole network as a 6,064-if-statement program reproduces 94.2 % of calls on fresh jets, accuracy within 0.3 points, W rejection 0.70×, and the network\'s response to the jet shift; a direct physics formula does not reproduce the shift response'),
         ('P1 / P1v / E17', 'ParT not translation invariant (verified); inputs about the WTA axis change 30.3 % of JEDI-linear\'s calls (80.6 → 59.3 %), 11.7 % of ParT_full\'s, 34.1 % of ParT_kin\'s'),
-        ('Small taggers', 'all 28 runs + 2 reruns done. N = 64: Linformer 2 blocks 80.91 ± 0.15 %, Deep Sets 80.73 ± 0.09 %, JEDI 80.92 %; plain transformers 69–76 % (100-epoch runs in progress). Next: run the JEDI tests on them (X2)'),
+        ('Small taggers', 'E18: models retrained with inputs about the hardest particle reach 80.90 % (Linformer) and 80.15 % (Deep Sets); X4 tests whether they learned the invariant mass. All 28 runs + 2 reruns done. N = 64: Linformer 2 blocks 80.91 ± 0.15 %, Deep Sets 80.73 ± 0.09 %, JEDI 80.92 %; plain transformers 69–76 % (100-epoch runs in progress). Next: run the JEDI tests on them (X2)'),
         ('Models and data', 'ParticleNet JetClass weights copied; no released L-GATr weights exist, so it is trained in-house; LorentzNet ships top-tagging and QG checkpoints; top-tagging and QG data on the volume'),
     ],
     decisions=[

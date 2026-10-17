@@ -1,6 +1,6 @@
 """Write the k8s Job YAMLs for the small-tagger training sets to train/jobs/.
 
-    python train/make_jobs.py [--set main|extra1] [--only n32-s0,n64-s1] [--suffix=-b] [--conc C] [--cpu C] [--mem G]
+    python train/make_jobs.py [--set main|extra1|e18] [--only n32-s0,n64-s1] [--suffix=-b] [--conc C] [--cpu C] [--mem G]
     kubectl apply -f train/jobs/<job>.yaml
 
 Sets (job name -> runs as model:N:seed[:dir-tag[:train_small flags]], see gpu_job.sh):
@@ -8,6 +8,8 @@ Sets (job name -> runs as model:N:seed[:dir-tag[:train_small flags]], see gpu_jo
   extra1  n64-p30: tf-2b-d16 and tf-2b-d32 at N = 64, seed 1, --patience 30 (reruns of the two early-stopped main runs;
           directory tag -p30, the originals stay); n64-e100: tf-2b-d32 and tf-2b-d64 at N = 64, seeds 0 and 1, 100 epochs
           cosine, --patience 100 (no early stop), directory tag -e100.
+  e18     n64-axhard: dsets-d64 and linf-2b-d32-k8 at N = 64, seeds 0 and 1, --axis hardest ((deta, dphi) re-measured
+          about the hardest particle; normalisation norm_stats_axhard.json from train/axis_stats.py), tag -axhard.
 Several runs share one GPU (NRP: GPU utilisation must stay > 40 %). CPU / memory per set from measurements: about 0.75-1
 core and 1.8-2.1 GiB of container memory per concurrent run (main jobs: 5.0-5.1 cores, 12.7-15.0 GiB for 7 runs).
 Job names anrunw-ai-train-<job>; labels owner=anrunw, study=aaron-interp, set=small-taggers. The container runs
@@ -90,12 +92,16 @@ def job_sets():
         "n64-e100": dict(runs=[f"{m}:64:{s}:-e100:--epochs=100,--patience=100" for m in ("tf-2b-d32", "tf-2b-d64")
                                for s in SEEDS], conc=4, cpu=4, mem=10),
     }
-    return {"main": main, "extra1": extra1}
+    e18 = {  # E18: inputs re-measured about the hardest particle (train_small --axis hardest), directory tag -axhard
+        "n64-axhard": dict(runs=[f"{m}:64:{s}:-axhard:--axis=hardest" for m in ("dsets-d64", "linf-2b-d32-k8")
+                                 for s in SEEDS], conc=4, cpu=4, mem=10),
+    }
+    return {"main": main, "extra1": extra1, "e18": e18}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--set", default="main", help="main | extra1")
+    ap.add_argument("--set", default="main", help="main | extra1 | e18")
     ap.add_argument("--only", default="", help="comma-separated job names")
     ap.add_argument("--suffix", default="", help="job-name suffix for resubmits, written --suffix=-b")
     ap.add_argument("--conc", type=int, default=None, help="trainings running at once per GPU (default: the set's)")

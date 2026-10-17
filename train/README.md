@@ -12,6 +12,9 @@ exactly JEDI-linear's inputs: the first N particles (pT order), features (pT, Δ
   comma-separated `train_small.py` options written with `=` (`--epochs=100,--patience=100`).
 - `make_jobs.py` — writes the Job YAMLs to `jobs/` for a named set (`--set main`: one job per (N, seed), the 7 models
   concurrently; `--set extra1`: the patience-30 reruns and the 100-epoch tf-2b-d32 / tf-2b-d64 runs).
+- `axis_stats.py` — E18: normalisation stats for inputs re-measured about the hardest particle (`--axis hardest` in
+  `train_small.py`), with JEDI-linear's procedure (float32 mean/std over the full 620,000-jet training archive, padding
+  included); reproduces `norm_stats.json` exactly on the stored inputs; writes `data/norm_stats_axhard.json`.
 - `summarize_small.py` — `collect` (on the cluster: run records → `summary_small.json`) and `render` (Markdown tables and
   the PNG `results/site/T7_small_models.png`, mean ± spread over seeds).
 - `STATUS.md` — what was launched and how to check it.
@@ -25,6 +28,11 @@ exactly JEDI-linear's inputs: the first N particles (pT order), features (pT, Δ
 
 Parameter counts: tf-2b-d64 67,653; tf-1b-d16 2,405; tf-2b-d16 4,629; tf-1b-d32 8,901; tf-2b-d32 17,445; linf adds N×K per block
 (linf-1b-d32-k4 9,029 at N = 32, 9,157 at N = 64; linf-2b-d32-k8 17,957 / 18,469); dsets-d64 11,269 (independent of N).
+
+Input axis (`--axis`): `stored` (default; the archive's (Δη, Δφ) about the jet axis) or `hardest` (every real
+particle's (Δη, Δφ) re-measured about slot 0, the hardest particle: d = x − x[slot 0], Δφ wrapped to [−π, π), padded
+rows stay 0, pT unchanged; applied to train, dev and test; normalisation `data/norm_stats_axhard.json`). The axis,
+its definition, the normalisation file and its shift/scale values are written to each run's `arch.json`.
 
 ## Training (defaults of `train_small.py`)
 AdamW (wd 0.01), lr 1e-3, 200 warm-up steps then cosine decay to 0 over `--epochs 30`, batch 1024, label smoothing 0,
@@ -67,6 +75,8 @@ labels `owner=anrunw, study=aaron-interp, set=small-taggers`, 1 GPU, limits = re
 - `extra1`: `n64-p30` = tf-2b-d16 and tf-2b-d32 at N = 64, seed 1, `--patience=30` (reruns of the two main runs that
   early-stopped; directories `<model>-n64-p30/seed1`; 2 CPU, 6 Gi); `n64-e100` = tf-2b-d32 and tf-2b-d64 at N = 64, seeds
   0 and 1, `--epochs=100 --patience=100` (directories `<model>-n64-e100/seed<k>`; 4 CPU, 10 Gi).
+- `e18`: `n64-axhard` = dsets-d64 and linf-2b-d32-k8 at N = 64, seeds 0 and 1, `--axis=hardest` (directories
+  `<model>-n64-axhard/seed<k>`; 4 CPU, 10 Gi). Stats from the CPU job `train-axstats2` (`axis_stats.py`).
 See `STATUS.md` for job states, measured resource use, results and progress commands.
 
 ## Check progress

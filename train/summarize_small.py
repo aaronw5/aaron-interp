@@ -89,7 +89,8 @@ def render(summary, png, md, ref):
         rs = G[(model, n, tag)]
         accs = [r["test_acc"] for r in rs]
         m, s = mean_spread(accs)
-        var = {"": "30 ep, patience 5", "-p30": "30 ep, patience 30", "-e100": "100 ep, no early stop"}.get(tag, tag)
+        var = {"": "30 ep, patience 5", "-p30": "30 ep, patience 30", "-e100": "100 ep, no early stop",
+               "-axhard": "30 ep, axis = hardest particle"}.get(tag, tag)
         by_seed = {r["seed"]: f"{pct(r['test_acc'])}{'*' if r['early_stopped'] else ''}" for r in rs}
         per_seed = " / ".join(by_seed.get(k, "–") for k in (0, 1))  # value under its own seed; – = not run
         aucs = " / ".join(f"{sum(r['auc'][c] for r in rs) / len(rs):.3f}" for c in ("W", "Z", "t"))
@@ -111,14 +112,15 @@ def render(summary, png, md, ref):
 
         cols = ["model", "N", "training", "params", "test acc, seed 0 / seed 1 [%]", "mean ± spread [%]",
                 "AUC W / Z / t\n(mean over seeds)"]
-        widths = [2.6, 0.5, 1.9, 0.9, 2.4, 1.5, 1.9]
+        widths = [2.6, 0.5, 2.7, 0.9, 2.4, 1.5, 1.9]
         n_seeds = len({r["seed"] for r in runs})
         title = (f"Small taggers trained on JEDI-linear's inputs (hls4ml, (pT, Δη, Δφ), first N particles); "
                  f"test = 260,000 jets; {len(runs)} runs")
         note = ("spread = half the difference between the two seeds. * = early-stopped (patience 5 on val loss). "
                 "Best checkpoint = lowest val loss on 25,000 held-out training jets.\n"
                 "Reference: JEDI-linear official models, data/official_acc.json. AUC: one class vs rest, score = class probability.\n"
-                "Patience-30 rows: reruns of the early-stopped seed-1 runs (same seed); the seed-0 runs never triggered the patience-5 stop.")
+                "Patience-30 rows: reruns of the early-stopped seed-1 runs (same seed); the seed-0 runs never triggered the patience-5 stop.\n"
+                "Axis = hardest particle (E18): (Δη, Δφ) of train, dev and test jets re-measured about the hardest particle; all other rows use the stored jet axis.")
         h = 0.31
         fig, ax = plt.subplots(figsize=(sum(widths), 0.9 + h * len(rows_png) + 0.5), dpi=160)
         ax.axis("off")
