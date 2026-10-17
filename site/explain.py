@@ -363,6 +363,17 @@ D4_EXPLAINER = [
   'The jet axis is a convention. The standard axis (E-scheme) is the summed momentum direction. The winner-take-all (WTA) axis follows the harder branch when the jet is reclustered; '
   'it is insensitive to soft radiation and used for some substructure measurements. A trigger may use a seed particle. The invariant mass is the same for every choice; '
   '$\\sqrt{M_0 M_2}$ about the axis is not.', 'results/site/X2_axis.png'),
+ ('Why the axis choice changes the networks\' mass: a two-prong jet',
+  'A W or Z jet has two prongs carrying momentum fractions $z$ and $1-z$, separated by an angle $\\theta$. Its invariant mass is $m^2 \\approx z(1-z)\\,p_T^2\\,\\theta^2$. '
+  'About the centre the networks\' variable equals the mass: $M_0 M_2 = m^2$. About an axis placed on one prong (fraction $z$), that prong sits at $r = 0$ and the other at $r = \\theta$, so '
+  '$M_0 M_2 = (1-z)\\,p_T^2\\theta^2 = m^2/z$ and the networks\' mass becomes $m/\\sqrt{z}$. The WTA axis sits on the harder prong ($z \\ge 0.5$), so the reading grows by a factor between 1 and $\\sqrt2 = 1.41$: '
+  'an 80 GeV W jet reads 80–113 GeV, which crosses the Z window. The hardest single particle can sit in the softer prong ($z < 0.5$), which gives larger factors. For the example jet: $106/81.3 = 1.30$ ($z = 0.59$, WTA on the harder prong) '
+  'and $125/81.3 = 1.53$ ($z = 0.43$, hardest particle in the softer prong). One-prong jets (light quarks, gluons) have their WTA axis close to the centre (median 0.030 rad for QCD jets on JetClass), so their reading changes little; '
+  'this is why the changed decisions are mostly W → Z and Z → q.', None),
+ ('Where these axes are used',
+  'The standard (E-scheme) axis is the direction of the summed four-momentum and is how anti-$k_T$ jets are usually defined. The winner-take-all recombination scheme was proposed so that the axis is not moved by soft radiation '
+  '(recoil-free); it is used, for example, for the axes of N-subjettiness, and the angle between the standard and WTA axes has itself been studied as an observable of soft radiation. Trigger-level jet finding can build jets around a seed particle. '
+  'A tagger trained with one convention and given inputs in another sees its mass reading change by the factor above.', None),
  ('Test', 'Recompute every particle\'s $\\Delta\\eta$, $\\Delta\\phi$, $\\Delta R$ about the WTA axis, the hardest particle, or the E-scheme axis recomputed from the stored particles, keeping the particles\' momenta unchanged; 10,000 JetClass jets.', None),
  ('Result',
   'WTA axis (a median 0.095 rad from the stored axis): ParT_full changes 11.7 % of decisions (accuracy 85.9 → 80.9 %), ParT_kin 34.1 % (74.5 → 56.0 %). Hardest particle: 14.0 % and 38.0 %. '
