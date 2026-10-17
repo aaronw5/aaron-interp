@@ -573,6 +573,65 @@ E21_EXPLAINER = [
  ('Why it matters', 'The narrative step "the dense layers multiply the moments" is replaced by a measured statement: the class neurons depend on $S_0$ and $S_{50}$ approximately as on their product, with large per-jet scatter; the layer where this forms is the next test.', None),
 ]
 
+X6_EXPLAINER = [
+ ('Question', 'Are the program elements found in JEDI-linear (64 particles) properties of one trained checkpoint, or do they appear in other, separately trained official JEDI-linear models?', None),
+ ('Background',
+  'Three other official checkpoints read the same (pT, Δη, Δφ) inputs: 32 particles (78.0 %), 128 particles (80.9 %), and a permutation-invariant variant (81.8 %) whose fixed-point number formats are the same for every particle slot, so it cannot keep or drop particles by pT rank. '
+  'In the 64-particle model, zero-bit number formats in the two sum layers keep only certain pT ranks for each object ("rank windows"). The permutation-invariant model tests whether the objects need such windows.', None),
+ ('Method',
+  'The tests used on the reference model, with thresholds fixed before the run, on 20,000 test jets (seed 0), 9,223 disjoint jets (seed 77) and, in the verification, 6,950 fresh jets (seed 4242): mean ablation of every unit; classification of each live first-layer unit as '
+  '$\\alpha_{p_T} p_T + \\beta > 0$ (pT-only), $\\alpha_\\eta \\Delta\\eta + \\alpha_\\phi \\Delta\\phi + \\beta > 0$ (angle-only) or mixed, with a null that permutes each input\'s nonzero kernel entries over the 64 units; the kept pT ranks of each second-round object; '
+  'swapping $(\\Delta\\eta, \\Delta\\phi)$ of two adjacent ranks across a window edge vs inside a window, ratio $R = \\overline{|\\Delta S|}_{\\rm across}/\\overline{|\\Delta S|}_{\\rm inside}$; the radial share of each object\'s response to one particle within each pT, against random combinations of the model\'s own angle cuts; and a rigid shift of every particle by 0.06 rad, '
+  'which leaves the invariant mass unchanged, against a rotation about the axis with the same mean displacement.', None),
+ ('Result',
+  'All 57 live first-layer units in the four models have exactly zero weight on either pT or angle; random placement of the nonzero weights gives this in 16–48 % of draws per model, so the pattern is not separated from the sparsity. '
+  'Within-pT radial share is 0.977–0.999 for 11 of 12 position-dependent objects among the five most used (above the 97.5 % point of the combination null, 0.92–0.955); one 128-particle object has 0.941. '
+  'The 0.06 rad shift turns 45–76 % of W jets into Z calls, against 2–3 % for the matched rotation. In the three sorted-input models a hard-particle window (10, 14, 20 ranks) gives $R$ = 2.4, 5.4 and 4.6 (the 128-particle edge chosen after the run), 0.71–0.82 with the masks removed; at five other tested edges $R$ is 0.27–1.00 or about 0. '
+  'The permutation-invariant model has no rank windows and is 0.90 [0.58, 1.22] points more accurate than the 64-particle model on the same 20,000 jets (paired; 0.49 [−0.04, 1.02] on the fresh jets).',
+  'results/jedi/x6_models.png'),
+ ('Checks', 'Unedited accuracy matches the official values within 0.7 points. Removing the slot masks only at real-particle slots costs 2.7 / 18.4 / 20.7 points (32 / 64 / 128 particles); letting padded slots into the sums as well raises this to 3.1 / 37.7 / 52.9. The untrained redraws give one class to every jet, so they cannot change calls under any edit.', None),
+ ('Why it matters', 'The near-radial objects and the shift-based mass response are present in four separately trained checkpoints, including one without rank windows, so in this model family the objects do not require rank windows. Where windows exist, the hard-particle window acts causally, with a strength that differs between checkpoints.', None),
+]
+
+E22_EXPLAINER = [
+ ('Question', 'When one unit of the network is set to its value on another jet, does the if-statement program, with the same variable swapped, make the same new call?', None),
+ ('Background',
+  'The program of E11 reproduces 94 % of the network\'s calls on ordinary jets. Agreement on ordinary jets can come from correlations between the program\'s variables and the network\'s units. '
+  'An interchange intervention tests the variables one at a time: unit $k$ of the network gets its value on a source jet $s$, the program\'s formula $\\hat V_k$ gets its value on $s$, and the two calls are compared. '
+  'On pairs where the swap does not change the network\'s call, agreement is mostly the 94 % base rate, so the measure is taken on the pairs $E(k)$ where it does (effective IIA).', None),
+ ('Method',
+  'Three samples (seeds 11, 91, 137; 8,149–8,848 held-out jets, 5,000 random base/source pairs each). For each live unit of $S$, $h_4$, $h_5$, $z$: the network with $V_k \\leftarrow V_k(s)$ and the program with $\\hat V_k \\leftarrow \\hat V_k(s)$ and its later formulas recomputed. '
+  'Controls: the program\'s variable aligned to another unit (200 derangements); 1000 random directions per stage; a linear probe on 380 observables in place of the formula, fitted to the same target; a swap-free predictor (the program\'s runner-up class on the base jet). Intervals from a bootstrap over jets (pair weight $w_b w_s$); Holm over 118 units and over 4 stages.', None),
+ ('Result',
+  'Effective IIA per unit is 0.19–0.88 (stage means 0.52–0.66), against 0.22–0.35 for the permuted alignment. $S_0$ 0.76 [0.71, 0.80], $S_{29}$ 0.55–0.57, $S_1$ 0.38–0.41, $z_0$ 0.75–0.77, $z_7$ 0.63–0.72; none reaches 0.8. '
+  'Against the swap-free predictor (0.51–0.54) the program is higher at $z$ by 0.15 [0.07, 0.23]; at $S$ by 0.03 [−0.04, 0.10], at $h_4$ and $h_5$ by about 0. Per unit, 17 of 118 are higher after Holm. Random swaps of a quarter of all units give 0.78–0.83 (0.944 without a swap; 0.54–0.62 misaligned).', 'results/jedi/e22_verify.png'),
+ ('Checks',
+  'The network tail used for the swaps reproduces the network exactly. With the $S$ formulas and the network\'s own layers after $S$, $S_{29}$ rises to 0.83 and $S_1$ to 0.74, so most of the shortfall is in the downstream formulas\' response to swapped values. '
+  'At $z$ the unit basis scores 0.66 against 0.43 for random directions ($p$ 0.019; 0.076 after Holm over 4 stages). The probe gives lower IIA than the formula for 6–8 of 16 $z$ units, but it also fits post-ReLU $z$ less well ($R^2$ 0.36–0.89 vs 0.83–0.99) and the gap follows the fit gap (Spearman 0.43). The untrained network calls one class for every jet and gives no effective pairs.', None),
+ ('Why it matters', 'The 94 % same-call figure measures agreement on ordinary jets. Under single-unit swaps the program gives the network\'s new call for about half to two thirds of the changed calls; the swap-specific part is measured at $z$, and the stage-level difference from a swap-free predictor at $S$, $h_4$, $h_5$ is not.', None),
+]
+
+B4_EXPLAINER = [
+ ('Question', 'Does the nested if-statement program (E11) describe JEDI-linear better than standard compact surrogates of the same size, both in reproducing the calls and in reproducing how the calls change when the input jet is edited?', None),
+ ('Background',
+  'Description length (DL) counts the fitted pieces of a surrogate: hinge terms for MARS, internal nodes for a tree, leaves for boosted trees, nonzero weights for linear models. '
+  'Edit agreement on a jet is 1 if the surrogate changes its call exactly when the network does, to the same new class: '
+  '$A = \\mathbb{1}[f_s(x\') \\ne f_s(x) \\Leftrightarrow f_n(x\') \\ne f_n(x)]\\cdot\\mathbb{1}[f_n(x\') \\ne f_n(x) \\Rightarrow f_s(x\') = f_n(x\')]$. '
+  'The control for the 0.06 rad shift moves each particle 0.06 rad in its own random direction; its expected change of $\\sum_i p_{T,i} r_i^2$ is $|d|^2\\sum_i p_{T,i}$, the same as the shift\'s.', None),
+ ('Method',
+  'Fit on 20,000 jets (seed 0), select on 10,000, test on 8,848 (seed 11), confirm on 8,519 (seed 91) and on 8,218 fresh jets (seed 23). Surrogates: the nested program with 2–30 terms per unit, MARS from 475 physics inputs straight to the 5 logits, '
+  'decision trees, gradient-boosted trees (on the call and on the logits), L1 logistic and Lasso, energy-flow polynomials up to degree 3. '
+  'Edits: 0.06 rad shift, 45° rotation, swap of the angles of pT ranks 13 and 14, one particle from 10 to 12 GeV, each with a control. For a fixed baseline $b$ the lead difference per jet is $[a_n - a_b]_{\\rm shift} - [a_n - a_b]_{\\rm random}$.', None),
+ ('Result',
+  'Direct MARS and boosted trees reach the same call as the 2–16-term programs with 4.6–19 times fewer pieces; at 16 and 30 terms the program is within 1 point (94.06 % at 30 terms on fresh jets). '
+  'Under the shift the 16- and 30-term programs agree with the network 2.8 and 3.3 points more often than the strongest boosted-tree model (recall 61 % and 69 % vs 52 %); under the random displacement they lead the same model by 2.7 and 5.2 points, so the lead difference is $+0.13$ [$-1.29$, $1.52$] and $-1.95$ [$-3.41$, $-0.41$]. '
+  'MARS fitted straight to the logits reproduces 18–23 % of the shift\'s call changes with no W → Z changes, and 56–57 % of the random displacement\'s.', 'results/jedi/b4_fidelity_dl.png'),
+ ('Checks',
+  'Every model reproduces its stored same call exactly on the test jets; recomputed physics inputs match the stored ones to $3\\times10^{-9}$; a Δφ shift gives the same leads as the Δη shift. Under rotation, rank swap and the 2 GeV crossing the network changes 1–4 % of calls and no surrogate reproduces more than 12 % of them. PySR and energyflow are not installed in the cluster env.', None),
+ ('Why it matters',
+  'The staged program is not the most compact way to reproduce the calls, and its advantage over boosted trees holds for mass-raising displacements in general, not for the coherent shift only. The edit that separates surrogates by mechanism here is the shift against the direct physics-to-logit MARS fits, which use the invariant mass.', None),
+]
+
 # per-paper explainers, rendered inside the paper's tab (title, steps)
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
@@ -586,9 +645,13 @@ PAPER_EXPLAINERS = {
           ('Result 8 explained: classes as window rules on the class neurons, imposed (claim A6; E8)', E8_EXPLAINER, False),
           ('Result 9 explained: the pT-rank windows act causally (claims A1, A3; E20)', E20_EXPLAINER, False),
           ('Result 10 explained: the class neurons as formulas on the objects (claim A5; E7; cross-reference Paper B, B3)', E7_EXPLAINER, False),
-          ('Result 11 explained: is the mass a product of the moments? (claims A4, A9; E21)', E21_EXPLAINER, False)],
+          ('Result 11 explained: is the mass a product of the moments? (claims A4, A9; E21)', E21_EXPLAINER, False),
+          ('Result 12 explained: the same tests on other official JEDI-linear checkpoints (claims A1, A3, A4; X6)', X6_EXPLAINER, False),
+          ('Result 13 explained: interchange interventions on the if-statement program (claim A5; E22; cross-reference Paper B)', E22_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True),
-          ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False)],
+          ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False),
+          ('Result explained: interchange interventions, per variable (claim B2; E22)', E22_EXPLAINER, False),
+          ('Result explained: the if-statement program vs standard surrogates of the same size (claims B3, B4; B4)', B4_EXPLAINER, False)],
     'c': [('Result explained: ParT\'s mass comes mostly through the axis-relative inputs, not the pair features (claim C3)', C3_EXPLAINER, True),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),

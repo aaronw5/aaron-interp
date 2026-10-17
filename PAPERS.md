@@ -33,6 +33,13 @@ Status of the steps after round 2 (2026-10-17):
 - step 6 (neurons on the objects): K = 32 hinge formulas on the 19 S objects change 9.2–10.4 % of calls and follow the
   network's edit responses at 0.42–0.58 of their size (E7/E7v); stated as approximate. ParT/ParticleNet then show the same stages in a different arithmetic.
 
+Status after round 3 (2026-10-17):
+- step 2 across checkpoints (X6/X6v): the hard-particle window acts causally in all three sorted-input models (2.4–5.4×); the
+  permutation-invariant checkpoint has no rank windows, the same cut types, radial objects and shift response, and +0.9 points accuracy.
+- whole program (E22/E22v): per-unit interchange agreement 0.19–0.88 on call-changing swaps; the 94 % same-call figure is not a
+  per-variable causal statement.
+- Paper B baselines (B4/B4v): the program is not more compact; its shift lead over boosted trees is not shift-specific.
+
 Scale requirement (user 2026-10-16: "it can't JUST be a trigger tagger"): the small model is where the program is complete
 and exact; the paper's claim is about taggers in general, so ParT (and ParticleNet) are a main section, not an appendix. For
 every JEDI stage there is a ParT counterpart, run with the same edits:
@@ -80,18 +87,23 @@ first. Checklist applied to every unit we name:
 | "One dataset" | hls4ml + JetClass; top tagging / QG when weights exist |
 | "Off-manifold edits" | on-manifold check: |M1|²/(M0M2) median 3.5e-4, so the two mass definitions coincide on data; the edit isolates which one is computed |
 | "Prior work: Rai & Ganguly, Wang et al." | they trace a top-tagging circuit / attention sparsity; here: stage-wise formulas, exact identity, cross-architecture comparison |
+| "Single model / seed" (round-2 weakness 1) | X6/X6v: four official checkpoints; cut types, radial objects, shift response recur; window strength model dependent (2.4–5.4× at the hard-particle edge, ≤ 1 at five other edges) |
+| "Program fidelity is correlational (no causal abstraction)" (weakness 4) | E22/E22v: effective IIA per unit 0.19–0.88; above permuted alignment; above a swap-free predictor at z only |
+| "No baselines" (weakness 5) | B4/B4v: not more compact; shift lead over GBDT equals its lead on a random mass-raising displacement; direct MARS fails the shift |
 | "Quantisation specifics" | float + masks reproduces 95.5 % of calls; results reported on the float program with the fixed-point network as the reference |
 
 ## Claim confidence (0–1; from all evidence and the verifiers; updated by the ledger step each round)
-Last update: 2026-10-17, round 2 (E20/E20v, E7/E7v, E21/E21v). Change from the previous value in parentheses.
+Last update: 2026-10-17, round 3 (X6/X6v, E22/E22v, B4/B4v). Change from the previous value in parentheses.
+Round 2 values: A1 0.9, A3 0.8, A4 0.85, A5 0.5, B2 0.85, B3 0.6, B4 0.0.
 | claim | confidence | basis |
 |---|---|---|
-| A1 statements = cuts; objects = cut ∧ rank window | 0.9 (=) | E1–E3m, E9, R2; E20/E20v causal window test (0.75) for six angular objects |
+| A1 statements = cuts; objects = cut ∧ rank window (n64) | 0.85 (−0.05) | E1–E3m, E9, R2; E20/E20v causal window test (0.75) for six angular objects; X6v: in n32/n128 the window effect holds at the hard-particle edge only (2.4–5.4×), 0.27–1.00 or ≈ 0 at five other edges; half or more of the n64 mask-removal cost is padded slots (real slots only: 18.4 points, not 37.7) |
+| A1x program elements across official JEDI-linear checkpoints (X6) | 0.55 (new) | X6/X6v (0.45): cut types, ≥ 0.977 within-pT radial share (11/12 units), shift W → Z 0.45–0.76 in 4 checkpoints; pure cuts at the level random placement gives at the observed sparsity (p 0.16–0.48); perminv has no rank windows |
 | A2 context through four objects | 0.85 (=) | E4, E5v; R2: S58 replaceable |
-| A3 second-round objects = (pT, r) hinges over rank windows | 0.8 (=) | E5, E5v, E14/E14v, R2 (5 radial under every edit); E20 windows |
-| A4 un-recentred M2-like mass variable | 0.85 (+0.1) | E6, E6v, R1, E14v, E17; separate S units for M0, M2 |
+| A3 second-round objects = (pT, r) hinges over rank windows | 0.8 (=) | X6v: radial objects recur in 4 checkpoints above a combination-of-cuts null (11/12); perminv shows they do not require rank windows; E5, E5v, E14/E14v, R2 (5 radial under every edit); E20 windows |
+| A4 un-recentred M2-like mass variable | 0.9 (+0.05) | E6, E6v, R1, E14v, E17; separate S units for M0, M2; X6v: 0.06 rad shift W → Z 0.45–0.76 vs rotation 0.02–0.03 in all four official checkpoints (log10 p ≤ −147) |
 | A4 product of M0 and M2 / stage where it forms | 0.35 (new) | E15 withdrawn (0.2); E21 R test uninformative; E21v gradient ratio product-like at the read-out, not reviewed by the verifier, stage open |
-| A5 neurons = formulas on the S objects | 0.5 (+0.05) | E7/E7v (0.55): 9.2–10.4 % calls, edit slopes 0.41–0.58 |
+| A5 neurons = formulas on the S objects | 0.45 (−0.05) | E7/E7v (0.55): 9.2–10.4 % calls, edit slopes 0.41–0.58; E22/E22v (0.55): effective IIA z 0.37–0.88 (mean 0.66, swap-free 0.52, jet CI of the difference [0.07, 0.23]); S, h4, h5 not separated from a swap-free predictor at stage level |
 | A6 classes = window rules on z, effect via additive margin | 0.6 (=) | E8, E8v |
 | A8 ParT follows the same stages | 0.35 (new) | C3, P1v, P2v cover the mass row only |
 | A9 depth ordering of readability | 0.55 (−0.05) | E10, R2 (ρ 0.51), X2 (ρ 0.85–0.90); D2 not causal; mass product step not located |
@@ -99,9 +111,10 @@ Last update: 2026-10-17, round 2 (E20/E20v, E7/E7v, E21/E21v). Change from the p
 | A11 one main job per unit | 0.65 (=) | E16 (not skeptic-rerun) |
 | A12 mass formula follows the training axis | 0.6 (=) | E18, X4 (not skeptic-rerun) |
 | B1 exact pooled identity | 0.9 (=) | E3, E3m, E9 |
-| B2 nested if-statement program reproduces the network | 0.85 (=) | E11, E11v, R2 |
-| B3 same call on data ≠ same mechanism (direct surrogate fails edits) | 0.6 (−0.15) | E11v; E7: holds for the 87-observable basis; E7v: without the mass family the hand fit follows the translation (W → Z 75.7 %) at slope 0.37 |
-| B4 baselines | 0.0 | not started |
+| B2 nested if-statement program reproduces the network's calls (94 %) | 0.85 (=) | E11, E11v, R2, B4v (94.06 % fresh) |
+| B2m the program's variables are the network's causal variables (IIA) | 0.4 (new) | E22/E22v: effective IIA stage means 0.52–0.66 vs permuted 0.22–0.35; above swap-free at z only; no named unit ≥ 0.8; random multi-stage swaps 0.78–0.83 vs 0.944 without swap |
+| B3 same call on data ≠ same mechanism (direct surrogate fails edits) | 0.6 (=) | E11v; E7/E7v basis-dependent; B4v: direct physics-to-logit MARS (92.9 % same call) reproduces 18–23 % of the shift's call changes with 0 % W → Z, 56–57 % of a random displacement's; GBDT on logits follows the shift (W → Z 74.5–76.3 %); E22v: the probe-vs-formula IIA contrast tracks fit quality (not matched) |
+| B4 the nested program beats compact baselines at equal DL | 0.25 (new value; was 0.0, not started) | B4/B4v (0.55): not more compact (baselines 4.6–19× lower DL for K ≤ 16); same call within 1 point at K 16, 30; shift lead over GBDT +2.8–3.3 points equals its lead on a random mass-raising displacement (difference +0.13 [−1.29, 1.52], −1.95 [−3.41, −0.41]) |
 | C1 / C2 / C3 / C4 | 0.8 / 0.7 / 0.85 / 0.0 (=) | G107/G108; G21–G22; P1, P1v, P2, P2v, R1 |
 | D1 / D2 / D3 / D4 | 0.8 / 0.7 / 0.0 / 0.8 (=) | J26–J30; G194, G202–G204; —; P1v, E17, E19, R1 |
 
@@ -194,6 +207,14 @@ Claims to establish:
   12–19 %). Post-translation W → Z (S 87.6–88.5 %, network 76–77 %) is also reproduced by random terms on S (72–86 %), so it reflects
   the S inputs, not the fitted formula. Negative poles (most negative 1 %): z1 W 67–69 %, z6 W 85 %, z8 W 98 %; z0, z2, z3, z11, z15
   t 85–91 %; z4, z14 q 84–86 %. The neuron stage is approximately, not exactly, a function of the objects at this term budget.
+  [2026-10-17, E22 + E22v; verifier confidence 0.55: interchange interventions. Setting one unit to its value on a source jet, the program
+  (same variable swapped, downstream formulas recomputed) gives the network's new call in 0.19–0.88 of the pairs where the network's
+  call changes (three samples; S 0.33–0.77, h4 0.20–0.75, h5 0.25–0.79, z 0.37–0.88). Named: S0 0.76 [jet CI 0.71, 0.80], S29
+  0.55–0.57, S1 0.38–0.41 (inside its permuted range), z0 0.75–0.77, z7 0.63–0.72. Swap-free predictor (program's runner-up class
+  on the base): stage-level difference z +0.15 [0.07, 0.23], S +0.03 [−0.04, 0.10], h4/h5 ≈ 0; 17/118 units higher after Holm
+  (pairs treated as independent). The network's own runner-up class scores 0.75–0.90. Most of the S29/S1 shortfall sits in the
+  h4/h5/z formulas: S formulas with the network downstream give S29 0.83, S1 0.74. So the z formulas carry swap-specific agreement;
+  per-unit IIA is the measure to state, not the 94 % same call.]
   v1 (2026-10-16): "The 16 neurons are statements on A3's objects. Replacing each stage by its formula keeps the network's calls. [E7]"
 - A6 (v2, 2026-10-17, E8 + E8v; verifier confidence 0.6). Each class's calls are described by a rule of 2–3 neuron windows on z
   (precision 96–98 %, coverage 70–82 % on fresh jets; rules of similar quality exist in random rotations of z: 87–99 %, 46–82 %).
@@ -226,6 +247,9 @@ Claims to establish:
 - A12 (2026-10-17, E18/X4): the un-recentred mass follows from the training data: models retrained with off-centre (hardest-particle)
   axes mostly recentre (axis-jump response 0.13–0.41 of a matched real change; both pure hypotheses rejected); residual W → Z 7–22 % for
   soft-prong-axis jets. Narrative: a network learns the simplest formula that is correct on its training distribution.
+- A10 note (2026-10-17, X6/X6v): across four official JEDI-linear checkpoints (n32, n64, n128, perminv n64) the pure pT-only /
+  angle-only cuts are not separated from random placement at HGQ sparsity (p 0.16–0.48), so the "sparse cuts come from HGQ training"
+  hypothesis gains a sparsity explanation for purity; X5 (Deep Sets with HGQ / L1) still tests it across architectures.
 - A10 v2 (2026-10-17, X2): general across small architectures: axis-relative mass (invariant mass rejected) and layer ordering by
   complexity (ρ 0.85–0.90). Not general: JEDI-linear's sparse 13-cut first layer (Deep Sets uses 63–64 mixed units) and the size of the
   axis-moment response (0.07–2.0 of √(M0M2) across architectures and seeds). Hypothesis to test: the sparse cuts come from HGQ fixed-point
@@ -254,6 +278,19 @@ qs1 masks (with the add masks also absent) removes 95–98 % of the response and
 fixed density: 32–36 % accuracy. Inside-window swaps are not null (above 1 LSB for up to 27 % of jets): in the float program from
 the non-separable (pT, r) hinge, plus a part absent from the float program (rounding, not separately tested). S0 and S19 (pT-only)
 are not tested by angle swaps. Wording before this date: "an object is a cut AND a pT-rank window" (from masks, no causal test).
+
+Refinement 4 (2026-10-17, X6 + X6v; verifier confidence 0.45): other official checkpoints. In 3-feature n32 / n128 and
+3-feature-perminv n64, every l1 unit with a nonzero weight is pT-only or angle-only (57/57); at the observed kernel sparsity random
+placement of the nonzero entries gives this with p = 0.16–0.48 per model (product 0.009, Fisher 0.31), so the pure-cut pattern is not
+separated from HGQ sparsity. Rank windows: the qs1 masks of the sorted-input models contain a hard-particle window (0–9, 0–13, 0–19 at
+n = 32, 64, 128; other prefix windows exist); an angle swap across its edge changes the windowed S units 2.4–5.4× more than an inside swap
+(V: 5.37, 2.36, 4.59; the n128 edge chosen post hoc), 0.71–0.82 with masks removed. At five other tested edges the ratio is 0.27–1.00 or
+≈ 0 (n64 0|1 S1; n128 61|62 0.32 [0.27, 0.38] with radial units S21, S48, S54). Removing slot masks at real-particle slots costs 2.7 / 18.4
+/ 20.7 points (n32 / n64 / n128); E3m's "fully float 43.7 %" also admits padded slots (n64 real slots only: 62.3 %). perminv has no
+slot-dependent masks and is +0.90 [0.58, 1.22] points more accurate than n64 on M (paired, p 3e-8; V +0.49 [−0.04, 1.02], p 0.07), with
+the same cut types, radial objects (0.989–0.995) and shift response (W → Z 0.56). Reading: in this model family an object does not
+require a rank window; where windows exist (sorted inputs) the hard-particle window acts causally. Wording kept: "object = particles
+passing the cut within a fixed rank window" holds for the n64 model as measured by E20/E20v; its generality is limited to sorted-input models.
 
 A3 v3 (2026-10-16, E5v, verified on a fresh sample): rigid rotations and reflections of whole jets change 3.7–4.1 % of calls. Ten of
 the 17 particle objects (S0, S19, S20, S29, S30, S40, S43, S50, S51, S60 — the five costliest among them) move ≤ 0.1 SD; S13, S17,
@@ -320,6 +357,23 @@ p < 0.001, 16/16 neurons after Holm); under the rotation it does not respond (0.
 mechanism-separating edit depends on which correlated observable the fit selects; the same-call rate on ordinary jets does not detect
 this, the edit does. This qualifies B3 (E11v's direct surrogate) as basis-dependent. Merge rule: no change yet; B's stand-alone test
 (≥ 3 architectures or 2 datasets) is still open.]
+
+Round 3 (2026-10-17), E22/E22v, B4/B4v (verifier confidence 0.55 each):
+- B2 split into B2 (calls: 94 %, unchanged) and B2m (variables as causal variables: effective IIA 0.52–0.66 per stage; above a swap-free
+  predictor at z only). Old B2 wording ("reproduces the whole network … it also reproduces the network's responses") kept on the
+  results page with this date.
+- B4 v1 (2026-10-17, B4/B4v): the nested program is not more compact than direct MARS / GBDT (they reach mars2–16's same call at 4.6–19×
+  lower DL); at K = 16 and 30 it is within 1 point on same call and leads the strongest boosted-tree model of equal or smaller DL by
+  2.0–3.7 points of agreement under the coherent 0.06 rad shift (recall 61–69 % vs 50–52 %), and by 2.7–5.2 under a random 0.06 rad
+  displacement that raises Σ pT r² by the same expected amount, so the lead is not specific to the shift. Specific to the shift: direct
+  physics-to-logit MARS fits reproduce 18–23 % of its call changes with 0 % W → Z (56–57 % under the random displacement). Rank swap,
+  rotation and the a32 crossing do not separate surrogates (network flips 1–4 %). Prior B4 entry: "Baselines (tree extraction,
+  symbolic regression, probes)", not started. PySR and energyflow are not in the job env.
+- B3: the E22 probe-vs-formula IIA contrast at z is confounded by fit quality (post-ReLU R² 0.36–0.89 probe vs 0.83–0.99 formula; gap
+  tracks R² gap, Spearman 0.43); at matched R² (S29, S50) the difference is 0.01–0.02.
+- Merge rule: B's stand-alone case after round 3 rests on (i) the 94 % call reproduction, (ii) the direct-MARS shift failure, (iii)
+  per-variable IIA above permuted/swap-free baselines at z. Compactness and a mechanism-specific lead over GBDT are not supported.
+  The ≥ 3-architecture condition is still open. No merge decision taken (user gate).
 
 ## Datasets
 - hls4ml jets (5 classes g, q, W, Z, t): JEDI-linear family, small transformers / Linformers.
