@@ -3,7 +3,7 @@ Writing rule: plain statements of what was measured; no verdict words, no metaph
 Each claim carries a `detail` block (rendered as a drop-down): what the claim is, procedure (sample, edit, control, metric),
 result (numbers), tables, figures, verification, files. Figure paths are relative to the repo root; missing files are skipped."""
 
-UPDATED = '2026-10-16 (E5v, P1)'
+UPDATED = '2026-10-16 (E5v, P1, E11)'
 
 OVERVIEW = dict(
     title='Overview',
@@ -13,7 +13,7 @@ OVERVIEW = dict(
     status=[
         ('Science loop (Paper A + B)', 'round 1 on the cluster: E8 (classes as conjunctions, imposed), E14, E15; then verify → ledger → review'),
         ('E5v', 'done: A2 verified; A3 verified in corrected form (10 of 17 objects radial, 3 directional)'),
-        ('E11', 'MARS fit of the entire trigger model, all stages: 10 cluster jobs finished, analysis in progress'),
+        ('E11', 'done: the whole network as a 6,064-if-statement program reproduces 94.0 % of calls at 80.72 % vs 80.42 %; verification E11v running'),
         ('P1', 'done: ParT is not translation invariant either (φ shift 0.06: ParT_full 8.1 % of calls, W → Z 12 → 31 %; read-out mass 0.7× the M2 prediction); verification P1v running (input location, WTA axis)'),
         ('Small transformers', 'first set trained (N = 32, seed 0, 30 epochs): tf-2b-d32 77.2 %, dsets-d64 77.8 %, linf-2b-d32-k8 78.4 % vs JEDI n32 78.0 %; the other three jobs queued; per-epoch checkpoints saved'),
         ('Models and data', 'ParticleNet JetClass weights copied; no released L-GATr weights exist, so it is trained in-house; LorentzNet ships top-tagging and QG checkpoints; top-tagging and QG data on the volume'),
@@ -144,7 +144,7 @@ A_CLAIMS = [
                      'overstated (odd term 12–20 %; verifier confidence 0.55 for the exact form, > 0.9 for non-recentring). The v2 formula with a factor 2 in PAPERS.md was an error, corrected.',
         files='interp/e6_mass_jedi.py, interp/e6_verify.py; results/jedi/e6_mass.json, e6_verify.json, e6_verify_translation.png')),
  dict(id='A5', statement='The 16 neurons are statements on the network\'s own objects; replacing the neuron stage by the formula keeps the calls.',
-      status='next (science loop; E11 MARS fit of every stage finished, analysis in progress)', confidence=0.3, evidence='E7, E11',
+      status='partly measured (E11): z written on h5 formulas reaches R² 0.94 in the chain; z directly on S objects not yet fitted', confidence=0.45, evidence='E7, E11',
       detail=dict(what='Each z neuron as a hinge sum of the second-round objects S (and the dense layers in between) rather than of hand observables.',
                   procedure='Planned: fit per neuron on S units (E11 compositional fits); substitute z by the formula and let the last layer finish; same-call % and accuracy.',
                   result='Pending.', tables=[], figures=[], verification='—', files='interp/e11_mars_all.py')),
@@ -171,8 +171,9 @@ A_CLAIMS = [
                   ['girth', '1', 'S', 'S', '.66 / .99 / .97'], ['mass', '1', 'S', 'P', '.74 / .97 / .99'], ['e2', '1', 'S', 'S', '.49 / .95 / .96'],
                   ['D2', '2', '–', 'h4', '.21 / .63 / .79'], ['C2', '2', '–', 'S', '.48 / .71 / .76'], ['planar flow', '2', '–', 'h4', '.08 / .67 / .67'],
                   ['τ21', '3', '–', 'h4', '.09 / .68 / .74'], ['τ32', '3', '–', '–', '.24 / .36 / .44'], ['soft-drop mass', '3', 'h4', 'S', '.38 / .88 / .88']])],
-        figures=[('results/jedi/F2_variables_over_layers.png', 'Median held-out R² (bars = IQR) by stage and depth group; trained linear, trained MLP, untrained linear.')],
-        verification='Not yet rerun by a skeptic. Caveats recorded: the untrained control is nearly empty from S on; 99.9 % of particles sit at ΔR < 0.44, so outward edits leave the data range.',
+        figures=[('results/jedi/F2_variables_over_layers.png', 'Median held-out R² (bars = IQR) by stage and depth group; trained linear, trained MLP, untrained linear.'),
+                 ('results/site/F4_e11_evolution.png', 'E11: share of formula weight per observable family by stage.')],
+        verification='Not yet rerun by a skeptic. Independent agreement from E11: in the hinge formulas fitted on physics inputs, mass-family terms carry 0, 3, 3, 13, 21, 28 % of the formula weight at P, g, S, h4, h5, z; the first mass term is in h4 (h4:49, √(M0·M2) < 100.6 GeV). Caveats: the untrained control is nearly empty from S on; 99.9 % of particles sit at ΔR < 0.44, so outward edits leave the data range.',
         files='interp/e10_layers_jedi.py; results/jedi/e10_layers.json, e10_causal.json')),
  dict(id='A11', statement='Most live units have one main job that can be stated as a physical pattern, with weak activations that are neighbours of the main pattern and a readable negative pole (neuron atlas, after Goodfire\'s "Neural Networks Are Already Clean").',
       status='running (E16, cluster)', confidence=0.3, evidence='E16',
@@ -218,10 +219,15 @@ dict(key='b', tab='Paper B', title='B — Turning a model into if-statements',
     claims=[
         dict(id='B1', statement='The pooled-layer identity holds exactly in float for JEDI-type layers.', status='verified', confidence=0.9, evidence='E3, E3m, E9',
              detail=dict(what='Same identity as A1, stated as a property of any ReLU-then-sum layer.', procedure='See A1.', result='Max error 0.0 before the pooling quantizer; 7.8 % relative residual from fixed-point rounding on kept slots.', tables=[], figures=[], verification='E9 (260,000 jets).', files='interp/e1_e3_jedi.py')),
-        dict(id='B2', statement='MARS fits of every stage reproduce the network (same call, accuracy), and feature evolution over layers can be read from the fits.', status='fits finished (10 cluster jobs), analysis in progress', confidence=0.3, evidence='E11',
-             detail=dict(what='Every live unit of P, g, S, h4, h5, z fitted as hinge sums on (a) physics observables and (b) the previous stage\'s fitted formulas; stage-wise and cumulative substitution into the real network.',
-                         procedure='Fit on 2/3 of a 30,000-jet sample (seed 0), validate on 1/3, evaluate on 10,000 further jets (seed 11); ≤ 30 terms per unit; controls: untrained network, shuffled labels.',
-                         result='Pending.', tables=[], figures=[], verification='—', files='interp/e11_mars_all.py')),
+        dict(id='B2', statement='A nested if-statement program fitted stage by stage from physics inputs reproduces the whole network: 94.0 % of its calls (94.6 % with half-plane sums as inputs) and 80.72 % accuracy vs 80.42 % on 8,848 held-out jets.', status='measured; verification running (leakage, fresh sample, rejection, causal edits)', confidence=0.7, evidence='E11, E11v',
+             detail=dict(what='Every live unit of every stage (P 12, g 11, S 19, h4 54, h5 32, z 16: 144 units) written as a sum of hinge terms max(0, Q − t), max(0, t − Q) and products of two (mars.py forward selection). (a) each stage fitted on physics quantities; (b) each stage fitted on the previous stage\'s fitted values, starting from physics quantities computed from the particles, so (b) is one program from particles to z; the network\'s own last layer turns z into class scores.',
+                         procedure='Jets from the test file: 20,000 fit and 10,000 validation (seed 0), evaluation on 8,848 further jets (seed 11, 1,152 overlapping jets removed). Inputs: 383 library observables, 95 sums over pT-rank windows (N, ΣpT, ΣpT·r², Σr², Σr, Σ(r − 0.2)₊, soft counts), |M1|, √(M0·M2); supplement: one-sided half-plane sums in 8 directions × 4 windows. ≤ 30 terms per unit; terms chosen on 6,000 fit jets, coefficients refit on all 20,000. Substitution into the network per stage (single) and cumulatively. Controls: untrained network, shuffled targets, units at their mean.',
+                         result='Cumulative program through z: 94.0 % same call, 80.72 % accuracy (network 80.42 %); with half-plane inputs 94.6 %, 80.75 %. Per class g/q/W/Z/t: program 78.0 / 70.7 / 87.1 / 85.0 / 82.8, network 77.8 / 70.9 / 87.0 / 83.4 / 82.9. Size: 3,824 terms (2,344 products), 6,064 if-statements, 211 physics inputs. Per-unit held-out R² median: S 0.98, h4 0.96, h5 0.95, z 0.94 (chain); untrained network 0.08–0.18 from S on. z fitted directly on physics: 92.1 % same call, 80.11 %. Unexplained: single substitution of h4 on true S keeps 95.7 % of calls but drops accuracy to 79.59 %.',
+                         tables=[],
+                         figures=[('results/site/T5_e11_program.png', 'Stage-by-stage substitution of the if-statement program into the network.'),
+                                  ('results/site/F4_e11_evolution.png', 'What each stage\'s formulas are made of: share of formula weight per observable family; mass-family terms first appear at h4 and rise to 28 % at z (fits on physics inputs).')],
+                         verification='E11v running: leakage check of the chain, fresh disjoint sample, background rejection at 50 % efficiency per class (the earlier ParT formula kept accuracy but lost rejection, G160), the disagreeing 6 %, the h4 accuracy drop, and the program\'s response to the translation and pT edits compared with the network\'s.',
+                         files='interp/e11_mars_all.py; results/jedi/e11_mars_all.json, e11_fit_*.json, e11_evolution.png; inbox/E11_mars_all.md')),
         dict(id='B3', statement='Decision agreement does not imply mechanism fidelity.', status='earlier evidence on ParT; to redo on JEDI objects', confidence=0.6, evidence='G160, G180–G190',
              detail=dict(what='A formula can match the network\'s calls while attributing them to different particles.', procedure='Earlier: G160 (formula keeps 89 % of ParT\'s accuracy, 1–48 % of its rejection); G180–G190 (half of the key particles; refit cannot get both jet and particles right).', result='To be redone with the object formula on JEDI.', tables=[], figures=[], verification='—', files='distill-part/jld-features/research/FINDINGS.md')),
         dict(id='B4', statement='Baselines (tree extraction, symbolic regression, probes) on the same networks.', status='not started', confidence=0.0, evidence='—',

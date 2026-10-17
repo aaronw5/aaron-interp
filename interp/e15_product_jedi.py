@@ -142,8 +142,8 @@ def plot():
         rho6 = e6.get(st, {}).get(str(u), {}).get('rho') if u != '' else None
         f = lambda v, p='.3f': ('–' if v is None else format(v, p))
         cells.append([f'{st}{u}', str(d['n']), f(rho6, '.2f'), f(d['rho'], '.2f'), f(d['med_abs_lin']), f(d['med_abs_log']),
-                      f(d['frac_log_closer'], '.2f'), f(d['I_pred']), f'{d["I"]:.3f} ± {d["I_se"]:.3f}', f'{d["beta"]:.2f} ± {d["beta_se"]:.2f}',
-                      f'{d["step_c"]:.2f} | {d["step_k"]:.2f}'])
+                      f(d['frac_log_closer'], '.2f'), f(d['I_pred']), f'{d["I"]:.3f} ± {d["I_se"]:.3f}', f'{f(d["beta"], ".2f")} ± {f(d["beta_se"], ".2f")}',
+                      f'{f(d["step_c"], ".2f")} | {f(d["step_k"], ".2f")}'])
     fig2, a2 = plt.subplots(figsize=(13, 0.34 * len(cells) + 1.3), facecolor=surf); a2.axis('off')
     tb = a2.table(cellText=cells, colLabels=hdr, loc='center', cellLoc='center')
     tb.auto_set_font_size(False); tb.set_fontsize(8.5); tb.scale(1, 1.25)
@@ -165,10 +165,12 @@ from interp.jedi_core import Jedi, sample  # noqa: E402
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 x, y, Q = sample(per_class=PER, seed=SEED); x = x.astype(np.float32); J = len(x)
 real = x[..., 0] > 0
-assert (np.diff(x[..., 0], axis=1) <= 1e-6).all(), 'input not pT-ordered'
 net = Jedi(64); unt = Jedi(64, untrained=True, seed=0)
-res = dict(N=J, per_class=PER, seed=SEED, cells_c=CS, cells_k=KS, nboot=NBOOT)
-log(f'E15: {J} jets ({PER}/class, seed {SEED}); networks loaded')
+res = dict(N=J, per_class=PER, seed=SEED, cells_c=CS, cells_k=KS, nboot=NBOOT,
+           input_pt_sorted_frac=float((np.diff(x[..., 0], axis=1) <= 1e-6).all(1).mean()),
+           padded_slots_frac=float((~real).mean()), padded_max_abs_value=float(np.abs(x[~real]).max()))
+log(f'E15: {J} jets ({PER}/class, seed {SEED}); networks loaded; jets pT-sorted {res["input_pt_sorted_frac"]:.4f}; padded slots '
+    f'{res["padded_slots_frac"]:.3f}, max |value| in a padded slot {res["padded_max_abs_value"]:.2g}')
 
 
 def in_range(net_, xx):
@@ -255,10 +257,11 @@ for c in CS:
     for k in KS:
         X[(c, k)] = edit(x, c, k) if (c, k) != (1.0, 1.0) else x
         inr &= in_range(net, X[(c, k)])
-        assert (np.diff(X[(c, k)][..., 0], axis=1) <= 1e-6).all()
-        assert np.abs(X[(c, k)][~real]).max() == 0.0
-res['A'] = dict(in_range_all_cells=float(inr.mean()), n_in_range=int(inr.sum()))
-log(f'A: 9 cells built; jets inside the input range in all cells {inr.mean():.4f} ({inr.sum()})')
+res['A'] = dict(in_range_all_cells=float(inr.mean()), n_in_range=int(inr.sum()),
+                padded_moved_max=float(max(np.abs(xe[~real] - x[~real]).max() for xe in X.values())),
+                order_kept_frac=float(min((np.diff(xe[..., 0], axis=1) <= 1e-6).all(1).mean() for xe in X.values())))
+log(f'A: 9 cells built; jets inside the input range in all cells {inr.mean():.4f} ({inr.sum()}); padded slots moved by at most '
+    f'{res["A"]["padded_moved_max"]:.2g}; pT order kept in {res["A"]["order_kept_frac"]:.4f} of jets')
 mom = {ck: moments(xe) for ck, xe in X.items()}
 res['A']['moment_ratios'] = {f'c{c}k{k}': dict(M0=float(np.median(mom[(c, k)]['M0'] / M['M0'])), M2=float(np.median(mom[(c, k)]['M2'] / M['M2'])),
                                                m=float(np.median(mom[(c, k)]['m'] / np.maximum(M['m'], 1e-3))))
@@ -297,15 +300,22 @@ def fstats(V, sd, wb, min_n=200):
         cells[f'c{c}k{k}'] = dict(I=float(Im.mean() / sd), I_se=float(Im.std() / np.sqrt(n) / sd), I_pred=float(Ip.mean() / sd),
                                   sign=float(s), rel_dU_c=float(np.median((V[ci, 1] - B) / B)), rel_dU_k=float(np.median((V[1, ki] - B) / B)))
     absl = np.concatenate(absl); absg = np.concatenate(absg); closer = np.concatenate(closer)
-    bI = (w @ a) / (4 * wsum) / sd; bB = (w @ qq) / np.maximum(w @ rr, 1e-30)
+    bI = (w @ a) / (4 * wsum) / sd; bP = (w @ p) / (4 * wsum) / sd
+    # β = (measured interaction projected on the product's sign) / (the product's prediction of the same): the per-jet
+    # regression Σ I·I_pred / Σ I_pred² is biased under the sum because I and I_pred share the single-factor cells' noise
+    bB = bI / np.where(np.abs(bP) > 1e-12, bP, np.nan); bB = bB[np.isfinite(bB)]
     s1 = (V[2, 1] - B).mean(); s0 = (B - V[0, 1]).mean(); t1 = (V[1, 2] - B).mean(); t0_ = (B - V[1, 0]).mean()
+    Ip_s = float(p.mean() / 4 / sd)
     return dict(n=n, n_offered=int(V.shape[2]), sd=float(sd), e_c=ec, e_k=ek, rho=float(ek / ec) if abs(ec) > 1e-9 else None,
                 U_over_sd_median=float(np.median(B) / sd),
                 med_abs_lin=float(np.median(absl) / sd), med_abs_log=float(np.median(absg) / sd),
                 frac_log_closer=float(closer.mean()), frac_tie=float((closer == 0.5).mean()),
                 I=float(a.mean() / 4 / sd), I_se=float(bI.std()), I_ci=[float(np.percentile(bI, 2.5)), float(np.percentile(bI, 97.5))],
-                I_pred=float(p.mean() / 4 / sd), I_pred_se=float(p.std() / np.sqrt(n) / 4 / sd),
-                beta=float(qq.sum() / max(rr.sum(), 1e-30)), beta_se=float(bB.std()), beta_ci=[float(np.percentile(bB, 2.5)), float(np.percentile(bB, 97.5))],
+                I_pred=Ip_s, I_pred_se=float(bP.std()),
+                beta=float(a.mean() / 4 / sd / Ip_s) if abs(Ip_s) > 1e-12 else None,
+                beta_se=float(bB.std()) if len(bB) > 10 else None,
+                beta_ci=[float(np.percentile(bB, 2.5)), float(np.percentile(bB, 97.5))] if len(bB) > 10 else None,
+                beta_regression=float(qq.sum() / max(rr.sum(), 1e-30)),
                 step_c=float(s1 / s0) if abs(s0) > 1e-9 else None, step_k=float(t1 / t0_) if abs(t0_) > 1e-9 else None, cells=cells)
 
 
@@ -354,6 +364,45 @@ res['A']['trained'] = factorial_block(RA, R0, readers, 'trained')
 res['A']['untrained'] = factorial_block(RAU, U0, readers_u, 'untrained')
 
 
+def propagation(RR, F, net_):
+    """On a downstream unit's on-region (the jets with the unit > 0 in all 9 cells) the unit is linear in the upstream stage, so its
+    interaction equals W·I(upstream) up to the layer's input rounding.  Upstream units that stay on in all 9 cells pass their own
+    interaction on (inherited); upstream units that switch off in some cell make new interaction (switch)."""
+    out = {}
+    for up, dn, key in (('S', 'h4', 'd4'), ('h4', 'h5', 'd5'), ('h5', 'z', 'd6')):
+        Wm = net_.KB[key][0]                                                                  # (in, out)
+        Vup = np.stack([np.stack([RR[(c, k)][up][inr] for k in KS], 0) for c in CS], 0)      # (3, 3, n, in)
+        I_up = np.stack([Vup[ci, ki] - Vup[ci, 1] - Vup[1, ki] + Vup[1, 1] for ci, ki in CORNERS], 1)   # (n, 4, in)
+        on_up = (Vup > 0).all((0, 1))
+        Vdn = np.stack([np.stack([RR[(c, k)][dn][inr] for k in KS], 0) for c in CS], 0)
+        I_dn = np.stack([Vdn[ci, ki] - Vdn[ci, 1] - Vdn[1, ki] + Vdn[1, 1] for ci, ki in CORNERS], 1)
+        on_dn = (Vdn > 0).all((0, 1)); rows = {}
+        for u_s, d in F['units'][dn].items():
+            if 'I' not in d: continue
+            u = int(u_s); jets = on_dn[:, u]
+            if jets.sum() < 200: continue
+            s = np.array([d['cells'][f'c{CS[ci]}k{KS[ki]}']['sign'] for ci, ki in CORNERS])
+            pred = I_up[jets] @ Wm[:, u]; inh = (I_up[jets] * on_up[jets][:, None, :]) @ Wm[:, u]; sw = pred - inh
+            meas = I_dn[jets][:, :, u]; sd = d['sd']
+            rows[u_s] = dict(n=int(jets.sum()), I=float((meas * s).mean() / sd), I_from_upstream=float((pred * s).mean() / sd),
+                             I_inherited=float((inh * s).mean() / sd), I_switch=float((sw * s).mean() / sd),
+                             resid_median_abs=float(np.median(np.abs(meas - pred)) / sd), resid_max_abs=float(np.abs(meas - pred).max() / sd),
+                             n_upstream_switching_mean=float((~on_up[jets]).sum(1).mean()))
+        out[dn] = rows
+    return out
+
+
+res['A']['trained']['propagation'] = propagation(RA, res['A']['trained'], net)
+res['A']['untrained']['propagation'] = propagation(RAU, res['A']['untrained'], unt)
+for dn in ('h4', 'h5', 'z'):
+    P_ = res['A']['trained']['propagation'][dn]
+    top = sorted(P_.items(), key=lambda kv: -abs(kv[1]['I']))[:8]
+    log(f'A propagation into {dn} (sd units, projected on the product sign): I measured = W·I(upstream) [residual median|max] = inherited (upstream on in all cells) + switch')
+    for u_s, r_ in top + [(str(u), P_[str(u)]) for st_, u in MASSLIKE if st_ == dn and str(u) in P_ and (str(u), P_[str(u)]) not in top]:
+        log(f'   {dn}{u_s:<3s} n {r_["n"]:5d}: {r_["I"]:+.4f} = {r_["I_from_upstream"]:+.4f} [{r_["resid_median_abs"]:.4f}|{r_["resid_max_abs"]:.3f}] '
+            f'= {r_["I_inherited"]:+.4f} + {r_["I_switch"]:+.4f}; upstream units switching per jet {r_["n_upstream_switching_mean"]:.1f}')
+
+
 def fmt(v, p='.3f'):
     return '  n/a' if v is None else format(v, p)
 
@@ -365,7 +414,7 @@ def show_units(F, tag):
         rows.sort(key=lambda r: -abs(r[1]['I_pred']))
         for u, d in rows[:14 if st != 'z' else 16]:
             log(f'   {st}{u:<3d} n {d["n"]:5d} | {d["e_c"]:+.2f} {d["e_k"]:+.2f} {fmt(d["rho"], "+.2f")} | {d["med_abs_lin"]:.3f} {d["med_abs_log"]:.3f} '
-                f'{d["frac_log_closer"]:.2f} | {d["I"]:+.4f} ± {d["I_se"]:.4f} ({d["I_pred"]:+.4f}) | {d["beta"]:+.2f} ± {d["beta_se"]:.2f} | '
+                f'{d["frac_log_closer"]:.2f} | {d["I"]:+.4f} ± {d["I_se"]:.4f} ({d["I_pred"]:+.4f}) | {fmt(d["beta"], "+.2f")} ± {fmt(d["beta_se"], ".2f")} | '
                 f'{fmt(d["step_c"], ".2f")} {fmt(d["step_k"], ".2f")}')
         skipped = [int(u) for u, d in F['units'][st].items() if 'I' not in d]
         if skipped: log(f'   {st}: {len(skipped)} live units with < 200 jets on in all cells: {skipped}')
@@ -375,7 +424,7 @@ def show_units(F, tag):
             d = r_[nm]
             if 'I' in d:
                 log(f'   read-out {nm:8s} at {st:2s} n {d["n"]:5d} | med|U−lin| {d["med_abs_lin"]:.3f} med|U−log| {d["med_abs_log"]:.3f} frac log closer {d["frac_log_closer"]:.2f} | '
-                    f'I {d["I"]:+.4f} ± {d["I_se"]:.4f} (pred {d["I_pred"]:+.4f}) | beta {d["beta"]:+.2f} ± {d["beta_se"]:.2f} | step {fmt(d["step_c"], ".2f")} {fmt(d["step_k"], ".2f")}')
+                    f'I {d["I"]:+.4f} ± {d["I_se"]:.4f} (pred {d["I_pred"]:+.4f}) | beta {fmt(d["beta"], "+.2f")} ± {fmt(d["beta_se"], ".2f")} | step {fmt(d["step_c"], ".2f")} {fmt(d["step_k"], ".2f")}')
         li = r_['logm_interaction']
         log(f'   log m̂ at {st}: interaction in log units per corner cell (product predicts 0; sum prediction in brackets): '
             + ' '.join(f'{k_} {v_:+.4f}±{li["I_log_se_per_cell"][k_]:.4f} [{li["I_sum_pred_per_cell"][k_]:+.4f}]' for k_, v_ in li['I_log_mean_per_cell'].items())

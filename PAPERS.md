@@ -178,6 +178,11 @@ User idea (2026-10-16), node E11: MARS-fit the entire trigger model, every unit 
 compositionally on the previous stage's formulas; check whether the all-if-statement model reproduces the network's
 performance; read off how features evolve over the layers and what each neuron looks at, against physics.
 
+E11 result (2026-10-16; verification E11v running): the nested if-statement program (144 units, 3,824 hinge terms, 6,064
+if-statements, 211 physics inputs; each stage fitted on the previous stage's fitted values) reproduces 94.0 % of the
+network's calls on 8,848 held-out jets (94.6 % with half-plane sums) at 80.72 % accuracy vs 80.42 %. Fitted on physics inputs,
+mass-family terms first appear at h4 and carry 0 → 3 → 3 → 13 → 21 → 28 % of formula weight from P to z (independent of E10).
+
 Open questions for B: does the MARS fit on hand observables match the network on substitution tests as well as the object
 formula does? If yes, B is one section of A. Which if-statement form transfers across architectures?
 

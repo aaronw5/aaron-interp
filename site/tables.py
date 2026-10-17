@@ -66,3 +66,15 @@ table('T4_e5v_naming_context.png', 'JEDI-linear: verification of the S29 name an
   ['controls', '5 random draws of 4 from the 15 other live objects', '0.00, 0.82, 0.42, 0.17, 0.88 %'],
   ['code check', 'HGQ bit count b = i+f vs k+i+f', '0 disagreeing entries: the isolated slots in the windows are real']],
  [3.0, 4.2, 5.4])
+table('T5_e11_program.png', 'JEDI-linear written as if-statements, stage by stage (E11; 8,848 held-out test jets; network 80.42 % on them)',
+ ['stage replaced\n(with all stages before it)', 'units', 'held-out R²\nmedian (min)', 'same call as\nthe network', 'accuracy', 'control: units at\ntheir mean instead'],
+ [['P  first objects', '12', '0.817 (0.785)\n+ half-plane sums: 0.996 (0.974)', '95.7 %  (98.8 %)', '80.22 %', '81.6 % same call, 71.91 %'],
+  ['g  context', '11', '0.572 (0.390)\n+ half-plane sums: 0.950 (0.881)', '96.2 %  (98.4 %)', '80.72 %', '85.3 %, 74.28 %'],
+  ['S  second objects', '19', '0.982 (0.555)', '94.2 %  (95.3 %)', '80.99 %', '18.7 %, 19.91 %'],
+  ['h4', '54', '0.958 (0.610)', '94.6 %  (95.1 %)', '80.83 %', '18.7 %, 19.91 %'],
+  ['h5', '32', '0.946 (0.653)', '94.2 %  (95.0 %)', '80.63 %', '19.9 %, 20.14 %'],
+  ['z  class neurons\n→ network\'s last layer', '16', '0.941 (0.825)', '94.0 %  (94.6 %)', '80.72 %  (80.75 %)', '19.9 %, 20.14 %']],
+ [2.6, 0.7, 3.0, 1.9, 1.9, 2.4],
+ note='Nested program: each stage fitted on the previous stage\'s fitted values, starting from physics quantities computed from the particles (no network activation enters).\n'
+      'Size: 144 units, 3,824 terms (2,344 products), 6,064 if-statements, 211 physics inputs. Per class g/q/W/Z/t: program 78.0 / 70.7 / 87.1 / 85.0 / 82.8, network 77.8 / 70.9 / 87.0 / 83.4 / 82.9.\n'
+      'Controls: untrained network R² S 0.08, h4 0.17, h5 0.18, z 0.14; shuffled S targets ≈ 0. Parentheses: with one-sided half-plane sums added to the inputs. Verification running.')

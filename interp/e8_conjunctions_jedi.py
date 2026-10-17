@@ -156,9 +156,15 @@ for st in ('z', 'S'):
 from sklearn.tree import DecisionTreeClassifier
 
 
-def grids(V):
-    """per column: unique thresholds = 5-95 % quantiles (19 knots) + 0"""
-    return [np.unique(np.concatenate([np.quantile(V[:, j], np.linspace(.05, .95, N_KNOTS)), [0.0]])) for j in range(V.shape[1])]
+def grids(V, positive_part=False):
+    """per column: unique thresholds = 5-95 % quantiles (19 knots) + 0; positive_part (z): quantiles of the values > 0 only,
+    since d7 reads relu(z) and every threshold below 0 is the same state for the network"""
+    G = []
+    for j in range(V.shape[1]):
+        v = V[:, j]
+        if positive_part: v = v[v > 0] if (v > 0).sum() >= 50 else v
+        G.append(np.unique(np.concatenate([np.quantile(v, np.linspace(.05, .95, N_KNOTS)), [0.0]])))
+    return G
 
 
 def binify(V, G):
@@ -206,7 +212,7 @@ def cond_str(cond, stage, G=None):
 
 def describe(stage, Vfit, Vev, calls_fit, calls_ev, label):
     """per class: the 3-deep tree, its best-F1 leaf (rule), precision / coverage on eval; all leaves"""
-    G = grids(Vfit); Bf, Be = binify(Vfit, G), binify(Vev, G); out = {}
+    G = grids(Vfit, positive_part=(stage == 'z')); Bf, Be = binify(Vfit, G), binify(Vev, G); out = {}
     for c in range(5):
         pos_f, pos_e = calls_fit == c, calls_ev == c
         if pos_f.sum() < MIN_LEAF or (~pos_f).sum() < MIN_LEAF:
@@ -224,7 +230,7 @@ def describe(stage, Vfit, Vev, calls_fit, calls_ev, label):
                       precision=best['prec'], coverage=best['cov'], f1=best['f1'], prec_fit=best['prec_fit'], cov_fit=best['cov_fit'],
                       n_in_rule_eval=best['n_eval'], union_precision=Pu, union_coverage=Cu, union_f1=Fu, n_leaves=len(LV),
                       leaves=sorted(LV, key=lambda d: -d['f1_fit']))
-        log(f'  {label} {CLASSES[c]}: rule [{out[c]["rule_str"]}]  precision {Pe*100:.1f} %  coverage {Ce*100:.1f} % '
+        log(f'  {label} {CLASSES[c]}: rule [{out[c]["rule_str"]}]  precision {best["prec"]*100:.1f} %  coverage {best["cov"]*100:.1f} % '
             f'(fit {best["prec_fit"]*100:.1f} / {best["cov_fit"]*100:.1f}); tree union {Pu*100:.1f} / {Cu*100:.1f} %; {len(LV)} leaves')
     return out, G
 
@@ -257,6 +263,15 @@ def run_level(stage, D, all_units_sets):
                  n_fit_in_rule_called_c=int(((cf == c) & in_rule_f).sum()))
         r['rule'], r['rule_by_source'], r['n_other'] = impose(stage, cu, med_in, ce, c, check=True)
         r['rule_classmed'], _, _ = impose(stage, cu, med_c[cu], ce, c)
+        # every positive leaf of the tree (predicted c, >= 1 % coverage on fit) imposed the same way
+        r['leaves_imposed'] = []
+        for lf in d['leaves']:
+            if not lf['positive'] or lf['cov_fit'] < 0.01: continue
+            lcu = [UNITS[stage][int(f)] for f in lf['cond']]; lin = inside(bf[:, UNITS[stage]], {int(k): v for k, v in lf['cond'].items()})
+            if ((cf == c) & lin).sum() == 0: continue
+            lmed = np.median(bf[(cf == c) & lin][:, lcu], 0)
+            sw, _, _ = impose(stage, lcu, lmed, ce, c)
+            r['leaves_imposed'].append(dict(rule=cond_str({int(k): v for k, v in lf['cond'].items()}, stage), precision=lf['prec'], coverage=lf['cov'], switched=sw))
         # dose
         idx = np.flatnonzero(ce != c); dose = {}
         for f_ in DOSES:
@@ -297,7 +312,8 @@ def run_level(stage, D, all_units_sets):
         out[c] = r
         log(f'  {stage} {CLASSES[c]}: imposed on {r["n_other"]} jets called otherwise -> called {CLASSES[c]}: rule {r["rule"]:.1f} % '
             f'(class medians {r["rule_classmed"]:.1f}); dose {[dose[str(f_)] for f_ in DOSES]}; random K={K}: {r["random"]["mean"]:.1f} % '
-            f'[{r["random"]["min"]:.1f}-{r["random"]["max"]:.1f}] (outside rule {r["random_outside_rule"]["mean"] if r["random_outside_rule"] else None}); '
+            f'[{r["random"]["min"]:.1f}-{r["random"]["max"]:.1f}] (outside rule {round(r["random_outside_rule"]["mean"], 2) if r["random_outside_rule"] else None}); '
+            f'other leaves {[(l["rule"], round(l["precision"]*100), round(l["coverage"]*100), l["switched"]) for l in r["leaves_imposed"]]}; '
             f'ceiling {r["ceiling"]}; gap {r["gap"]:.1f}; necessity: {r["n_called_c_in_rule"]} jets, rule->other med still c '
             f'{r["necessity"]["rule_to_other_med"]:.1f} % (all units {r["necessity"]["all_units_to_other_med"]:.1f}); untrained {rU}; '
             f'by source {r["rule_by_source"]}  [{time.time()-t0:.0f} s]')

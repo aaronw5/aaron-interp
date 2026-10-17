@@ -3,7 +3,7 @@
 Script: interp/e11_mars_all.py (modes fit a <stage> / fit b / control untrained|shuffle / eval). Results: results/jedi/e11_fit_a_<stage>.json,
 e11_fit_b_<stage>.json (formula.py term format, plus per-term spread, weight share and importance), e11_control_untrained_*.json,
 e11_control_shuffle_S.json, e11_mars_all.json (R², substitution, controls, per-unit lookup, family shares), e11_evolution.png.
-Logs: logs/e11-{b,a-g,a-s-stage,a-h4,a-h5,a-z,untr-1,untr-2,shuf-s,eval,eval2,smoke}.log (cluster jobs; logs/e11.log belongs to the E11-windows run).
+Logs: logs/e11-{b,a-g,a-s-stage,a-h4,a-h5,a-z,untr-1,untr-2,shuf-s,eval,eval2,smoke}.log and logs/e11hp-*.log (cluster jobs; logs/e11.log belongs to the E11-windows run).
 All fits ran on the cluster (1 CPU / 2 Gi each, 8–20 min per job); supplement with half-plane sums: prefix e11hp (section 7).
 
 ## 1. Procedure
@@ -37,8 +37,8 @@ All fits ran on the cluster (1 CPU / 2 Gi each, 8–20 min per job); supplement 
 | P | 12 | 0.817 / 0.785 / 0.894 | 3 | 0.817 / 0.785 / 0.894 | 0.817 / 0.785 / 0.894 | 309 / 309 | 0.803 / 0.188 / 0.839 (9 units with spread > 0) |
 | g | 11 | 0.752 / 0.368 / 0.805 | 3 | 0.572 / 0.390 / 0.791 | 0.735 / 0.541 / 0.876 | 304 / 252 | 0.773 / 0.665 / 0.851 (6 units) |
 | S | 19 | 0.981 / 0.535 / 0.968 | 16 | 0.982 / 0.555 / 0.969 | 0.982 / 0.691 / 0.974 | 496 / 504 | 0.084 / 0.000 / 0.169 (2 units) |
-| h4 | 54 | 0.950 / 0.547 / 0.954 | 40 | 0.958 / 0.610 / 0.961 | 0.985 / 0.654 / 0.981 | 1558 / 1348 | UNTR_H4 |
-| h5 | 32 | 0.923 / 0.566 / 0.937 | 21 | 0.946 / 0.653 / 0.956 | 0.979 / 0.752 / 0.979 | 928 / 948 | UNTR_H5 |
+| h4 | 54 | 0.950 / 0.547 / 0.954 | 40 | 0.958 / 0.610 / 0.961 | 0.985 / 0.654 / 0.981 | 1558 / 1348 | 0.173 / 0.173 / 0.173 (7 units with spread > 0; spreads 0.011–0.29) |
+| h5 | 32 | 0.923 / 0.566 / 0.937 | 21 | 0.946 / 0.653 / 0.956 | 0.979 / 0.752 / 0.979 | 928 / 948 | 0.180 / 0.070 / 0.269 (17 units) |
 | z | 16 | 0.897 / 0.720 / 0.912 | 6 | 0.941 / 0.825 / 0.948 | 0.983 / 0.947 / 0.987 | 477 / 463 | 0.140 / 0.091 / 1.000 (15 units; the 1.000 is a unit equal to n_real_top10) |
 Cost-weighted = weighted by the unit's E1 ablation cost. Shuffled-target control, stage S: R² median −0.000, range −0.001 … 0.000 (33 terms kept over
 19 units). Validation − test R² differences: −0.005 … +0.002 per stage.
@@ -61,7 +61,7 @@ Cost-weighted = weighted by the unit's E1 ablation cost. Shuffled-target control
 - The all-if-statement model (last row of cumulative (b), then the network's own last layer with its rounding): 94.0 % same call, 80.72 % accuracy
   vs 80.42 % network on the same jets. Size: 144 units, 3,824 terms, 6,064 if-statements (2,344 of the terms are products), 394 distinct inputs
   (211 physics quantities enter through the P and S formulas). Per-class accuracy g/q/W/Z/t: program 78.0 / 70.7 / 87.1 / 85.0 / 82.8; network
-  NET_PER_CLASS.
+  77.8 / 70.9 / 87.0 / 83.4 / 82.9.
 - z fitted directly on physics (the 16-neuron MARS formula redone on test-file jets, 30-term cap): 92.1 % same call, 80.11 % (477 terms, 160
   inputs). Reference J12 (train archive, 100-term cap, 40,000 fit jets): formula 81.31 % vs network 80.94 %, same call ≈ 90 %.
 - Cumulative (a) equals single (a) to within 0.02 points at every stage: when stage k is replaced from physics, the earlier replacements only reach
@@ -180,12 +180,40 @@ angles (eta_i, phi_i, orientation) are counted under the radial/angular family.
 
 ## 6. Controls
 - Untrained network (same fitter, (a) inputs, units by activation spread): P median 0.803 (trained 0.817), g 0.773 (0.752); S 0.084 over the only
-  2 units with any spread (trained 0.981), z 0.140 (trained 0.897). h4 / h5: UNTR_LINE
+  2 units with any spread (trained 0.981), z 0.140 (trained 0.897). h4 / h5: h4 0.173 for all 7 units with nonzero spread (spreads 0.011–0.29, i.e. a few fixed-point steps); h5 median 0.180 (0.070–0.269, 17 units) vs trained 0.950 / 0.923.
   The untrained P and g units are pooled sums of random cuts and are named as well as the trained ones (top terms Σr, Σr over rank windows).
 - Shuffled targets (stage S): R² −0.001 … 0.000 for all 19 units; the fitter keeps 0–4 terms per unit (33 in total) at R² ≈ 0.
 
 ## 7. Supplement: half-plane sums added to the physics inputs (prefix e11hp)
-HP_SECTION
+Reason: the nine angular P units are E2's half-planes through the axis; the library has no one-sided angular sum, and they stopped at R² 0.785–0.843.
+Added to (a) inputs: Σ(n·r⃗)₊ and N(n·r⃗ > 0) for 8 directions n (0°, 45°, …, 315° in the (Δη, Δφ) plane) × 4 rank windows (all, top 14, ranks 1–63,
+13–63) = 64 inputs (539 in total). Everything else identical. Files: results/jedi/e11hp_*.json, e11hp_evolution.png; logs/e11hp-*.log.
+| stage | (a) median / min / cost-w | (b) chain median / min / cost-w | terms (a) / (b) |
+|---|---|---|---|
+| P | 0.996 / 0.974 / 0.996 (was 0.817 / 0.785 / 0.894) | same as (a) | 150 / 150 (was 309) |
+| g | 0.926 / 0.857 / 0.963 (was 0.752 / 0.368 / 0.805) | 0.950 / 0.881 / 0.972 (was 0.572 / 0.390 / 0.791) | 272 / 261 |
+| S | 0.981 / 0.689 / 0.976 | 0.981 / 0.825 / 0.980 | 492 / 512 |
+| h4 | 0.953 / 0.539 / 0.958 | 0.965 / 0.615 / 0.971 | 1529 / 1373 |
+| h5 | 0.923 / 0.565 / 0.939 | 0.960 / 0.639 / 0.962 | 933 / 939 |
+| z | 0.895 / 0.733 / 0.915 | 0.946 / 0.865 / 0.957 | 478 / 476 |
+- Angular P units on one-sided sums (direction measured from +Δη towards +Δφ): P29 = Σ(n·r)₊ at 0° (2 terms, 0.998); P36 = Σ(n·r)₊ at 270° (4 terms,
+  0.996); P40 = Σ(n·r)₊ at 135° (share 0.82, 0.997); P6 = Σ(n·r)₊ at 45° (share 0.66, 0.995); P57 at 135° (0.986); P43 at 225° + 180° (0.995);
+  P3 at 180° over ranks 1–63 (0.991); P30 at 270°/225° over ranks 1–63 (0.974); P46 at 270° (ranks 1–63) + 315° (0.992).
+- g units fed by them: g55 0.464 → 0.956, g39 0.390 → 0.947, g5 0.446 → 0.956, g29 0.463 → 0.950 (chain values).
+- Substitution (same call % / acc %), half-plane run:
+| stage | single (a) | single (b) | cumulative (a) | cumulative (b) |
+|---|---|---|---|---|
+| P | 98.8 / 80.47 | 98.8 / 80.47 | 98.8 / 80.47 | 98.8 / 80.47 |
+| g | 98.3 / 80.68 | 98.6 / 80.49 | 98.3 / 80.68 | 98.4 / 80.56 |
+| S | 94.9 / 80.90 | 95.2 / 80.65 | 94.9 / 80.90 | 95.3 / 80.84 |
+| h4 | 95.0 / 81.15 | 96.4 / 79.96 | 95.0 / 81.16 | 95.1 / 80.82 |
+| h5 | 93.9 / 80.87 | 96.6 / 80.17 | 93.9 / 80.87 | 95.0 / 80.57 |
+| z | 92.4 / 80.23 | 97.1 / 80.30 | 92.4 / 80.23 | **94.6 / 80.75** |
+- All-if-statement model with half-plane inputs: 94.6 % same call, 80.75 % accuracy (network 80.42 %), 3,711 terms, 5,862 if-statements;
+  per class g/q/W/Z/t 77.7 / 70.3 / 87.2 / 85.2 / 83.3.
+- P substitution: 95.7 → 98.8 % same call; the end-to-end program gains 0.6 points of same call (94.0 → 94.6 %); from S onward the losses are as in
+  the main run.
+- Family shares change only at P and g (radial 47 → 50 %, 37 → 50 %; "pT shares, other" 12 → 8 %, 17 → 8 %); S–z within 2 points of the main run.
 
 ## 8. Issues and deviations
 - Everything is fitted and tested on the TEST file (fit / validation / test disjoint; 1,152 overlapping jets removed from the test sample). The
@@ -197,5 +225,12 @@ HP_SECTION
 - Pod peak memory reached the 2 Gi request in every job (no OOM; exit 0).
 - (b) single substitution at h4 (formulas on the true S values) has 95.7 % same call but 79.59 % accuracy, 0.8 points below the network; cumulative
   (b) at h4 is 80.83 %. Recorded as measured; not investigated.
-- The angular P units (and the g units fed by them) are the weak link of the chain: no library observable is a one-sided angular sum (section 7
-  tests this directly).
+- The angular P units (and the g units fed by them) were the weak link of the chain on the library inputs; section 7 adds one-sided angular sums.
+- Untrained control: the redrawn network leaves only 9 P, 6 g, 2 S, 7 h4, 17 h5, 15 z units with nonzero spread; the comparison uses those.
+- eval was run twice (e11-eval before the h4/h5 control finished, e11-eval2 after); all R² and substitution numbers are identical.
+- e11smoke_* files are a 4-term / 1,500-jet smoke run of the full pipeline; not results.
+- Files written beyond the brief's list: results/jedi/e11hp_* (supplement) and e11smoke_* (smoke run); logs/e11-*.log and logs/e11hp-*.log (cluster
+  logs copied back; logs/e11.log was already taken). Copying results back with the whole-directory tar (`tar cf - -C …/results jedi`) also
+  refreshed results/jedi/e4_e5.json and e5_verify.json from the cluster copies (same keys and N = 20,000; content not diffed against the old local copy).
+- Compute: all fits and evaluations ran as cluster jobs at 1 CPU / 2 Gi (the first launch at 4 CPU / 8 Gi was deleted within 4 minutes and
+  relaunched); no local runs beyond import checks and the 2-unit timing test before the no-local-compute instruction.
