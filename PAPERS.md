@@ -105,6 +105,15 @@ Last update: 2026-10-17, round 2 (E20/E20v, E7/E7v, E21/E21v). Change from the p
 | C1 / C2 / C3 / C4 | 0.8 / 0.7 / 0.85 / 0.0 (=) | G107/G108; G21–G22; P1, P1v, P2, P2v, R1 |
 | D1 / D2 / D3 / D4 | 0.8 / 0.7 / 0.0 / 0.8 (=) | J26–J30; G194, G202–G204; —; P1v, E17, E19, R1 |
 
+## Proposed thesis revision after the round-2 review (2026-10-17; pending the user's decision)
+The external-style review (round 2: soundness 6, presentation 4, contribution 5, overall 5) finds the statistically strongest and most
+novel line is the mass/axis result, not the "statements → objects" framing (whose identity is definitional and whose sparse cuts do not
+generalise). Proposed Paper A thesis v3: "Jet taggers compute the simplest formula that is correct on their training data. Causal
+edits identify which one: JEDI-linear, ParT and small taggers read the jet mass as the momentum-weighted spread about the given axis,
+not the invariant mass; this makes their decisions depend on the jet-axis convention by an amount the formula predicts; training with
+an off-centre axis largely removes it." Statements/objects, the neuron atlas and the if-statement program become the method and
+supporting sections (Paper B keeps the faithfulness result). Keep v1/v2 above until the user decides.
+
 ## Main results, A vs B (and the merge rule)
 
 - **A's main result:** the complete program of a deployed tagger. For JEDI-linear: ~13 particle cuts → ~11 first objects
