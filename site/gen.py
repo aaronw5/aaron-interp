@@ -9,10 +9,15 @@ OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'results' / 'si
 e = html.escape
 
 
+USED = {}   # repo path -> published path (images are published once as separate files next to the page)
+
+
 def img(path):
     p = ROOT / path
     if not p.exists(): return f'<p class="mut">figure missing: {e(path)}</p>'
-    return f'<img src="data:image/png;base64,{base64.b64encode(p.read_bytes()).decode()}" alt="{e(path)}">'
+    pub = 'img/' + p.name
+    USED[path] = pub
+    return f'<img src="{pub}" alt="{e(p.stem)}" loading="lazy">'
 
 
 def table(cols, rows):
@@ -45,7 +50,8 @@ def paper(p):
     claims = ''.join(claim(c) for c in p['claims'])
     log = ''.join(f'<li><b>{e(v)}</b> — {e(t)}</li>' for v, t in p['thesis_log'])
     opens = ''.join(f'<li>{e(o)}</li>' for o in p['open'])
-    explainers = ''.join(f'<details class="explainer" open><summary>{e(t)}</summary>' + ''.join(f'<h4 class="step">{e(h)}</h4><p>{e(x)}</p>' + (f'<figure>{img(f)}</figure>' if f else '') for h, x, f in steps) + '</details>' for t, steps in X.PAPER_EXPLAINERS.get(p['key'], []))
+    explainers = ''.join(f'<details class="explainer"{" open" if op else ""}><summary>{e(t)}</summary>' + ''.join(f'<h4 class="step">{e(h)}</h4><p>{e(x)}</p>' + (f'<figure>{img(f)}</figure>' if f else '') for h, x, f in steps) + '</details>' for t, steps, op in X.PAPER_EXPLAINERS.get(p['key'], []))
+    explainers = (f'<h3>Results explained (open each)</h3>{explainers}' if explainers else '')
     return f'''<section id="tab-{p['key']}" class="tab" hidden>
 <h2>{e(p['title'])}</h2>
 <p>{e(X.PAPER_MOTIVATION.get(p['key'], ''))}</p>
@@ -117,4 +123,8 @@ details.claim .body{{border-top:1px solid var(--line);margin-top:8px;padding-top
 }})();
 </script>'''
 OUT.parent.mkdir(parents=True, exist_ok=True); OUT.write_text(page)
-print(OUT, len(page) // 1024, 'KB')
+import json, shutil
+imgdir = OUT.parent / 'img'; imgdir.mkdir(exist_ok=True)
+for src, pub in USED.items(): shutil.copy(ROOT / src, OUT.parent / pub)
+(OUT.parent / 'files.json').write_text(json.dumps({pub: str(OUT.parent / pub) for pub in USED.values()}, indent=1))
+print(OUT, len(page) // 1024, 'KB;', len(USED), 'images')

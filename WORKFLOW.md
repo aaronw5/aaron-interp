@@ -61,6 +61,11 @@ stage is limited to keeping PAPERS.md (theses, claims, confidence per claim) cur
 - Explain and motivate everything: every claim, figure and table on the page has background (what the reader needs to know),
   motivation (why it is tested), the physics meaning and why it matters, and a plain one-line summary (site/explain.py).
 - Use explanatory figures (diagrams on real jets) where a result is not obvious from numbers (site/explain_figs.py).
+- Every result gets a step-by-step explainer in its paper's tab (question → background → method → result with figure → checks →
+  why it matters), like the mass explainer (user: "Everything should be explained like this"). Layer letters are defined in the
+  Paper A "How to read this paper" explainer.
+- Page build: `python3 site/gen.py <scratchpad>/site/results_page.html` writes the page + img/ + files.json; publish with the
+  Artifact `url` of the results page and `files` = files.json (images published once, not inlined).
 - Organisation (user 2026-10-17): tabs are Overview + one per paper, nothing else. A result's explanation lives in the tab of the
   paper it belongs to (site/explain.py PAPER_EXPLAINERS), with cross-references from other papers' claims; the Overview holds only
   short summaries that point to the paper tab.
