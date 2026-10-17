@@ -175,9 +175,15 @@ MASS_EXPLAINER = [
   '$\\sqrt{M_0 M_2}$ is simpler for these networks: it is two sums over particles and one product, which is the kind of operation JEDI-linear\'s sum-then-dense structure computes directly.', None),
  ('3. Question',
   'Does the network compute a mass at all, where, and which of the two?', None),
- ('4. Can the mass be read from the network?',
-  'We fit a linear map from each layer\'s values to the jet mass (computed from the particles) on half of 15,000 jets and test it on the other half. Held-out $R^2$: '
-  'P 0.73, g 0.76, S 0.977, h4 0.991, h5 0.985, z 0.967. From S onward the mass is almost fully readable. This shows the information is present; it does not show the network uses it.', None),
+ ('4. Can the mass be read from the network? (the "read-out")',
+  'The network has no mass output. For every jet it computes internal numbers, for example the 64 values of layer $h_4$. '
+  'Step 1: take 10,000 ordinary jets; for each we know its true mass $m$ (computed from its particles) and its 64 $h_4$ values. '
+  'Step 2 ("fitting"): find 64 weights $w_k$ and an offset $b$ such that $\\log m \\approx b + \\sum_{k=1}^{64} w_k\\, h_{4,k}$ for these jets, as closely as possible (least squares with a small penalty, called ridge regression). '
+  'Step 3: check on 10,000 other jets that were not used in step 2: the same weighted sum predicts $\\log m$ with $R^2 = 0.97$, i.e. it reproduces 97 % of how the mass varies from jet to jet. '
+  'So the mass is present in $h_4$, and this weighted sum is our gauge for it. '
+  'Step 4: for an edited jet, run the network, take its 64 $h_4$ values, apply the same weights, and convert $\\log m$ back to GeV. This is what we call the network\'s mass reading: the mass that the network\'s internal state corresponds to, judged by how that state relates to mass on ordinary jets. '
+  'Limits: it is a gauge we built, not an output of the network; on a single jet it is off by about 10 %; and a fitted gauge reacts less than fully to changes (it shrinks toward the average), so its changes are compared with its response to a real mass change of the same size (calibration). '
+  'The same procedure on each layer gives $R^2$ = 0.73 at P, 0.76 at g, 0.977 at S, 0.991 at $h_4$ (15,000 jets), 0.985 at $h_5$, 0.967 at $z$. The class decisions (for example W called Z) are the network\'s own output and do not depend on this gauge.', None),
  ('5. Which units behave like a mass?',
   'We change the jets in two ways whose effect on each quantity is known. Scaling all angles by $k$ multiplies $m$ by $k$, $M_2$ by $k^2$ and leaves $M_0$ unchanged. '
   'Scaling all pT by $c$ multiplies $m$ by $c$, $M_0$ by $c$ and $M_2$ by $c$. For each unit we measure its response to both edits and take the ratio '
