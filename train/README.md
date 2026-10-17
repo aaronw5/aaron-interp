@@ -7,8 +7,13 @@ exactly JEDI-linear's inputs: the first N particles (pT order), features (pT, Δ
 ## Files
 - `models.py` — the architectures (`tf-{B}b-d{D}`, `linf-{B}b-d{D}-k{K}`, `dsets-d{D}`), attention written out explicitly.
 - `train_small.py` — data, training loop, evaluation; one run per invocation.
-- `gpu_job.sh` — runs inside the GPU Job: several runs concurrently on one GPU, nvidia-smi monitor, skip-if-done.
-- `make_jobs.py` — writes the Job YAMLs to `jobs/` (one per (N, seed): the 7 models train concurrently).
+- `gpu_job.sh` — runs inside the GPU Job: several runs concurrently on one GPU, nvidia-smi / memory / CPU monitor every
+  3 min, skip-if-done. Run spec `model:N:seed[:tag[:flags]]`: `tag` is appended to the run directory (`-p30`), `flags` are
+  comma-separated `train_small.py` options written with `=` (`--epochs=100,--patience=100`).
+- `make_jobs.py` — writes the Job YAMLs to `jobs/` for a named set (`--set main`: one job per (N, seed), the 7 models
+  concurrently; `--set extra1`: the patience-30 reruns and the 100-epoch tf-2b-d32 / tf-2b-d64 runs).
+- `summarize_small.py` — `collect` (on the cluster: run records → `summary_small.json`) and `render` (Markdown tables and
+  the PNG `results/site/T7_small_models.png`, mean ± spread over seeds).
 - `STATUS.md` — what was launched and how to check it.
 
 ## Models
@@ -18,7 +23,7 @@ exactly JEDI-linear's inputs: the first N particles (pT order), features (pT, Δ
 | `linf-{B}b-d{D}-k{K}` | as `tf`, but K and V are projected from N tokens to K with one learned (N×K) matrix E, shared across heads and between K and V; padded tokens are zeroed before the projection. |
 | `dsets-d{D}` | per-particle MLP 3→D→D (ReLU) → masked sum → MLP D→D→32→16 (ReLU) → Linear(16→5). Float JEDI-like Deep Sets without the context round. |
 
-Parameter counts: tf-1b-d16 2,405; tf-2b-d16 4,629; tf-1b-d32 8,901; tf-2b-d32 17,445; linf adds N×K per block
+Parameter counts: tf-2b-d64 67,653; tf-1b-d16 2,405; tf-2b-d16 4,629; tf-1b-d32 8,901; tf-2b-d32 17,445; linf adds N×K per block
 (linf-1b-d32-k4 9,029 at N = 32, 9,157 at N = 64; linf-2b-d32-k8 17,957 / 18,469); dsets-d64 11,269 (independent of N).
 
 ## Training (defaults of `train_small.py`)
@@ -49,7 +54,7 @@ Smoke test (CPU, 1 epoch, 20k jets): add `--epochs 1 --max_train 20000 --max_tes
 The set, as GPU Jobs (from the repo root):
 ```
 ./sync.sh                                   # mirror the repo to /j-jepa-vol/aaron-interp/code
-python train/make_jobs.py                   # -> train/jobs/n{32,64}-s{0,1}.yaml (run on the helper pod if local compute is off)
+python train/make_jobs.py --set main        # -> train/jobs/n{32,64}-s{0,1}.yaml (run on the helper pod if local compute is off)
 kubectl apply -f train/jobs/n32-s0.yaml     # one job first; check utilisation in logs/train-n32-s0.log, then the rest
 ```
 Each job: `gpu_job.sh <job> <concurrency> <model:N:seed>...`; a run whose directory already has `test.json` is skipped,
@@ -57,8 +62,12 @@ so a resubmitted job (`make_jobs.py --suffix=-b`) only redoes what is missing. J
 labels `owner=anrunw, study=aaron-interp, set=small-taggers`, 1 GPU, limits = requests.
 
 ## The exact set launched
-7 models × N ∈ {32, 64} × seeds {0, 1} = 28 runs, 4 jobs (`n32-s0`, `n32-s1`, `n64-s0`, `n64-s1`), each the 7 models of
-one (N, seed) concurrently on one GPU. See `STATUS.md` for job names, sizes and progress commands.
+- `main`: 7 models × N ∈ {32, 64} × seeds {0, 1} = 28 runs, 4 jobs (`n32-s0`, `n32-s1` → resubmitted as `n32-s1-b`,
+  `n64-s0`, `n64-s1`), each the 7 models of one (N, seed) concurrently on one GPU (6 CPU, 16–20 Gi).
+- `extra1`: `n64-p30` = tf-2b-d16 and tf-2b-d32 at N = 64, seed 1, `--patience=30` (reruns of the two main runs that
+  early-stopped; directories `<model>-n64-p30/seed1`; 2 CPU, 6 Gi); `n64-e100` = tf-2b-d32 and tf-2b-d64 at N = 64, seeds
+  0 and 1, `--epochs=100 --patience=100` (directories `<model>-n64-e100/seed<k>`; 4 CPU, 10 Gi).
+See `STATUS.md` for job states, measured resource use, results and progress commands.
 
 ## Check progress
 ```

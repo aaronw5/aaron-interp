@@ -1,74 +1,121 @@
-# Small-tagger training: status (2026-10-16)
+# Small-tagger training: status (updated 2026-10-17 ~01:55 UTC)
 
-Set: 7 models (`tf-1b-d16`, `tf-2b-d16`, `tf-1b-d32`, `tf-2b-d32`, `linf-1b-d32-k4`, `linf-2b-d32-k8`, `dsets-d64`)
-× N ∈ {32, 64} × seeds {0, 1} = 28 runs. Defaults of `train_small.py`: AdamW lr 1e-3 (200 warm-up steps, cosine to 0 over
-30 epochs), batch 1024, patience 5 on val loss, train = train archive minus `splits.npz` dev (595,000), val = dev (25,000),
-test = val archive (260,000). Code snapshot per job under `/j-jepa-vol/aaron-interp/models/small/_snapshots/`.
+Main set: 7 models (`tf-1b-d16`, `tf-2b-d16`, `tf-1b-d32`, `tf-2b-d32`, `linf-1b-d32-k4`, `linf-2b-d32-k8`, `dsets-d64`)
+× N ∈ {32, 64} × seeds {0, 1} = 28 runs, **all 28 complete**. Defaults of `train_small.py`: AdamW lr 1e-3 (200 warm-up
+steps, cosine to 0 over 30 epochs), batch 1024, patience 5 on val loss, train = train archive minus `splits.npz` dev
+(595,000), val = dev (25,000), test = val archive (260,000). Code snapshot per job under
+`/j-jepa-vol/aaron-interp/models/small/_snapshots/`.
+Extra set `extra1`: the two early-stopped runs again with patience 30 (directory tag `-p30`, **complete**), and
+tf-2b-d32 / tf-2b-d64 at N = 64 for 100 epochs without early stopping, seeds 0 and 1 (tag `-e100`, **running**).
 
 ## Jobs (namespace cms-ml, labels owner=anrunw, study=aaron-interp, set=small-taggers; 1 GPU each, limits = requests)
-| job | runs (all 7 models, concurrently on one GPU) | request | state |
+| job | runs | request | state / measured use |
 |---|---|---|---|
 | `anrunw-ai-train-smoke` | CPU smoke test: tf-1b-d16, linf-1b-d32-k4, dsets-d64 (N=32), tf-1b-d16 `--cls_token` (N=64); 1 epoch, 20k jets → `models/small-smoke/` | 1 CPU, 2 Gi (exempt size) | complete, exit 0, 127 s |
-| `anrunw-ai-train-n32-s0` | N=32, seed 0 | 6 CPU, 16 Gi | complete: 7/7 runs, 5 min on an NVIDIA L40 (rci-tide-gpu-05.sdsu.edu); monitor at 3 min: GPU 100 %, 6.2 GB GPU memory, container memory 15.0 GiB, 7 processes |
-| `anrunw-ai-train-n32-s1` | N=32, seed 1 | 6 CPU, 20 Gi | **failed**: Job started 20:04:46 UTC, pod failed 20:36:27 UTC, `BackoffLimitExceeded` (backoffLimit 0). The container never ran: no job log, no `_snapshots/n32-s1-*`, no `*-n32/seed1` directories (gpu_job.sh creates the first two in its first lines). The pod object and its events no longer existed when checked (~5 h later), so the reason (scheduling/eviction, image pull, GPU admission) is not recorded. |
-| `anrunw-ai-train-n32-s1-b` | N=32, seed 1 (resubmit of the above) | 6 CPU, 20 Gi | launched 2026-10-17 ~01:07 UTC; `backoffLimit: 1` (one retry; gpu_job.sh skips runs with test.json); running: all 7 runs started 01:14:44 UTC on an RTX 2080 Ti (k8s-haosu-12.sdsc.optiputer.net) |
-| `anrunw-ai-train-n64-s0` | N=64, seed 0 | 6 CPU, 20 Gi | complete: 7/7 runs, 21 min on an RTX 2080 Ti (k8s-haosu-16.sdsc.optiputer.net); monitor: GPU 100 %, 6.8 GB GPU memory, container memory 12.8 GiB peak, CPU 5.0–6.0 cores (job average 5.13) |
-| `anrunw-ai-train-n64-s1` | N=64, seed 1 | 6 CPU, 20 Gi | complete: 7/7 runs, 16 min on an RTX 2080 Ti (k8s-haosu-07.sdsc.optiputer.net); GPU 98–100 %, memory 12.7 GiB peak, CPU job average 5.01 cores |
+| `anrunw-ai-train-n32-s0` | 7 models, N=32, seed 0 (7 concurrent) | 6 CPU, 16 Gi | complete 7/7; 5 min on an L40; GPU 100 %, memory 15.0 GiB |
+| `anrunw-ai-train-n32-s1` | 7 models, N=32, seed 1 | 6 CPU, 20 Gi | **failed** before its container ran (pod failed 20:36:27 UTC, 32 min after start, `BackoffLimitExceeded` with backoffLimit 0; no log, no snapshot, no run dirs; pod and events gone when checked, cause not recorded) |
+| `anrunw-ai-train-n32-s1-b` | resubmit of n32-s1 | 6 CPU, 20 Gi | complete 7/7; 10 min on an RTX 2080 Ti; GPU 100 %, memory 12.75 GiB, CPU 5.05 cores average |
+| `anrunw-ai-train-n64-s0` | 7 models, N=64, seed 0 | 6 CPU, 20 Gi | complete 7/7; 21 min on an RTX 2080 Ti; GPU 100 %, memory 12.8 GiB, CPU 5.13 cores |
+| `anrunw-ai-train-n64-s1` | 7 models, N=64, seed 1 | 6 CPU, 20 Gi | complete 7/7; 16 min on an RTX 2080 Ti; GPU 98–100 %, memory 12.7 GiB, CPU 5.01 cores |
+| `anrunw-ai-train-n64-p30` | tf-2b-d16, tf-2b-d32, N=64, seed 1, `--patience=30` → `<model>-n64-p30/seed1` (2 concurrent) | 2 CPU, 6 Gi | complete 2/2; first image pull on k8s-haosu-10 failed (`failed to extract layer … Canceled`, ErrImagePull), second took 8 min 42 s; ran 01:35:17–01:45:20 UTC on an RTX 2080 Ti; GPU 100 %, memory 4.0 GiB, CPU 1.78 cores average |
+| `anrunw-ai-train-n64-e100` | tf-2b-d32, tf-2b-d64, N=64, seeds 0/1, `--epochs=100 --patience=100` → `<model>-n64-e100/seed<k>` (4 concurrent) | 4 CPU, 10 Gi | running since 01:25:37 UTC on an RTX 2080 Ti (k8s-haosu-05); GPU 100 %, memory 7.5 GiB, CPU 3.95 cores; tf-2b-d64 reached epoch 22 after 27 min (≈ 74 s per epoch, ≈ 2 h for 100 epochs); at 01:53 UTC val acc tf-2b-d32 epoch 30: 0.738 / 0.757, tf-2b-d64 epoch 22: 0.754 / 0.759 (seed 0 / 1) |
 
-Memory was raised from 16 to 20 Gi after n32-s0 used 15.0 GiB of 16 (7 CUDA processes); the N=64 jobs then peaked at
-12.8 GiB (64 % of 20 Gi). CPU: N=64 jobs averaged 5.0–5.1 of 6 cores (83–86 %). GPU: 100 % while ≥ 3 runs were active,
-98 % with 1 run left.
+Since n32-s1-b, jobs use `backoffLimit: 1`; a retry skips runs that already have `test.json`. Sizing: about 0.75–1 CPU
+core and 1.8–2.1 GiB of container memory per concurrent run (measured on the 7-run jobs).
 
-## Results so far (test archive, 260,000 jets; best = lowest val loss)
+## Results: mean ± spread over seeds (test archive, 260,000 jets; spread = half the seed-0/seed-1 difference)
+`*` = early-stopped (patience 5). Patience-30 rows: reruns of the two early-stopped seed-1 runs (same seed).
+Reference rows: JEDI-linear official 3-feature models, `data/official_acc.json`. PNG: `results/site/T7_small_models.png`.
 
-### N = 32, seed 0 (no run early-stopped)
-| model | params | best epoch | val acc | test acc | test AUC g/q/W/Z/t | rej50 g/q/W/Z/t |
+| model | N | variant | params | test acc seed 0 / seed 1 [%] | mean ± spread [%] | AUC W / Z / t (mean) |
 |---|---|---|---|---|---|---|
-| tf-1b-d16 | 2,405 | 30 | 0.6836 | 0.6808 | 0.866/0.883/0.914/0.904/0.940 | 17/22/29/37/52 |
-| tf-2b-d16 | 4,629 | 30 | 0.7516 | 0.7524 | 0.910/0.909/0.954/0.946/0.956 | 30/29/80/202/119 |
-| tf-1b-d32 | 8,901 | 30 | 0.7189 | 0.7183 | 0.894/0.898/0.933/0.921/0.947 | 24/27/39/75/96 |
-| tf-2b-d32 | 17,445 | 30 | 0.7737 | 0.7724 | 0.922/0.917/0.963/0.955/0.960 | 37/33/114/319/149 |
-| linf-1b-d32-k4 | 9,029 | 29 | 0.7439 | 0.7416 | 0.906/0.903/0.948/0.940/0.952 | 28/31/83/153/81 |
-| linf-2b-d32-k8 | 17,957 | 29 | 0.7853 | 0.7841 | 0.930/0.919/0.968/0.963/0.962 | 41/37/202/493/133 |
-| dsets-d64 | 11,269 | 30 | 0.7794 | 0.7778 | 0.923/0.916/0.966/0.959/0.958 | 36/35/163/364/115 |
+| tf-1b-d16 | 32 | 30 ep, patience 5 | 2,405 | 68.08 / 70.11 | 69.10 ± 1.02 | 0.920 / 0.909 / 0.942 |
+| tf-2b-d16 | 32 | 30 ep, patience 5 | 4,629 | 75.24 / 75.71 | 75.47 ± 0.23 | 0.955 / 0.946 / 0.955 |
+| tf-1b-d32 | 32 | 30 ep, patience 5 | 8,901 | 71.83 / 72.08 | 71.96 ± 0.12 | 0.933 / 0.922 / 0.946 |
+| tf-2b-d32 | 32 | 30 ep, patience 5 | 17,445 | 77.24 / 77.53 | 77.39 ± 0.14 | 0.963 / 0.955 / 0.960 |
+| linf-1b-d32-k4 | 32 | 30 ep, patience 5 | 9,029 | 74.16 / 73.58 | 73.87 ± 0.29 | 0.947 / 0.938 / 0.949 |
+| linf-2b-d32-k8 | 32 | 30 ep, patience 5 | 17,957 | 78.41 / 78.34 | 78.37 ± 0.03 | 0.968 / 0.963 / 0.962 |
+| dsets-d64 | 32 | 30 ep, patience 5 | 11,269 | 77.78 / 77.80 | 77.79 ± 0.01 | 0.965 / 0.958 / 0.958 |
+| JEDI-linear 3-feature (official) | 32 | reference | – | – | 78.00 | – |
+| tf-1b-d16 | 64 | 30 ep, patience 5 | 2,405 | 69.31 / 69.21 | 69.26 ± 0.05 | 0.931 / 0.915 / 0.940 |
+| tf-2b-d16 | 64 | 30 ep, patience 5 | 4,629 | 73.84 / 72.39* | 73.12 ± 0.73 | 0.952 / 0.934 / 0.947 |
+| tf-1b-d32 | 64 | 30 ep, patience 5 | 8,901 | 69.38 / 69.15 | 69.27 ± 0.11 | 0.927 / 0.910 / 0.943 |
+| tf-2b-d32 | 64 | 30 ep, patience 5 | 17,445 | 76.19 / 73.42* | 74.80 ± 1.39 | 0.956 / 0.939 / 0.953 |
+| linf-1b-d32-k4 | 64 | 30 ep, patience 5 | 9,157 | 76.69 / 77.78 | 77.23 ± 0.54 | 0.956 / 0.951 / 0.958 |
+| linf-2b-d32-k8 | 64 | 30 ep, patience 5 | 18,469 | 81.06 / 80.76 | 80.91 ± 0.15 | 0.975 / 0.971 / 0.967 |
+| dsets-d64 | 64 | 30 ep, patience 5 | 11,269 | 80.64 / 80.81 | 80.73 ± 0.09 | 0.974 / 0.970 / 0.964 |
+| tf-2b-d16 | 64 | 30 ep, patience 30 | 4,629 | – / 74.09 | 74.09 | 0.955 / 0.939 / 0.948 |
+| tf-2b-d32 | 64 | 30 ep, patience 30 | 17,445 | – / 76.24 | 76.24 | 0.960 / 0.944 / 0.956 |
+| JEDI-linear 3-feature (official) | 64 | reference | – | – | 80.92 | – |
 
-Reference on the same test set: JEDI-linear 3-feature n32 ≈ 78 %, n64 80.94 %.
+Per-model differences between N = 32 and N = 64 (mean test acc; for tf-2b-d16/d32 at N = 64: seed 0 main + seed 1 p30):
+tf-1b-d16 69.10 → 69.26; tf-2b-d16 75.47 → 73.97; tf-1b-d32 71.96 → 69.27; tf-2b-d32 77.39 → 76.21; linf-1b-d32-k4
+73.87 → 77.23; linf-2b-d32-k8 78.37 → 80.91; dsets-d64 77.79 → 80.73.
 
-### N = 64, seeds 0 and 1 (test acc seed0 / seed1; best epoch / epochs run per seed)
-| model | params | best ep (s0; s1) | test acc s0 / s1 | test AUC g/q/W/Z/t (s0) | rej50 g/q/W/Z/t (s0) |
-|---|---|---|---|---|---|
-| tf-1b-d16 | 2,405 | 30/30; 30/30 | 0.6931 / 0.6921 | 0.858/0.889/0.933/0.917/0.940 | 13/24/46/72/49 |
-| tf-2b-d16 | 4,629 | 30/30; **9/14** | 0.7384 / 0.7239 | 0.895/0.902/0.954/0.936/0.950 | 21/26/70/208/89 |
-| tf-1b-d32 | 8,901 | 30/30; 30/30 | 0.6938 / 0.6915 | 0.868/0.890/0.930/0.911/0.942 | 15/24/42/64/61 |
-| tf-2b-d32 | 17,445 | 30/30; **7/12** | 0.7619 / 0.7342 | 0.917/0.913/0.960/0.944/0.956 | 30/29/85/313/140 |
-| linf-1b-d32-k4 | 9,157 | 30/30; 30/30 | 0.7669 / 0.7778 | 0.936/0.910/0.953/0.948/0.956 | 54/34/120/188/77 |
-| linf-2b-d32-k8 | 18,469 | 29/30; 29/30 | 0.8106 / 0.8076 | 0.950/0.929/0.976/0.972/0.968 | 71/38/367/1236/170 |
-| dsets-d64 | 11,269 | 29/30; 28/30 | 0.8064 / 0.8081 | 0.945/0.926/0.973/0.968/0.964 | 64/37/343/980/153 |
+## Results: per run
+Epochs run / best epoch; best = lowest val loss. Every run that did not stop early has its best epoch at 28–30.
 
-Early stops (patience 5 on val loss): tf-2b-d16-n64 seed 1 stopped after epoch 14 (best epoch 9, val loss 0.763, lr 7.9e-4 at
-the best epoch); tf-2b-d32-n64 seed 1 stopped after epoch 12 (best epoch 7, val loss 0.734, lr 8.7e-4). Their checkpoints
-cover epochs 0–14 and 0–12. For comparison, tf-2b-d32-n64 seed 0 had val-loss rises at epochs 5, 10, 12–13, 15–16 and
-reached val loss 0.671 at epoch 30. A rerun of these two without early stopping would be `--patience 30` (not done).
+| run | params | epochs run / best epoch | val acc | test acc | test AUC g/q/W/Z/t | rej50 g/q/W/Z/t |
+|---|---|---|---|---|---|---|
+| tf-1b-d16-n32 s0 | 2,405 | 30/30 | 68.36 | 68.08 | 0.866/0.883/0.914/0.904/0.940 | 17/22/29/37/52 |
+| tf-1b-d16-n32 s1 | 2,405 | 30/30 | 69.95 | 70.11 | 0.881/0.890/0.925/0.914/0.944 | 20/24/35/54/70 |
+| tf-2b-d16-n32 s0 | 4,629 | 30/30 | 75.16 | 75.24 | 0.910/0.909/0.954/0.946/0.956 | 30/29/80/202/119 |
+| tf-2b-d16-n32 s1 | 4,629 | 30/30 | 75.76 | 75.71 | 0.912/0.910/0.956/0.947/0.954 | 32/31/86/220/88 |
+| tf-1b-d32-n32 s0 | 8,901 | 30/30 | 71.89 | 71.83 | 0.894/0.898/0.933/0.921/0.947 | 24/27/39/75/96 |
+| tf-1b-d32-n32 s1 | 8,901 | 30/30 | 72.00 | 72.08 | 0.896/0.900/0.934/0.923/0.944 | 25/28/44/76/85 |
+| tf-2b-d32-n32 s0 | 17,445 | 30/30 | 77.37 | 77.24 | 0.922/0.917/0.963/0.955/0.960 | 37/33/114/319/149 |
+| tf-2b-d32-n32 s1 | 17,445 | 30/30 | 77.53 | 77.53 | 0.924/0.918/0.963/0.955/0.961 | 38/34/117/339/157 |
+| linf-1b-d32-k4-n32 s0 | 9,029 | 30/29 | 74.39 | 74.16 | 0.906/0.903/0.948/0.940/0.952 | 28/31/83/153/81 |
+| linf-1b-d32-k4-n32 s1 | 9,029 | 30/30 | 73.57 | 73.58 | 0.903/0.900/0.945/0.936/0.947 | 27/30/78/117/64 |
+| linf-2b-d32-k8-n32 s0 | 17,957 | 30/29 | 78.53 | 78.41 | 0.930/0.919/0.968/0.963/0.962 | 41/37/202/493/133 |
+| linf-2b-d32-k8-n32 s1 | 17,957 | 30/30 | 78.62 | 78.34 | 0.929/0.919/0.968/0.963/0.962 | 40/37/202/509/136 |
+| dsets-d64-n32 s0 | 11,269 | 30/30 | 77.94 | 77.78 | 0.923/0.916/0.966/0.959/0.958 | 36/35/163/364/115 |
+| dsets-d64-n32 s1 | 11,269 | 30/30 | 77.78 | 77.80 | 0.923/0.917/0.965/0.957/0.959 | 36/35/151/352/131 |
+| tf-1b-d16-n64 s0 | 2,405 | 30/30 | 68.92 | 69.31 | 0.858/0.889/0.933/0.917/0.940 | 13/24/46/72/49 |
+| tf-1b-d16-n64 s1 | 2,405 | 30/30 | 68.83 | 69.21 | 0.859/0.888/0.930/0.914/0.940 | 14/24/43/68/48 |
+| tf-2b-d16-n64 s0 | 4,629 | 30/30 | 73.64 | 73.84 | 0.895/0.902/0.954/0.936/0.950 | 21/26/70/208/89 |
+| tf-2b-d16-n64 s1 | 4,629 | 14/9 (early stop) | 72.23 | 72.39 | 0.883/0.897/0.950/0.932/0.944 | 18/25/64/165/55 |
+| tf-1b-d32-n64 s0 | 8,901 | 30/30 | 68.92 | 69.38 | 0.868/0.890/0.930/0.911/0.942 | 15/24/42/64/61 |
+| tf-1b-d32-n64 s1 | 8,901 | 30/30 | 68.92 | 69.15 | 0.874/0.891/0.925/0.910/0.943 | 16/24/40/55/68 |
+| tf-2b-d32-n64 s0 | 17,445 | 30/30 | 75.92 | 76.19 | 0.917/0.913/0.960/0.944/0.956 | 30/29/85/313/140 |
+| tf-2b-d32-n64 s1 | 17,445 | 12/7 (early stop) | 73.54 | 73.42 | 0.895/0.903/0.952/0.934/0.950 | 21/26/66/189/89 |
+| linf-1b-d32-k4-n64 s0 | 9,157 | 30/30 | 76.85 | 76.69 | 0.936/0.910/0.953/0.948/0.956 | 54/34/120/188/77 |
+| linf-1b-d32-k4-n64 s1 | 9,157 | 30/30 | 77.77 | 77.78 | 0.938/0.916/0.960/0.954/0.960 | 55/35/167/392/97 |
+| linf-2b-d32-k8-n64 s0 | 18,469 | 30/29 | 81.01 | 81.06 | 0.950/0.929/0.976/0.972/0.968 | 71/38/367/1236/170 |
+| linf-2b-d32-k8-n64 s1 | 18,469 | 30/29 | 80.78 | 80.76 | 0.948/0.928/0.975/0.971/0.966 | 65/38/346/1071/153 |
+| dsets-d64-n64 s0 | 11,269 | 30/29 | 80.48 | 80.64 | 0.945/0.926/0.973/0.968/0.964 | 64/37/343/980/153 |
+| dsets-d64-n64 s1 | 11,269 | 30/28 | 80.75 | 80.81 | 0.945/0.926/0.974/0.971/0.964 | 61/37/356/1054/149 |
+| tf-2b-d16-n64-p30 s1 | 4,629 | 30/30 | 73.81 | 74.09 | 0.897/0.902/0.955/0.939/0.948 | 22/26/74/224/70 |
+| tf-2b-d32-n64-p30 s1 | 17,445 | 30/30 | 76.04 | 76.24 | 0.918/0.913/0.960/0.944/0.956 | 31/30/87/312/139 |
 
-Validation curve, tf-1b-d16-n32 seed 0 (val loss / val acc): init 1.678/0.201; ep1 1.057/0.593; ep2 1.020/0.612; ep3 0.993/0.625;
-ep4 0.970/0.634; ep6 0.949/0.643; ep10 0.922/0.655; ep15 0.904/0.663; ep20 0.883/0.676; ep25 0.873/0.681; ep30 0.871/0.684.
-dsets-d64-n32 seed 0: init 1.618/0.200; ep1 0.996/0.611; ep3 0.778/0.719; ep8 0.708/0.751; ep14 0.662/0.773; ep22 0.642/0.778;
-ep30 0.639/0.779 (val loss spikes at ep9 1.046, ep11 0.788, ep13 0.769, then recovers).
-Dead units (fraction with pre-activation max ≤ 0 on 10k held-out jets): transformers 0 in every GELU layer at every epoch;
-dsets-d64 phi1/phi2/rho1/rho2/rho3 = 0.016/0.094/0.219/0.156/0.188 from epoch 1 on (init 0.016/0.062/0.172/0.188/0.125).
+Early stops (patience 5): tf-2b-d16-n64 seed 1 stopped after epoch 14 (best epoch 9, val loss 0.763, lr 7.9e-4 at the
+best epoch); tf-2b-d32-n64 seed 1 stopped after epoch 12 (best 7, val loss 0.734, lr 8.7e-4). Checkpoints of those runs
+cover epochs 0–14 and 0–12.
+Reruns with patience 30 (same seed 1; the rerun of tf-2b-d32 reproduces the original epoch-7 val loss / acc, 0.7338 /
+0.7354 vs 0.73384 / 0.73536): both ran all 30 epochs, best epoch 30, test acc tf-2b-d16 74.09 % (was 72.39), tf-2b-d32
+76.24 % (was 73.42). The seed-0 runs never triggered the patience-5 stop, so their training is the same as under
+patience 30; seed 0 (main) with seed 1 (p30): tf-2b-d16-n64 73.97 ± 0.12, tf-2b-d32-n64 76.21 ± 0.03.
 
 ## Where results land
-`/j-jepa-vol/aaron-interp/models/small/<model>-n<N>/seed<k>/`: `arch.json`, `log.csv` (per epoch incl. `dead_<layer>`),
-`ckpt/epoch_0.pt` … `epoch_30.pt`, `best.pt`, `test.json`, `test_probs.npy`, `train.log`.
-Job logs: `/j-jepa-vol/aaron-interp/logs/train-<job>.log` (start/end per run, monitor lines every 3 min).
+- Runs: `/j-jepa-vol/aaron-interp/models/small/<model>-n<N>[<tag>]/seed<k>/`: `arch.json`, `log.csv` (per epoch incl.
+  `dead_<layer>`), `ckpt/epoch_0.pt` (init) … `epoch_<last>.pt`, `best.pt`, `test.json`, `test_probs.npy`, `train.log`.
+- Job logs: `/j-jepa-vol/aaron-interp/logs/train-<job>.log` (start/end per run, monitor line every 3 min).
+- Summary: `/j-jepa-vol/aaron-interp/results/small/summary_small.json` (copy in the local repo `results/small/`), tables
+  `results/small/table_small.md`, PNG `results/site/T7_small_models.png`. Regenerate:
+  ```
+  # on the cluster (helper pod, stdlib only)
+  python3 code/train/summarize_small.py collect --models_dir models/small --official data/official_acc.json --out results/small/summary_small.json
+  # locally (matplotlib)
+  python train/summarize_small.py render results/small/summary_small.json --png results/site/T7_small_models.png --md results/small/table_small.md
+  ```
 
 ## Check progress
 ```
 kubectl -n cms-ml get jobs -l set=small-taggers
 POD=$(kubectl -n cms-ml get pods -l owner=anrunw -o name | sed 's|pod/||' | grep '^anrunw-helper-' | head -1)
-kubectl -n cms-ml exec $POD -- tail -5 /j-jepa-vol/aaron-interp/logs/train-n32-s1-b.log
-kubectl -n cms-ml exec $POD -- bash -c 'cd /j-jepa-vol/aaron-interp/models/small; for f in */seed*/test.json; do printf "%-28s %s\n" $f "$(grep -m1 \"accuracy\" $f)"; done'
-kubectl -n cms-ml exec $POD -- cut -d, -f1,4-7 /j-jepa-vol/aaron-interp/models/small/tf-1b-d16-n64/seed0/log.csv
+kubectl -n cms-ml exec $POD -- tail -5 /j-jepa-vol/aaron-interp/logs/train-n64-e100.log
+kubectl -n cms-ml exec $POD -- tail -3 /j-jepa-vol/aaron-interp/models/small/tf-2b-d64-n64-e100/seed0/train.log
 ```
-A failed or missing run is rerun by resubmitting its job with a suffix (`python train/make_jobs.py --only n64-s0 --suffix=-b
---mem 20` — `=` needed, `-b` alone parses as a flag — then `kubectl apply -f train/jobs/n64-s0-b.yaml`); runs with `test.json` are skipped.
+A failed or missing run is rerun by resubmitting its job with a suffix: `python train/make_jobs.py --set <set> --only <job>
+--suffix=-b` (`=` needed: `-b` alone parses as a flag), then `kubectl apply -f train/jobs/<job>-b.yaml`; runs with
+`test.json` are skipped.

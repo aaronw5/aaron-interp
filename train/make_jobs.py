@@ -1,12 +1,18 @@
-"""Write the k8s Job YAMLs for the small-tagger training set to train/jobs/.
+"""Write the k8s Job YAMLs for the small-tagger training sets to train/jobs/.
 
-    python train/make_jobs.py [--only n32-s0,n64-s1] [--suffix=-b] [--conc 7] [--cpu 6] [--mem 16]
+    python train/make_jobs.py [--set main|extra1] [--only n32-s0,n64-s1] [--suffix=-b] [--conc C] [--cpu C] [--mem G]
     kubectl apply -f train/jobs/<job>.yaml
 
-Set: 7 models x N in {32, 64} x seeds {0, 1} = 28 runs, grouped into 4 jobs by (N, seed), the 7 models of a job training
-concurrently on one GPU (NRP: GPU utilisation must stay > 40 %; one tiny model alone does not). Job names
-anrunw-ai-train-<job>; labels owner=anrunw, study=aaron-interp. The container runs train/gpu_job.sh from the repo
-mirror /j-jepa-vol/aaron-interp/code (run ./sync.sh first); the log goes to /j-jepa-vol/aaron-interp/logs/train-<job>.log.
+Sets (job name -> runs as model:N:seed[:dir-tag[:train_small flags]], see gpu_job.sh):
+  main    7 models x N in {32, 64} x seeds {0, 1} = 28 runs, 4 jobs by (N, seed), 7 runs concurrent per GPU.
+  extra1  n64-p30: tf-2b-d16 and tf-2b-d32 at N = 64, seed 1, --patience 30 (reruns of the two early-stopped main runs;
+          directory tag -p30, the originals stay); n64-e100: tf-2b-d32 and tf-2b-d64 at N = 64, seeds 0 and 1, 100 epochs
+          cosine, --patience 100 (no early stop), directory tag -e100.
+Several runs share one GPU (NRP: GPU utilisation must stay > 40 %). CPU / memory per set from measurements: about 0.75-1
+core and 1.8-2.1 GiB of container memory per concurrent run (main jobs: 5.0-5.1 cores, 12.7-15.0 GiB for 7 runs).
+Job names anrunw-ai-train-<job>; labels owner=anrunw, study=aaron-interp, set=small-taggers. The container runs
+train/gpu_job.sh from the repo mirror /j-jepa-vol/aaron-interp/code (run ./sync.sh first); the log goes to
+/j-jepa-vol/aaron-interp/logs/train-<job>.log.
 """
 import argparse
 import os
@@ -76,36 +82,41 @@ spec:
 """
 
 
-def jobs():
-    """{job_name: [model:N:seed, ...]} — one job per (N, seed), all 7 models."""
-    out = {}
-    for n in NS:
-        for s in SEEDS:
-            out[f"n{n}-s{s}"] = [f"{m}:{n}:{s}" for m in MODELS]
-    return out
+def job_sets():
+    """{set: {job_name: dict(runs=[spec, ...], conc, cpu, mem)}}."""
+    main = {f"n{n}-s{s}": dict(runs=[f"{m}:{n}:{s}" for m in MODELS], conc=7, cpu=6, mem=20) for n in NS for s in SEEDS}
+    extra1 = {
+        "n64-p30": dict(runs=[f"{m}:64:1:-p30:--patience=30" for m in ("tf-2b-d16", "tf-2b-d32")], conc=2, cpu=2, mem=6),
+        "n64-e100": dict(runs=[f"{m}:64:{s}:-e100:--epochs=100,--patience=100" for m in ("tf-2b-d32", "tf-2b-d64")
+                               for s in SEEDS], conc=4, cpu=4, mem=10),
+    }
+    return {"main": main, "extra1": extra1}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--set", default="main", help="main | extra1")
     ap.add_argument("--only", default="", help="comma-separated job names")
-    ap.add_argument("--suffix", default="", help="job-name suffix for resubmits (e.g. -b)")
-    ap.add_argument("--conc", type=int, default=7, help="trainings running at once per GPU")
-    ap.add_argument("--cpu", type=int, default=6)
-    ap.add_argument("--mem", type=int, default=16, help="Gi")
+    ap.add_argument("--suffix", default="", help="job-name suffix for resubmits, written --suffix=-b")
+    ap.add_argument("--conc", type=int, default=None, help="trainings running at once per GPU (default: the set's)")
+    ap.add_argument("--cpu", type=int, default=None, help="default: the set's")
+    ap.add_argument("--mem", type=int, default=None, help="Gi (default: the set's)")
     args = ap.parse_args()
     here = os.path.dirname(os.path.abspath(__file__))
     os.makedirs(os.path.join(here, "jobs"), exist_ok=True)
     only = [j for j in args.only.split(",") if j]
-    for job, runs in jobs().items():
+    for job, cfg in job_sets()[args.set].items():
         if only and job not in only:
             continue
+        conc = args.conc or cfg["conc"]
+        cpu = args.cpu or cfg["cpu"]
+        mem = args.mem or cfg["mem"]
         jname = job + args.suffix
         path = os.path.join(here, "jobs", f"{jname}.yaml")
         with open(path, "w") as f:
-            f.write(TEMPLATE.format(jname=jname, job=job, conc=args.conc, runs=" ".join(runs), root=ROOT,
-                                    cpu=args.cpu, mem=args.mem, bad_nodes=BAD_NODES, gpus=GPUS))
-        print(f"{path}: {len(runs)} runs, {args.conc} concurrent, {args.cpu} CPU, {args.mem} Gi")
-
+            f.write(TEMPLATE.format(jname=jname, job=job, conc=conc, runs=" ".join(cfg["runs"]), root=ROOT,
+                                    cpu=cpu, mem=mem, bad_nodes=BAD_NODES, gpus=GPUS))
+        print(f"{path}: {len(cfg['runs'])} runs, {conc} concurrent, {cpu} CPU, {mem} Gi")
 
 if __name__ == "__main__":
     main()
