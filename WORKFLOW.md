@@ -11,7 +11,9 @@ Fields follow v2: Name, Title, Short Hypothesis, Related Work, Abstract, Experim
 - A novelty check against the literature runs before each paper's write-up starts.
 
 ## Phase (user, 2026-10-17): exploration
-"Don't freeze paper right, we should explore more." Theses are working hypotheses; no freezing, no confirmatory-only rounds yet.
+"Don't freeze paper right, we should explore more." "What I mean is we have 3 months until deadline we can explore." Deadline ≈ mid-January 2027
+(exact date to confirm). Working plan: explore until ≈ mid-December (≥ 2 of 3 loop nodes per round exploratory); then consolidate
+(choose theses with the user, confirmatory runs on fresh seeds and samples); writing only after the user's go-ahead (write-up gate). Theses are working hypotheses; no freezing, no confirmatory-only rounds yet.
 Each round mixes rigour on existing claims with exploration: new phenomena, other models (ParticleNet, LorentzNet, L-GATr,
 PELICAN-type invariant models), other datasets (top tagging, quark–gluon), other physics quantities (beyond mass: N-subjettiness,
 multiplicity, b-tagging, leptons), and other methods (DAS, SAEs, EFP bases). Statistics rules still apply to every result.
