@@ -546,7 +546,7 @@ def plot(tag):
             wz = e['calls']['W_to_Z']; wzs = f'{wz["p"]:.3f}\n[{wz["ci"][0]:.3f}, {wz["ci"][1]:.3f}]'
             if 'hyp' not in e:
                 rows.append([cell0, elabel(name), f'{e["pred"]["M0M2"]["mean"]:+.4f}', ow, '–', '–', '–',
-                             f'{e["test_zero"]["p_boot"]:.2g}\n(Δ = 0)', '–', '–', wzs, '–', '(null)'])
+                             fmt_p(e['test_zero']) + '\n(H0: Δ = 0)', '–', '–', wzs, '–', '(null)'])
                 continue
             h = e['hyp']['M0M2']; ha = e['hyp']['inv']; mr = e['calls']['matched_real']['W_to_Z']
             exc = ', '.join(HLAB[x] for x in e['excluded_holm_p_lt_0.01']) or 'none'
@@ -617,7 +617,8 @@ def plot(tag):
             sel = [(n, e) for n, e in E.items() if (n.startswith(f'shift_{grp}') if grp != 'axis' else e['kind'] == 'axis')]
             xx = [e['hyp']['M0M2']['pred_mean'] for _, e in sel]; yy = [e['observed']['mean'] for _, e in sel]
             yl = [e['observed']['mean'] - e['observed']['ci'][0] for _, e in sel]; yh = [e['observed']['ci'][1] - e['observed']['mean'] for _, e in sel]
-            ax.errorbar(xx, yy, yerr=[yl, yh], fmt=mk, color=PAL[grp], ms=8, mfc=PAL[grp], mec=SURF, mew=1.5, elinewidth=1.4, capsize=0,
+            ax.errorbar(xx, yy, yerr=[yl, yh], fmt=mk, color=PAL[grp], ms=8 if grp != 'phi' else 9, mfc=PAL[grp] if grp != 'phi' else 'none',
+                        mec=SURF if grp != 'phi' else PAL[grp], mew=1.5 if grp != 'phi' else 1.8, elinewidth=1.4, capsize=0,
                         label=lab_, zorder=5)
             if grp == 'axis':
                 for (n, e), x_, y_ in zip(sel, xx, yy):
@@ -634,7 +635,7 @@ def plot(tag):
     cap = ('Points: mean read-out change under each axis edit (true invariant mass unchanged), 95 % bootstrap CI over test-half jets.  '
            'Black line and grey band: the same read-out under real mass changes (angles × k).  On the black line the read-out moves as for a real '
            'mass change of ½Δlog(M0·M2); on y = 0 it moves as the invariant mass would.')
-    fig.text(0.01, 0.012, textwrap.fill(cap, int(60 * len(keys) + 20)), color=INK2, fontsize=8.8, va='bottom')
+    fig.text(0.01, 0.012, textwrap.fill(cap, int(75 * len(keys) + 10)), color=INK2, fontsize=8.8, va='bottom')
     fig.tight_layout(rect=(0, 0.08, 1, 1)); fig.savefig(SITE / f'F7_mass_axis_calibrated{sfx}.png', dpi=140, facecolor=SURF); plt.close(fig)
     log('wrote', SITE / f'F7_mass_axis_calibrated{sfx}.png')
 

@@ -206,6 +206,12 @@ MASS_EXPLAINER = [
   'predict 1.7× and 2.1× larger changes with a different dependence on $\\delta$. ParT, a different architecture, gives the same picture (0.66–0.77 of the prediction; true-W → Z 12 % → 31 %). '
   'In the figure, the dashed curve is JEDI-linear\'s own mass read-out for one W jet (a linear map from h4 to log mass, fitted on ordinary jets): it reads 90 GeV unshifted (true 81 GeV; single-jet read-outs scatter by about 10 %), '
   'rises with the shift to 101 GeV at $\\delta = 0.06$, and the network\'s call changes from W to Z at $\\delta \\approx 0.045$ and to q above 0.07. The other two curves are computed from the particles with the formulas.', 'results/site/X1_mass_shift.png'),
+ ('8b. Statistics (R1)',
+  'One read-out per model, calibrated by its response to a real mass change of the same predicted size; 95 % bootstrap intervals over 20,000 fresh jets; Holm correction over 165 tests. '
+  'The invariant-mass hypothesis (no change) is rejected for every shift and axis change in all three networks. For JEDI-linear the calibrated ratio to $\\sqrt{M_0 M_2}$ is 0.56, 0.70, 0.90, 1.02 [1.00, 1.03] for shifts of 0.02, 0.03, 0.045, 0.06 rad, '
+  '0.92 [0.90, 0.94] for the WTA axis and 0.97 [0.95, 0.99] for the hardest-particle axis; a 90° rotation (no change of either mass) moves the read-out by −0.0001 [−0.0009, +0.0007]. '
+  'So $\\sqrt{M_0 M_2}$ describes large changes; small shifts move the reading by only 56–74 % of it. One more result: at 0.06 rad the read-out moves as much as under a real mass change of the same size, but 77 % of W jets are called Z against 12 % under the real change, '
+  'so the decision depends on more than this one mass variable.', 'results/site/T13_mass_axis_stats.png'),
  ('9. What is not settled',
   'The response is 0.74–0.84 of the $\\sqrt{M_0 M_2}$ prediction rather than 1. A part that depends on the direction of the shift remains (12–20 % of the response); E14 showed that it is the sum of the second-round per-particle responses, which are polygons built from 3–9 of the directional cuts (0.96–1.05 of the measured direction term). '
   ' The network also uses the total pT at fixed mass: lowering pT by 20 % while keeping $m$ fixed sends 78 % of W jets to top. So the internal variable is "mass about the given axis" '
