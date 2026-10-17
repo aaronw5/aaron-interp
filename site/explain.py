@@ -344,7 +344,11 @@ C3_EXPLAINER = [
   'Feeding the shifted jets but keeping the per-particle $\\Delta R$ at its unshifted value removes 92–100 % of ParT_full\'s response: the response comes through that one input, not through the pair features.',
   'results/site/F3_part_translation.png'),
  ('Where it enters', 'The figure shows the same test with individual inputs held fixed.', 'results/site/F5_part_input_location.png'),
- ('Why it matters', 'Two architectures trained on different datasets use the same un-recentred mass, even when the invariant mass is available from pair inputs. The full explanation of the mass variable is in the Paper A tab.', None),
+ ('What this does and does not show',
+  'ParT can compute the invariant mass from its pair features: the pairwise masses $m_{ij}^2$ sum to the jet mass. The shift leaves every pair feature unchanged, so any response to the shift must come through the axis-relative per-particle inputs; the response shows that ParT uses that route. '
+  'It does not show that ParT ignores the pair route. Both routes give the same answer on ordinary jets; under the shift they disagree, and ParT follows the axis-relative one by 0.66–0.77 of its full size (ParT_full). '
+  'The next test (P2) changes the true mass and feeds the change to only one route at a time, to measure how much of ParT\'s ordinary mass response goes through each.', None),
+ ('Why it matters', 'JEDI-linear has only the axis-relative route. ParT has both and its decisions still move when only the axis-relative route changes. The share of each route (P2) decides whether ParT\'s mass is mainly the invariant mass with an axis-dependent part, or mainly the moment mass. The full explanation of the mass variable is in the Paper A tab.', None),
 ]
 
 D4_EXPLAINER = [
@@ -409,7 +413,7 @@ PAPER_EXPLAINERS = {
           ('Result 4 explained: variables appear over the layers in order of complexity (claim A9)', A9_EXPLAINER, False),
           ('Result 5 explained: small comparison models trained on the same inputs (claims A8/A10)', SMALL_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True)],
-    'c': [('Result explained: ParT\'s mass is also measured about the axis (claim C3)', C3_EXPLAINER, True),
+    'c': [('Result explained: ParT\'s decisions depend on the axis-relative inputs (claim C3)', C3_EXPLAINER, True),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
           ('Earlier results in brief (claims D1, D2)', EARLIER_D, False)],
