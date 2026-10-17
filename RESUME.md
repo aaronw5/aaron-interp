@@ -5,7 +5,7 @@ project. A session cron job fires twice an hour and runs this checklist when it 
 
 Cluster jobs keep running while agents are paused. On resume:
 1. `kubectl -n cms-ml get jobs -l study=aaron-interp`; read finished logs under /j-jepa-vol/aaron-interp/logs/ (e5v, e11-*, e1e3-3f-n64*, p1, train-*).
-2. Resume the science loop from its LAST run id (currently round 2: wf_17ca1010-a16, args {"rounds":1,"nodes_per_round":3,"first_round":2}).
+2. Resume the science loop from its LAST run id (currently round 3: wf_0059e09f-0cf, args {"rounds":1,"nodes_per_round":3,"first_round":3, "seed_review": "<round-2 review summary>"}).
    If the script was edited since the run started, a resume reruns every agent (cache keys include the prompt); in that case merge
    the finished agents' results from journal.jsonl with a single ledger agent instead (as done for round 1 → commit 0511d51).
 3. Resume the paused agents by SendMessage ("continue; report where you left off"): E11 MARS fit (a3b876542e12d9f1c), small-transformer
