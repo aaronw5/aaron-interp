@@ -109,7 +109,7 @@ Claims to establish:
   (pT or ln pT, and r = ΔR to the axis) summed over a fixed pT-rank window; azimuth adds ≤ 0.017 R². Named: S29 ≈ ΣpT·r² +
   Σr² + soft count (R² 0.976; cost 40.9 %), S1 = Σ_{ranks ≥ 1}(r − 0.2)₊, S0 = ΣpT of the 14 hardest, S50 = ΣpT·r² over ranks
   0–38, S19 = N(pT > 1 GeV) among ranks 13–63, S30 = Σ r for r < 0.165. Radial edits on S29/S1 match the hinge prediction
-  (slope 1.03–1.04). The radial symmetry is built in round two from round one's directional half-planes. v1: "nameable
+  (slope 1.03–1.04). The radial symmetry is built in round two from round one's directional half-planes [superseded by A3 v4]. v1: "nameable
   energy-flow quantities (counts and pT-weighted sums over regions)".
 - A4 (v3, 2026-10-16, E6 + E6v, verified on a fresh sample; verifier confidence 0.55 for the exact form, > 0.9 for
   non-recentring). The network's mass variable is an un-recentred M2-like quantity: M0 = ΣpT and M2 = Σ pT r² are read
@@ -118,16 +118,37 @@ Claims to establish:
   δ ≥ 0.02 and flips 77 % of W calls to Z; the alternatives Σ pT r and Σ r² are excluded by magnitude (×1.7, ×2.1) and
   exponent. It is not an exact function of r² about the axis: a direction-dependent odd term of 12–20 % of the even term
   remains, consistent with its construction from nine asymmetric half-plane cuts (the only angular inputs); the pT·r²
-  products form piecewise-linearly in l2/l3 (the response travels a → s → u → S, not through P/g). v2: "√(M0·M2) about
+  products form piecewise-linearly in l2/l3 (the response travels a → s → u → S, not through P/g). [2026-10-17, E14/E14v: the odd term is
+  the sum of the per-particle second-round maps: with g frozen the maps give 0.96–1.05 of the measured odd part (95 % CIs within
+  [0.93, 1.08]); on the point-reflected sample the sample-asymmetry term is −0.0005 to +0.0003 (p ≥ 0.20); symmetrized maps give
+  odd 0.0000 [−0.0005, +0.0005] with the even part unchanged; 15–24 % (seed 31) / 9–21 % (seed 8) of the odd part passes through g.]
+  [2026-10-17, E15/E15v: "multiplied in h4/h5" is not established. E15 measured a read-out interaction β 0.6–0.7 at h4/h5 (sum 0,
+  product 1); E15v showed the same read-out gives −0.75 for ReLU windows on a sum, 0.9–1.15 for ReLU units on separate M0, M2 and
+  −0.01 to 1.14 for random ReLU layers on S, so β does not separate the rules. Holds: M0 (S0) and M2 (S50) are separate S units; the
+  read-out's gain-normalised M0 response matches the product within 0.06 for M2 > 8.1 GeV from S onward (random ReLU layers on S
+  do the same). Open: where, or whether, a product forms. Wording before this date: "M0 = ΣpT and M2 = Σ pT r² are read separately at
+  S and multiplied in h4/h5".] v2: "√(M0·M2) about
   the given axis" (exact form overstated). v1 read "m² ≈ 2·ΣpT·Σ pT r² − 2|Σ pT r⃗|²": the factor 2 was an error.
 - A5. The 16 neurons are statements on A3's objects. Replacing each stage by its formula keeps the network's calls. [E7]
-- A6. Classes are combinations of neuron objects, and imposing a combination causes the class (J33b on the network's own objects). [E8]
+- A6 (v2, 2026-10-17, E8 + E8v; verifier confidence 0.6). Each class's calls are described by a rule of 2–3 neuron windows on z
+  (precision 96–98 %, coverage 70–82 % on fresh jets; rules of similar quality exist in random rotations of z: 87–99 %, 46–82 %).
+  Setting the rule's neurons to the class's in-rule medians moves 26–62 % of jets called otherwise into the class (g 54, q 32, W 41,
+  Z 61, t 26 %); the rule's set ranks 6th–78th of the 560 neuron triples with the same values, and triples without a rule neuron move
+  4–8 % on average. Moving the neurons just inside their windows moves 3–25 %, while 96–98 % of unedited in-rule jets are called the
+  class; the logit change is the exact sum of single-neuron changes through d7. So the windows describe the calls; the causal
+  effect is the distance moved along an additive logit margin, not window membership. Windows: z0 (78–81 GeV) and z7 (90–92 GeV) are
+  E6's W and Z neurons; the t rule's z8 (124–170 GeV) is not E6's top neuron z10. At S: g 48, t 34, q 21, Z 16, W 6 % (W at the
+  level of pairs without a rule unit, 4.7 %).
+  v1 (2026-10-16): "Classes are combinations of neuron objects, and imposing a combination causes the class (J33b on the network's
+  own objects). [E8]"
 - A7 (scope v3, user 2026-10-16: "just use the best version of JEDI"): one JEDI model, 3-feature n64 (the model of all
   earlier J-results), with the untrained n64 network as the control. Cross-model generality comes from the other
   architectures (A10), not from JEDI variants. [E9 → control only]
 - A9 (user, 2026-10-16). High-level variables are built over the layers: sums of particles first (P, S), then products
   and ratios (h4, h5), then clustering-type variables, if at all. The layer where a variable first becomes linearly readable
   rises with its algebraic depth. [E10; E6 for mass]
+  [2026-10-17, E15v: the product step for mass (sum at S → product in h4/h5) is not located by E15's test; the mass example of A9
+  stays open until a read-out-free test separates the combination rule from the pT-threshold features.]
 - A8. ParT follows the same scheme: pair-bias statements, head routing, messages, class-token neurons, and combinations. [P-series]
 - A11 (user, 2026-10-16: "similar to the Goodfire post, look at neurons too"). Most live units have one main job that can be
   stated as a physical pattern (jet images + observables), with weak activations that are neighbours of the main pattern and a
@@ -152,6 +173,15 @@ the 17 particle objects (S0, S19, S20, S29, S30, S40, S43, S50, S51, S60 — the
 S63, S1 move 0.1–0.2 SD; S52, S56, S62 and the context-only S31, S58 (built from η- and φ-cut g units) are directional. S29's causal
 object is the hinge sum itself (edit slope 0.99); the 3-term name is a correlational proxy (slope 0.83). A2 verified (E5v: 14.61 %,
 four objects 13.91 %, random four 0–0.9 %).
+
+A3 v4 (2026-10-17, E14 + E14v; verifier confidence 0.7). How round two builds the near-radial objects: 15 particle-level u units
+take half-plane input through five s units (s43: a29, a6, a36, a40, a43 → u1, u29, u56, u60; s60: a6, a43, a46, a3 → u52, u62, u43,
+u13, u30; s53: a29, a40, a30 → u51, u63; s32 → u17, u20; s52 → u50, u40). 11 units use one s unit, so their on-contour is the level
+set of one weighted sum of 3–5 half-planes; u13, u43, u40, u60 combine 2–3 s units. The contours are polygons in the 3–9 directions
+with nonzero weight (all nine only for u40), max/min 1.14–1.47, 3–9 % rms from a circle; random-direction polygons with fitted
+weights fit about as well as a circle (2–8 %), so the shape test is weaker than "nine-direction polygon" implied. The context g adds no
+per-particle angular term; the half-plane P units reach round two through g for u30 (32 %) and u31, u58 (100 %). Old wording (A3 v2,
+2026-10-16, E5): "The radial symmetry is built in round two from round one's directional half-planes."
 
 Narrative order: architecture identity (A1) → objects (A2, A3) → how mass is computed (A4) → neurons and classes (A5, A6)
 → universality (A7) → a larger model (A8).

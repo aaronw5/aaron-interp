@@ -72,9 +72,9 @@ CLAIMS = {
     background='Earlier work wrote the 16 neurons as formulas of hand-chosen jet observables (mass, τ21, ...). Here the inputs are the network\'s own S objects instead.',
     motivation='This closes the chain from particles to classes in the network\'s own terms, which is what "front to back" means.'),
 'A6': dict(
-    plain='Test whether each class corresponds to a combination of neuron conditions (e.g. "W-mass window on AND two-prong on AND top gate off"), and whether forcing that combination makes the network pick the class.',
-    background='Earlier, on the fitted formula, W = n12 ∧ n4 ∧ n0 described 48 % of W calls with 97 % purity and, when imposed, turned 26 % of other jets into W.',
-    motivation='The last step of the thesis: classes as combinations of objects.'),
+    plain='For each class, a rule of 2–3 conditions on the class neurons (for W: "W-mass neuron z0 on, z1 low, z4 on") picks out the jets the network calls that class with 96–98 % precision. Setting those neurons to typical values of the class moves 26–62 % of other jets into it; just entering the windows moves far fewer, because the last layer adds the neurons\' contributions.',
+    background='Earlier, on the fitted formula, W = n12 ∧ n4 ∧ n0 described 48 % of W calls with 97 % purity and, when imposed, turned 26 % of other jets into W. The class scores of JEDI-linear are one linear layer on ReLU(z), so each neuron adds its own term to each class score.',
+    motivation='The last step of the thesis: classes as combinations of objects. The test separates two readings: the class as a logical AND of windows, or the class as a sum of neuron contributions that a rule only approximates.'),
 'A9': dict(
     plain='Simple quantities (sums over particles) can be read from early layers; quantities that need products or ratios (mass, girth) appear later; quantities that need clustering (τ21, soft-drop mass) are read best at h4 and mostly not well.',
     background='"Algebraic depth" is how many steps beyond plain sums a quantity needs: 0 = a sum (ΣpT, particle count), 1 = a product or ratio of sums (mass, girth), 2 = ratios of those (D2, C2), 3 = needs reclustering or grooming (τ21, soft-drop mass).',
@@ -127,7 +127,7 @@ KEY_RESULTS_HOW = (
     'scaling all pT by $c$ multiplies the mass by $c$, $M_0$ by $c$ and $M_2$ by $c$. For each unit we take the ratio $\\rho$ of its response to the two edits (in log): '
     'a function of the mass has $\\rho = 1$, a function of $M_2$ alone $\\rho = 2$, of $M_0$ alone $\\rho = 0$. Units with $\\rho \\approx 1$: 2 in S, 9 in h4, 8 in h5, 3 in z. '
     'The pieces: S29 and S50 carry $M_2$ (sums of $p_T r^2$ over rank windows), S0 carries $M_0$ (summed pT of the 14 hardest particles, fed through the context unit g49). '
-    'Freezing S0 halves the pT response of the h4/h5 mass units, so the product is formed in h4/h5. '
+    'Freezing S0 halves the pT response of the h4/h5 mass units. Where the product forms is open: a later test (E15) could not separate a product from a sum followed by ReLU units (E15 verification). '
     '(3) The decision uses it: the W neuron z0 peaks at 75–77 GeV of input mass, the Z neurons z7/z14 at 94–98 GeV, the top gate z10 at 135–148 GeV, and W jets switch to Z calls '
     'between 80 and 90 GeV of edited mass, under both the angle and the pT edit. '
     '(4) Which mass: on ordinary jets the invariant mass $m$ and $\\sqrt{M_0 M_2}$ about the axis agree to a correlation of 0.99999, so no ordinary jet can tell them apart. '
@@ -193,7 +193,7 @@ MASS_EXPLAINER = [
   '$M_0$: the first-layer unit a15 is linear in pT for every particle, so its sum P15 is $\\sum p_T$; the context unit g49 takes 72 % of its value from P15 and feeds the second-round object S0, '
   'the summed pT of the 14 hardest particles. $M_2$: the second-round objects S29 and S50 are sums of a hinge in $(\\ln p_T, r)$ that track $\\sum p_T r^2$ (held-out $R^2$ 0.98, 0.94); '
   'moving particles outward changes S29 by the amount the hinge predicts (slope 0.99). The product: when S0 is frozen at each jet\'s own unedited value, the pT response of the h4/h5 mass units halves '
-  'and their $\\rho$ rises from about 1 to 2–5 ($M_2$-like). So $M_0$ and $M_2$ are formed separately at S and multiplied in h4/h5. In the if-statement fit of the whole network (E11), the h4 unit with the '
+  'and their $\\rho$ rises from about 1 to 2–5 ($M_2$-like). So $M_0$ and $M_2$ are formed separately at S. A test of whether they are combined as a product in h4/h5 (E15) was refuted by its verification: the read-out statistic used gives product-like values also for a sum followed by ReLU units and for random ReLU layers on S, so the location of the product is open. In the if-statement fit of the whole network (E11), the h4 unit with the '
   'largest effect (h4:49) is written mainly as $\\sqrt{M_0 M_2} < 100.6$ GeV ($R^2$ 0.991).', 'results/site/X3_mass_path.png'),
  ('7. How the decision uses it',
   'The class neurons respond to the mass variable with windows: the W neuron z0 peaks at 75–77 GeV of input mass, the Z neurons z7 and z14 at 94–98 GeV, the top gate z10 at 135–148 GeV. '
@@ -207,8 +207,8 @@ MASS_EXPLAINER = [
   'In the figure, the dashed curve is JEDI-linear\'s own mass read-out for one W jet (a linear map from h4 to log mass, fitted on ordinary jets): it reads 90 GeV unshifted (true 81 GeV; single-jet read-outs scatter by about 10 %), '
   'rises with the shift to 101 GeV at $\\delta = 0.06$, and the network\'s call changes from W to Z at $\\delta \\approx 0.045$ and to q above 0.07. The other two curves are computed from the particles with the formulas.', 'results/site/X1_mass_shift.png'),
  ('9. What is not settled',
-  'The response is 0.74–0.84 of the $\\sqrt{M_0 M_2}$ prediction rather than 1. A part that depends on the direction of the shift remains (12–20 % of the response), consistent with the network building $r$ '
-  'from nine directional cuts. The network also uses the total pT at fixed mass: lowering pT by 20 % while keeping $m$ fixed sends 78 % of W jets to top. So the internal variable is "mass about the given axis" '
+  'The response is 0.74–0.84 of the $\\sqrt{M_0 M_2}$ prediction rather than 1. A part that depends on the direction of the shift remains (12–20 % of the response); E14 showed that it is the sum of the second-round per-particle responses, which are polygons built from 3–9 of the directional cuts (0.96–1.05 of the measured direction term). '
+  ' The network also uses the total pT at fixed mass: lowering pT by 20 % while keeping $m$ fixed sends 78 % of W jets to top. So the internal variable is "mass about the given axis" '
   'to within these numbers, plus a separate dependence on total pT; it is not an exact copy of one formula.', None),
  ('10. Why it matters',
   'For interpretability: the network computes a different formula from the physics one, and the two can only be told apart away from the training data; the formula predicts how the network fails there. '
@@ -452,6 +452,50 @@ ATLAS_EXPLAINER = [
  ('Why it matters', 'Most units of a trained trigger network can be described by one physical quantity, which supports writing the network as named formulas; the units that cannot are listed and are where the formula program loses accuracy.', None),
 ]
 
+E8_EXPLAINER = [
+ ('Question', 'Is each class a combination of conditions on the 16 class neurons $z$, and does putting the neurons into that combination make the network choose the class?', None),
+ ('Background',
+  'The class scores are one linear layer on the class neurons: $\\mathrm{score}_c = \\sum_k W_{7,ck}\\,\\mathrm{ReLU}(z_k) + b_{7,c}$, and the network calls the class with the largest score. '
+  'A "window" is a condition such as $z_0 \\ge 1.35$; a rule is two or three windows joined by AND. The neuron $z_0$ is the W-mass neuron of the mass result (on for jets of 78–81 GeV inside this window), $z_7$ the Z-mass neuron (90–92 GeV).', None),
+ ('Method',
+  'Step 1 (description): on 20,000 jets a decision tree of depth 3 predicts "the network calls class $c$" from the 16 values of $z$; the best leaf is the rule. Precision = share of jets inside the rule that the network calls $c$; coverage = share of the network\'s $c$ calls inside the rule; both on 10,000 other jets. '
+  'Step 2 (intervention): on jets the network calls something else, set only the rule\'s neurons to the median values of jets called $c$ inside the rule and let the network\'s last layer decide; count how many are now called $c$. '
+  'Step 3 (variants): move the neurons only just inside the windows; move them part of the way (dose); move other sets of three neurons to the same kind of values (all 560 triples).', None),
+ ('Result',
+  'The rules describe the calls: precision 96–98 % and coverage 70–82 % for all five classes, on fresh jets as well. Setting the rule\'s neurons to typical class values moves 54 % (g), 32 % (q), 41 % (W), 61 % (Z) and 26 % (t) of other-called jets into the class; setting all 16 neurons moves 100 %. '
+  'Moving the neurons only just inside the windows moves 3–25 %, although 96–98 % of ordinary jets inside the windows are called the class. The change in the class scores from moving three neurons equals the sum of the changes from moving each alone, to numerical precision.', 'results/site/T18_e8_conjunctions.png'),
+ ('Checks (E8v, fresh jets)',
+  'Among all 560 triples of neurons set to values of the same kind, the rule\'s triple ranks 6th (g, Z), 10th (W), 39th (q) and 78th (t); the best triple for t, $\\{z_8, z_{10}, z_{13}\\}$, moves 77 % and contains $z_{10}$, the top neuron of the mass result, which the tree did not pick. '
+  'Triples without any rule neuron move 4–8 % on average. Rules of similar precision (87–99 %) are found after randomly rotating the 16 neuron axes, so a rule of this kind is not specific to individual neurons. '
+  'The random-neuron comparison in the original run used different values from the rule (class medians instead of in-rule medians), and the untrained network calls every jet top, so neither control tested the rule; the exhaustive triple comparison replaces them.', 'results/site/F7_e8_conjunctions.png'),
+ ('What this shows',
+  'The class decision can be summarised by window rules on the class neurons, which name the mass windows for W and Z. The causal effect is set by how far the neurons move along the additive score difference, not by whether a window condition is met: the network adds the neurons\' contributions, and a rule is an approximate description of where that sum favours a class.', None),
+ ('Why it matters',
+  'This is the last stage of the thesis (classes as combinations of neuron statements). It changes the claim from "a logical AND of windows" to "a sum of neuron contributions, summarised by window rules", which is the form the paper can state with the network\'s own last layer.', None),
+]
+
+E14_EXPLAINER = [
+ ('Question', 'The first layer only has directional cuts (half-planes through the axis). How does the second round turn them into objects that depend almost only on the distance $r$ from the axis, and does this explain the direction-dependent part of the mass response?', None),
+ ('Background',
+  'Each first-layer angular unit is $a_j = \\mathrm{ReLU}(\\vec n_j\\cdot(\\Delta\\eta, \\Delta\\phi) + \\beta_j)$: on for particles on one side of a line through (or within 0.01 rad of) the axis. There are nine, with normals at 0°, 51°, 131°, 144°, 161°, 204°, 248°, 270° and 290°. '
+  'A sum of such half-planes with weights $w_j$, $\\sum_j w_j\\,\\mathrm{ReLU}(r\\,\\vec n_j\\cdot\\hat x + \\beta_j)$, grows with $r$ in every direction that is covered; the set of points where it reaches a level $L$ is a polygon around the axis.', None),
+ ('Method',
+  'Write each second-round unit $u_c$ exactly as a sum of terms from each half-plane, the context $g$ and biases (largest error $3\\times10^{-5}$); find which intermediate $s$ units carry the half-planes. '
+  'Map each unit\'s response to one particle over $(p_T, r, \\theta)$ and find its on-contour $r_c(\\theta)$. Compare the contour with the polygon predicted from the weights, with a circle, and with polygons in random directions. '
+  'Shift whole jets by $\\delta$ in six directions and compare the network\'s mass read-out with the sum over particles of the per-particle maps, and with the same maps made symmetric.', None),
+ ('Result: paths and shapes',
+  '15 second-round units take half-plane input through five $s$ units (for example $s_{43}$ combines $a_{29}, a_6, a_{36}, a_{40}, a_{43}$ and feeds $u_1$ and $u_{29}$). Eleven use one $s$ unit, so their on-contour is exactly a level set of one weighted sum of 3–5 half-planes; four combine two or three. '
+  'The contours are polygons with a ratio of largest to smallest radius of 1.14–1.47, within 3–9 % of a circle. Only $u_{40}$ uses all nine directions.', 'results/site/F8_e14_halfplanes.png'),
+ ('Result: the direction term of the mass',
+  'With the context held fixed, summing the per-particle maps over the particles of the shifted jet gives 0.96–1.05 of the measured direction-dependent part of the mass read-out (95 % intervals within [0.93, 1.08]). Making the maps point-symmetric removes that part ($0.0000$, interval $[-0.0005, +0.0005]$) and leaves the direction-independent part unchanged. '
+  '15–24 % of the direction term passes through the context $g$ instead.', 'results/site/T19_e14_halfplanes.png'),
+ ('Checks (E14v, fresh jets)',
+  'All structure numbers reproduce within 4 points. Polygons in random directions with fitted weights fit the contours to 5–8 %, about as well as a circle, so the contour shape alone does not identify the directions; the identification rests on the exact weight decomposition. '
+  'On the point-reflected sample the term from the sample\'s own asymmetry is $-0.0005$ to $+0.0003$ ($p \\ge 0.20$), so the direction term is the network\'s per-particle response. E14\'s first counterfactual added half of a reflected jet\'s change to the original, which produced negative inputs that the fixed-point layer cannot represent; the corrected construction symmetrizes both the base and the edited jet.', None),
+ ('Why it matters',
+  'It completes the step from directional cuts to near-radial objects with an explicit formula per unit, and it explains the part of the mass response that a function of $r$ alone cannot: the objects are polygons, not circles, and a shifted jet moves particles across their uneven edges.', None),
+]
+
 # per-paper explainers, rendered inside the paper's tab (title, steps)
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
@@ -460,7 +504,9 @@ PAPER_EXPLAINERS = {
           ('Result 3 explained: the network\'s mass variable (claim A4; same test on ParT in Paper C, claim C3; axis consequence in Paper D, claim D4)', MASS_EXPLAINER, False),
           ('Result 4 explained: variables appear over the layers in order of complexity (claim A9)', A9_EXPLAINER, False),
           ('Result 5 explained: small comparison models trained on the same inputs (claims A8/A10)', SMALL_EXPLAINER, False),
-          ('Result 6 explained: the neuron atlas, one card per unit (claim A11)', ATLAS_EXPLAINER, False)],
+          ('Result 6 explained: the neuron atlas, one card per unit (claim A11)', ATLAS_EXPLAINER, False),
+          ('Result 7 explained: how round two turns half-planes into near-radial objects (claims A3, A4; E14)', E14_EXPLAINER, False),
+          ('Result 8 explained: classes as window rules on the class neurons, imposed (claim A6; E8)', E8_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True)],
     'c': [('Result explained: ParT\'s mass comes mostly through the axis-relative inputs, not the pair features (claim C3)', C3_EXPLAINER, True),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],

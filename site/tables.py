@@ -109,3 +109,46 @@ table('T17_atlas_tally.png', 'Neuron atlas (E16): how many live units have one m
  [3.0, 1.1, 1.7, 3.0, 1.6, 2.2],
  note='One main job: one cluster of the jets where the unit is on holds ≥ 80 % of its activation. Related: every cluster with ≥ 10 % of the activation is best described by an observable with |Spearman ρ| ≥ 0.7 to the unit\'s own\n'
       '(mostly the same quantity over a lower- and a higher-mass population). Steering (setting the unit to its 99th percentile) changes a median 9.9 % of calls, the same as for a random unit of the same layer (9.8 %): steering is specific only for the class neurons z.')
+table('T18_e8_conjunctions.png', 'Classes as conjunctions of neuron windows on z (E8 + verification; 10,000 evaluation jets each; rules fit on 20,000)',
+ ['class', 'rule on z (tree, fit jets)', 'precision / coverage\nE8 → fresh', 'switched, rule units at\nin-rule medians: E8 → fresh', 'rank of rule set\nof 560 triples', 'highest triple\n(switched)', 'units moved just inside\nthe windows (edge)', 'still called c after rule\nunits → other medians'],
+ [['g', 'z1 ≥ 4.33, z4 < 0.435, z8 < 3.87', '96.5/74.8 → 98.1/76.4 %', '54.4 → 54.0 %', '6', 'z1 z4 z9 (61.6 %)', '17.0 (12.8) %', '0.0 %'],
+  ['q', 'z1 < 3.89, z3 > 0, z12 ≥ 1.38', '98.2/72.8 → 98.4/71.5 %', '31.2 → 31.8 %', '39', 'z1 z4 z9 (52.5 %)', '25.1 (4.7) %', '96.1 %'],
+  ['W', 'z0 ≥ 1.35, z1 < 4.33, z4 > 0', '98.4/82.8 → 98.3/82.0 %', '42.0 → 40.6 %', '10', 'z0 z4 z7 (48.3 %)', '7.6 (3.4) %', '22.3 %'],
+  ['Z', 'z0 < 1.35, z5 ≥ 0.44, z7 ≥ 1.04', '96.7/76.6 → 97.4/77.3 %', '62.0 → 61.4 %', '6', 'z0 z7 z8 (75.7 %)', '21.5 (9.2) %', '57.4 %'],
+  ['t', 'z1 < 4.87, z4 > 0, z8 ≥ 2.59', '95.8/69.5 → 96.2/69.7 %', '26.0 → 26.2 %', '78', 'z8 z10 z13 (77.3 %)', '7.2 (5.7) %', '89.7 %'],
+  ['controls', 'triples without a rule unit', '—', 'mean 3.8–7.7 %;\nmax 12.8–58.1 %', '—', 'all 16 neurons: 100 %', '—', '—'],
+  ['basis', 'trees in 5 random rotations of z', 'precision 87–99 %;\ncoverage 46–82 %', 'switched 2–69 %', '—', '—', '—', '—']],
+ [0.8, 2.7, 2.2, 2.4, 1.5, 1.7, 1.9, 1.9],
+ note='Fresh sample: sample(7800, seed 23) minus the 4,545 jets shared with E8; 6,000 per class. The logit change of a 3-unit edit equals the sum of the single-unit changes exactly (max |difference| 0.0).\n'
+      'Window masses (25/50/75 %): z0 ≥ 1.35: 78/80/81 GeV (E6 W window); z7 ≥ 1.04: 90/91/92 GeV (E6 Z window); z8 ≥ 2.59: 124/153/170 GeV (not E6\'s top window z10). At S: g 47.8, q 21.4, W 5.5, Z 15.5, t 33.7 % switched.')
+table('T19_e14_halfplanes.png', 'How round two turns the nine half-planes into near-radial objects (E14 + verification; 10,000 jets each, seeds 8 and 31)',
+ ['measurement', 'E14 (seed 8)', 'verification (seed 31)'],
+ [['units with half-plane input / via one s unit / via 2–3 s units', '15 u units via s43, s60, s53, s32, s52', '11 single-path; u13, u43 (s32, s53, s60), u40 (s32, s52, s53), u60 (s43, s53)'],
+  ['half-planes with nonzero weight per unit', '"nine-direction polygon"', '3 (u51, u63); 4 (u17, u20, u30, u52, u62); 5 (u1, u29, u50, u56);\n6 (u60); 7 (u13, u43); 9 (u40 only)'],
+  ['on-contour max/min (78 contours)', '1.14–1.47', '1.142–1.465'],
+  ['rms error of r_c(θ): Part-1 weight polygon', 'median 6e-8; ≤ 0.005 in 60/78; max 0.064', 'median 5.5e-8; ≤ 0.005 in 60/78; max 0.064'],
+  ['   best circle about the axis / Fourier m ≤ 4', '—', '0.032–0.086 / 0.019–0.037'],
+  ['   9 random directions, fitted weights (median)', '0.046–0.089', '0.046–0.083 (below the circle in 6/17 contours)'],
+  ['   permuted Part-1 weights (median)', '0.21–0.72', '0.22–0.81; one draw reproduces u63 at 3 GeV (p = 0.022)'],
+  ['context g: half-plane variance via g', 'u30 31.8 %; u31, u58 100 %', 'u30 32.3 %; u31, u58 100 %'],
+  ['odd part, maps ÷ measured (g frozen), δ 0.03', '0.97 / 0.93 / 0.97 (η / φ / diag)', '0.99 [0.97, 1.01] / 0.96 [0.93, 0.99] / 0.98 [0.96, 0.99]'],
+  ['odd part, maps ÷ measured (g frozen), δ 0.06', '1.01 / 1.02 / 1.03', '1.00 [0.99, 1.02] / 1.05 [1.03, 1.08] / 1.03 [1.02, 1.05]'],
+  ['share of the odd part through g (1 − frozen/free)', '9–20 %', '15–24 % (e.g. δ 0.06 η: frozen/free 0.76 [0.74, 0.78])'],
+  ['sample-asymmetry term B (reflected sample), δ 0.03', '—', '−0.0004 [−0.0011, +0.0002], p 0.20–0.22 (H0: B = 0 not rejected)'],
+  ['odd part, point-symmetrized maps', '≤ 0.0008 (hybrid construction)', '+0.0000 [−0.0005, +0.0005]; even part 0.101 (unsymmetrized 0.101–0.103)']],
+ [4.6, 3.4, 6.0],
+ note='Brackets: 95 % bootstrap intervals over jets (1,000 resamples). E14\'s hybrid counterfactual (S_own + ½[ΔS(x′) + ΔS(−x′)]) gives negative S entries in 6–24 % of jets; through the fixed-point head (unsigned d4 inputs)\n'
+      'it flips sign (+0.078/+0.052/+0.093); the construction with base and edited S both symmetrized gives 0 in both heads. Permutation p values: 25–163 complete draws of 200, so p resolution 0.006–0.04; no Holm correction over 51 tests.')
+table('T20_e15_calibration.png', 'Does the read-out β separate a sum from a product of M0 and M2? Same ridge procedure on unit populations with a known rule (E15 verification; 9,639 jets)',
+ ['population (64 units from the true moments, or the network)', 'A2 β of m̂ (GeV)\n(E15: sum 0, product 1)', 'M0-only response ÷ pT×c response\nlow / mid / high M2 third'],
+ [['sum λM0 + M2, held linearly', '0.00', '0.754 / 0.496 / 0.294'],
+  ['product √(M0·M2)', '1.00', '0.500 / 0.500 / 0.500'],
+  ['ReLU windows on λM0 + M2', '−0.73, −0.76, −0.77 (3 seeds)', '0.783 / 0.487 / 0.296'],
+  ['ReLU windows on √(M0·M2)', '1.00, 1.00, 1.00', '0.500 / 0.500 / 0.499'],
+  ['ReLU on random directions in (z(M0), z(M2))', '1.15, 0.90, 1.04', '0.22–0.59 / 0.42–0.47 / 0.41–0.53'],
+  ['random untrained ReLU layer on the trained S', '−0.01, 0.42, 1.14', '0.49–0.66 / 0.44–0.48 / 0.46–0.50'],
+  ['network S / h4 / h5 / z', '0.42 / 0.70 / 0.53 / 0.32\n(E15: 0.33 / 0.70 / 0.60 / 0.32)', 'S 0.62/0.58/0.55; h4 0.63/0.44/0.47; z 0.65/0.54/0.53'],
+  ['network h4: read-out of V_sum / of V_prod instead of log m', '0.03 / 0.71 (R² 0.995 / 0.991)', '—']],
+ [4.6, 3.6, 3.8],
+ note='The A2 β follows the read-out target and generic ReLU nonlinearity on S, so the 0.6–0.7 at h4/h5 does not place the combination between sum and product. The gain-normalised M0 response separates the known rules;\n'
+      'the network matches the product within 0.06 in the high-M2 third (M2 > 8.1 GeV) from S onward. Matched M0×c vs M2×c steps (read-out-free, product d = 0, sum +0.47/0/−0.48): h4 median d +0.61/+0.15/+0.02, IQR width ≈ 1.5.')

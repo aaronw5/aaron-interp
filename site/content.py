@@ -3,7 +3,7 @@ Writing rule: plain statements of what was measured; no verdict words, no metaph
 Each claim carries a `detail` block (rendered as a drop-down): what the claim is, procedure (sample, edit, control, metric),
 result (numbers), tables, figures, verification, files. Figure paths are relative to the repo root; missing files are skipped."""
 
-UPDATED = '2026-10-16 (E5v, P1v, E11)'
+UPDATED = '2026-10-17 (science loop round 1: E8, E14, E15 with verification)'
 
 OVERVIEW = dict(
     title='Overview',
@@ -11,7 +11,7 @@ OVERVIEW = dict(
           'on the same data, then ParT / ParticleNet / L-GATr on JetClass. One tab per paper; each claim opens to its procedure, numbers, '
           'tables and figures. Tabs merge if papers merge.',
     status=[
-        ('Science loop (Paper A + B)', 'round 1 on the cluster: E8 (classes as conjunctions, imposed), E14, E15; then verify → ledger → review'),
+        ('Science loop (Paper A + B)', 'round 1 done: E8 (classes as window rules on z; verified, confidence 0.6), E14 (half-planes → near-radial objects; verified, 0.7), E15 (product vs sum of M0, M2; refuted as stated, 0.2: the read-out β does not separate the two)'),
         ('E5v', 'done: A2 verified; A3 verified in corrected form (10 of 17 objects radial, 3 directional)'), ('E16', 'neuron atlas done: 78 % of live units described by one quantity (86 % by decision weight); 157 cards'),
         ('E11 / E11v', 'verified: the whole network as a 6,064-if-statement program reproduces 94.2 % of calls on fresh jets, accuracy within 0.3 points, W rejection 0.70×, and the network\'s response to the jet shift; a direct physics formula does not reproduce the shift response'),
         ('P1 / P1v / E17', 'ParT not translation invariant (verified); inputs about the WTA axis change 30.3 % of JEDI-linear\'s calls (80.6 → 59.3 %), 11.7 % of ParT_full\'s, 34.1 % of ParT_kin\'s'),
@@ -92,7 +92,7 @@ A_CLAIMS = [
                      'objects (see A3) and S30\'s own term is not Σ r (its edit response comes through g). Verifier confidence 0.9.',
         files='interp/e4_e5_jedi.py; results/jedi/e4_e5.json; inbox/E4_E5_objects.md')),
  dict(id='A3', statement='The second-round objects are hinges in (pT or ln pT, r = ΔR to the axis) summed over fixed pT-rank windows; 10 of the 17 particle objects (the five costliest among them) are radial to ≤ 0.1 SD under rotations of the whole jet, 4 to 0.1–0.2 SD, and 3 (plus the two context-only objects) are directional.',
-      status='verified in corrected form: 10 of 17 particle objects radial to ≤ 0.1 SD; 3 directional; rotations change 3.7–4.1 % of calls', confidence=0.8, evidence='E5, E5v',
+      status='verified in corrected form: 10 of 17 particle objects radial to ≤ 0.1 SD; 3 directional; construction from the half-planes measured (E14, verified 0.7)', confidence=0.8, evidence='E5, E5v, E14, E14v',
       detail=dict(
         what='Each second-round object S_c = Σ_i u_{i,c}/16 with u_{i,c} = ReLU(W3 (s_i + g) + b3)_c. With g fixed at its mean, the per-particle '
              'response f_c(pT, Δη, Δφ) was measured directly and then named with jet-level quantities.',
@@ -108,6 +108,8 @@ A_CLAIMS = [
                'S30: Σ r for r < 0.165 (0.957). S31, S58: functions of g alone.',
         tables=[],
         figures=[('results/site/T1_second_round_objects.png', 'The nine costliest second-round objects: response, rank window, name, causal check (E5).'),
+                 ('results/site/F8_e14_halfplanes.png', 'E14: (a) on-contours of u29, u1, u50 with the half-plane polygon; (b) per-object change under translation, maps vs network; (c) one half-plane set to 0, change by azimuth sector; (d) mass read-out under translation, measured vs maps vs symmetrized maps (E14\'s hybrid construction; see T19 for the corrected one).'),
+                 ('results/site/T19_e14_halfplanes.png', 'E14 and its verification side by side, with 95 % intervals.'),
                  ('results/site/T3_rotation_test.png', 'Rotation and reflection test of the objects (E5v).'),
                  ('results/site/T4_e5v_naming_context.png', 'Verification of the S29 name and of the context path (E5v).')],
         verification='E5v, fresh 10,000 jets (seed 7), nothing refit. Rigid rotations by 45°, 90°, 180° and the two reflections (every r unchanged to 1e-7) change '
@@ -116,10 +118,15 @@ A_CLAIMS = [
                      'Carriers of the call change (one rotated object patched into the unrotated network): S1 2.27 %, S29 2.11 %, S56 1.58 %, S31 1.09 %, S17 1.05 %. '
                      'S29 name: R² 0.976 on fresh jets; r × 1.1 edit moves S29 by +1.749 vs hinge-sum prediction +1.799 (slope 0.99) and 3-term formula +1.979 (slope 0.83): '
                      'the causal object is Σ ReLU(4.44 ln pT + 93.8 r − 21.2)/16, the 3-term name a correlational proxy. Bit-count check: 0 disagreeing entries, the isolated '
-                     'window slots are real. Verifier verdict: R1 refuted as first stated ("radial" for all), confidence 0.85 in the corrected reading; R2 reproduced (0.9).',
-        files='interp/e4_e5_jedi.py, interp/e5_causal_jedi.py, interp/e5_verify.py; results/jedi/e4_e5.json, e5_causal.json, e5_verify.json')),
+                     'window slots are real. Verifier verdict: R1 refuted as first stated ("radial" for all), confidence 0.85 in the corrected reading; R2 reproduced (0.9). '
+                     'E14 (construction, 10,000 jets, seed 8): 15 particle-level u units take half-plane input through five s units (s43, s60, s53, s32, s52); 11 use one s unit, so their on-contour is the level set of one weighted sum of 3–5 half-planes; '
+                     'u13, u43, u40, u60 combine 2–3 s units. Contours: polygons in the 3–9 directions with nonzero weight (all nine only for u40), max/min 1.14–1.47, 3–9 % rms from a circle; the weight polygon reproduces them to rms ≤ 0.005 for 60 of 78 contours (max 0.064). '
+                     'g adds no per-particle angular term; the half-plane P units reach round two through g for u30 (32 %) and u31, u58 (100 %). One half-plane set to 0 changes 7–29 % of calls with ≥ 99 % of the change on its own half (g frozen). '
+                     'E14v (seed 31) reproduced all of this within 4 points (confidence 0.7); corrections: not "one weighted sum" for 4 units, not a nine-direction polygon, random-direction polygons fit about as well as circles.',
+        statistics='E14v (10,000 jets, seed 31; 95 % bootstrap intervals over jets, 1,000 resamples): contour controls H0 "a polygon in random directions fits as well": random directions with fitted weights rms 0.046–0.083 against real directions 0–0.026 and a circle 0.032–0.086; permutation p resolution 0.006–0.04 (25–163 complete draws of 200), no Holm correction over 51 tests (threshold 0.001 not reachable with 200 draws); one permuted draw reproduces u63 at 3 GeV (p = 0.022).',
+        files='interp/e4_e5_jedi.py, interp/e5_causal_jedi.py, interp/e5_verify.py, interp/e14_halfplanes_jedi.py, interp/e14_verify_jedi.py; results/jedi/e4_e5.json, e5_causal.json, e5_verify.json, e14_halfplanes.json, e14_verify*.json')),
  dict(id='A4', statement='The network\'s mass variable is an un-recentred M2-like quantity: ΣpT and Σ pT r² are read separately at S and multiplied in h4/h5; a rigid shift of the whole jet, which leaves the invariant mass unchanged, flips 77 % of W calls to Z.',
-      status='verified (fresh sample, dose–response, direction, input-range and first-round controls)', confidence=0.85, evidence='E6, E6v',
+      status='verified for non-recentring and the M2-sized response (E6v); direction term explained by the per-particle maps (E14v); "multiplied in h4/h5" not established (E15 refuted as stated by E15v)', confidence=0.75, evidence='E6, E6v, E14, E14v, E15, E15v',
       detail=dict(
         what='For axis-centred particles, m² ≈ M0·M2 − |M1|² with M0 = ΣpT, M1 = Σ pT r⃗, M2 = Σ pT r² (checked: correlation with m 0.999986, median ratio 0.99998). '
              'A sum-pooling network can carry M0, M1, M2 linearly in its pooled layers; the product needs the dense layers. The −|M1|² term is what makes m '
@@ -140,20 +147,36 @@ A_CLAIMS = [
                   ['z10 (top)', '87.5, 160', '80, 137.5', '148 / 135']])],
         figures=[('results/site/X1_mass_shift.png', 'Explanation on one W jet: shifting all particles leaves the invariant mass at 81.3 GeV while the networks\' variable √(M0·M2) about the axis rises into the Z-neuron window.'),
                  ('results/jedi/F1_mass_translation.png', 'E6v: read-out of log m and the W → Z fraction under a rigid translation along η (10,000 jets, seed 17).'),
-                 ('results/site/T2_mass_and_windows.png', 'Summary table of the mass measurements.')],
+                 ('results/site/T2_mass_and_windows.png', 'Summary table of the mass measurements.'),
+                 ('results/site/T20_e15_calibration.png', 'E15v: the read-out β of known sum and product populations; β does not separate the two, the gain-normalised M0 response does.')],
         verification='E6v reproduced the E6 numbers within 0.01 on a fresh sample. Verdict: not refuted for non-invariance and the M2-sized response; "exactly √(M0·M2) about the axis" '
-                     'overstated (odd term 12–20 %; verifier confidence 0.55 for the exact form, > 0.9 for non-recentring). The v2 formula with a factor 2 in PAPERS.md was an error, corrected.',
-        files='interp/e6_mass_jedi.py, interp/e6_verify.py; results/jedi/e6_mass.json, e6_verify.json, e6_verify_translation.png')),
+                     'overstated (odd term 12–20 %; verifier confidence 0.55 for the exact form, > 0.9 for non-recentring). The v2 formula with a factor 2 in PAPERS.md was an error, corrected. '
+                     'Direction term (E14, E14v): with g frozen, the sum over particles of the second-round per-particle maps gives 0.96–1.05 of the measured odd part of the h5 mass read-out (seed 31; seed 8 0.93–1.03); point-symmetrizing the maps (base and edited S both symmetrized) sets the odd part to 0.0000 [−0.0005, +0.0005] with the even part unchanged; 15–24 % of the odd part passes through g. '
+                     'Product location (E15, open point): E15 measured a read-out interaction β (sum 0, product 1) of 0.33/0.70/0.60/0.32 at S/h4/h5/z under separate M0 and M2 edits; E15v reproduced it (0.42/0.70/0.53/0.32) and showed with the same read-out procedure on known populations that a sum followed by ReLU windows gives −0.75, ReLU units on separate M0, M2 give 0.9–1.15 and random ReLU layers on S give −0.01 to 1.14, so β does not separate sum from product (verifier confidence in E15\'s reading 0.2). '
+                     'What holds: S0 responds to M0 only and S50 to M2 only; the gain-normalised M0 response of the read-out is 0.63/0.44/0.47 at h4 by M2 third (product 0.50 flat, sum 0.75/0.50/0.29), matching the product within 0.06 for M2 > 8.1 GeV from S onward, as random ReLU layers on S also do. '
+                     'A read-out-free test (matched M0 × c vs M2 × c steps; product d = 0) gives h4 median d +0.61/+0.15/+0.02 with IQR width ≈ 1.5, confounded with the pT-threshold features that the M0 step also moves. Where (or whether) the product forms is open.',
+        statistics='E14v (95 % bootstrap over 9,999 jets): odd(maps)/odd(measured, g frozen) δ 0.03: 0.99 [0.97, 1.01], 0.96 [0.93, 0.99], 0.98 [0.96, 0.99] (η, φ, diag); δ 0.06: 1.00 [0.99, 1.02], 1.05 [1.03, 1.08], 1.03 [1.02, 1.05]. H0 "the odd part comes from the sample\'s asymmetry" (B = 0 tested on the point-reflected sample): B −0.0004 [−0.0011, +0.0002], p 0.20–0.22 at δ 0.03; p 0.20–0.95 at δ 0.06; H0 not rejected, so the odd part is the network\'s per-particle response. '
+                   'E15v: bootstrap se of E15\'s interaction (0.0005–0.0008 sd) omits read-out refit variance; refitting on another sample moves β by up to 0.09 (S 0.33 → 0.42, h5 0.60 → 0.53). T ratios se ≤ 0.009.',
+        files='interp/e6_mass_jedi.py, interp/e6_verify.py, interp/e14_halfplanes_jedi.py, interp/e14_verify_jedi.py, interp/e15_product_jedi.py, interp/e15_verify.py, interp/e15_verify_iso.py; results/jedi/e6_mass.json, e6_verify.json, e14_verify_ci.json, e15_product.json, e15_verify.json, e15_verify_iso.json')),
  dict(id='A5', statement='The 16 neurons are statements on the network\'s own objects; replacing the neuron stage by the formula keeps the calls.',
       status='partly measured (E11): z written on h5 formulas reaches R² 0.94 in the chain; z directly on S objects not yet fitted', confidence=0.45, evidence='E7, E11',
       detail=dict(what='Each z neuron as a hinge sum of the second-round objects S (and the dense layers in between) rather than of hand observables.',
                   procedure='Planned: fit per neuron on S units (E11 compositional fits); substitute z by the formula and let the last layer finish; same-call % and accuracy.',
                   result='Pending.', tables=[], figures=[], verification='—', files='interp/e11_mars_all.py')),
- dict(id='A6', statement='Classes are conjunctions of neuron windows; imposing a conjunction on the network causes the class.',
-      status='running (loop node E8)', confidence=0.4, evidence='E8; J33b on the formula\'s objects',
-      detail=dict(what='J33b showed on the fitted formula that W = n12[W window] ∧ n4[boson] ∧ n0 etc.; here the same on the network\'s own z/S values with causal imposition.',
-                  procedure='Loop node E8 (cluster). Metric: fraction of jets called otherwise that get the class when the conjunction\'s neurons are set to their in-object medians; random-neuron control.',
-                  result='Pending.', tables=[], figures=[], verification='—', files='—')),
+ dict(id='A6', statement='Each class\'s calls are described by a rule of 2–3 neuron windows on z (precision 96–98 %, coverage 70–82 %); setting the rule\'s neurons to typical in-rule values moves 26–62 % of jets called otherwise into the class, by the distance moved along the additive logit margin rather than by entering the windows.',
+      status='verified in corrected form (E8v, confidence 0.6)', confidence=0.6, evidence='E8, E8v; J33b on the formula\'s objects',
+      detail=dict(what='J33b showed on the fitted formula that a class is a conjunction of neuron windows (W = n12 ∧ n4 ∧ n0). E8 asks the same of the network\'s own 16 pre-ReLU class neurons z and its 19 live second-round objects S: does a 2–3-window rule describe the calls, and does imposing it cause the class.',
+                  procedure='E8: 30,000 test jets (6,000 per class, seed 4); random 20,000 fit / 10,000 evaluation. Per class a 3-deep decision tree on the fit jets predicts "network calls c" from z (thresholds on a 5–95 % quantile grid plus the on/off point); the rule is the leaf with the highest F1. Imposition on evaluation jets called otherwise: the rule\'s units set to the medians of fit jets called c inside the rule (other units untouched; the network\'s own last layer makes the call); dose f = 0.25–1; single units and pairs alone; necessity (rule units set to the medians of jets called otherwise). Controls: random units (10 draws), all units, untrained network. Same at S. '
+                            'E8v: fresh disjoint 30,000 jets (seed 23, 4,545 shared jets removed); all 560 z triples (969 S triples, 171 pairs) with the same value source; trees in 5 random rotations of standardized z; units moved just inside the windows; logit additivity.',
+                  result='z rules and switched shares (E8 → E8v): g z1 ≥ 4.33, z4 < 0.435, z8 < 3.87: precision 96.5 → 98.1 %, coverage 74.8 → 76.4 %, switched 54.4 → 54.0 %; q z1 < 3.89, z3 > 0, z12 ≥ 1.38: 31.2 → 31.8 %; W z0 ≥ 1.35, z1 < 4.33, z4 > 0: 42.0 → 40.6 %; Z z0 < 1.35, z5 ≥ 0.44, z7 ≥ 1.04: 62.0 → 61.4 %; t z1 < 4.87, z4 > 0, z8 ≥ 2.59: 26.0 → 26.2 %. All 16 neurons: 100 %. '
+                         'Switches come mostly from neighbouring calls (q → g 99.95 %, W → Z 100 %, g → q 95.5 %, q → W 83.5 %). Necessity: g 0.0, W 22.3, Z 57.4, t 89.7, q 96.1 % still called c. Moving the rule units just inside their windows: 7.2–25.1 % (edge 3.4–12.8 %) while 96–98 % of unedited in-rule jets are called c; the 3-unit logit change equals the sum of single-unit changes (max |difference| 0.0). '
+                         'Window masses: z0 78–81 GeV (E6 W neuron), z7 90–92 GeV (E6 Z neuron), z8 124–170 GeV (not E6\'s top neuron z10). At S: g 47.8, q 21.4, W 5.5, Z 15.5, t 33.7 %; W and Z rules have precision 64–71 % and share the S50 axis.',
+                  tables=[],
+                  figures=[('results/site/T18_e8_conjunctions.png', 'E8 and E8v: rules, precision/coverage, switched shares, rank among all triples, entering the windows, necessity.'),
+                           ('results/site/F7_e8_conjunctions.png', 'E8: switched share at z (a) and at S (b), with the best single unit, random units (mean over all 10 draws; 5–9 of the draws contain a rule unit), the untrained network (its random last layer sends large z1 to g) and all units; (c) dose curves.')],
+                  verification='E8v (skeptic, fresh disjoint jets): reproduced within 1–4 points; confidence 0.6. Corrections: the random-unit control set random units to class medians but rule units to in-rule medians (not value-matched; with class medians the rule switches 53.0/30.0/37.0/54.5/23.0 %); the tree\'s set is not the set that switches most (t: {z8, z10, z13} 77.3 % vs the rule\'s 25.6 %); rules in random rotations of z reach 87–99 % precision, so the description is not specific to the neuron basis (the neuron basis has the highest coverage for g and W); refitting changes one unit for q, W, Z; the untrained control calls every jet t and does not test the rule.',
+                  statistics='Value-matched exhaustive control (E8v), H0 "the rule\'s neuron set switches no more than an arbitrary set of the same size": rank of the rule\'s set among all 560 z triples 6/39/10/6/78 (g/q/W/Z/t), i.e. share of triples switching at least as much 0.011/0.070/0.018/0.011/0.14; at S the g triple ranks 8/969 (0.008), q 130/969 (0.13), the W pair 59/171 (0.35), the Z pair 1/171 (0.006), t 146/969 (0.15). Triples without a rule unit: mean 3.8–7.7 %, max 12.8–58.1 %. Switched shares are on 7,854–8,153 jets per class (binomial 95 % half-width ≤ 1.1 points). Five classes × two levels tested: with Holm over the 10 tests none passes at 0.05 (smallest 0.006 against the first threshold 0.005); uncorrected, g, W, Z at z and g, Z at S are below 0.02.',
+                  files='interp/e8_conjunctions_jedi.py, interp/e8_fig.py, interp/e8_verify.py; results/jedi/e8_conjunctions.json, e8_verify.json; inbox/merged/E8_report.md, E8_verify.md')),
  dict(id='A9', statement='Variables of higher algebraic depth become linearly readable later in the network.',
       status='measured; verification pending; one causal check negative (D2)', confidence=0.6, evidence='E10',
       detail=dict(
@@ -207,10 +230,14 @@ dict(key='a', tab='Paper A', title='A — How a tagger builds its decisions',
         ('A4 v3, E6/E6v', 'The mass variable is an un-recentred M2-like quantity; exact form open (direction-dependent odd term 12–20 %).'),
         ('A2/A3 v2, E4/E5', 'Context enters through four objects; 17 of 19 second-round objects are radial (pT, r) hinges over rank windows.'),
         ('A3 v3, E5v', 'Radial only for 10 of 17 particle objects (to ≤ 0.1 SD); S52, S56, S62 and the context-only S31, S58 are directional; rigid rotations change 3.7–4.1 % of calls.'),
+        ('A3 v4, 2026-10-17, E14/E14v', 'Construction measured: 15 units take half-plane input through five s units; contours are polygons in 3–9 directions (max/min 1.14–1.47), not nine-direction polygons. Old: "the radial symmetry is built in round two from round one\'s directional half-planes".'),
+        ('A4 note, 2026-10-17, E14v/E15v', 'The direction term is the sum of the per-particle maps (0.96–1.05). "Multiplied in h4/h5" is not established: E15\'s β does not separate sum from product. Old: "M0 and M2 are read separately at S and multiplied in h4/h5".'),
+        ('A6 v2, 2026-10-17, E8/E8v', 'Window rules describe the calls (96–98 %); imposing them moves 26–62 % via the additive logit margin, not window membership. Old: "Classes are conjunctions of neuron windows; imposing a conjunction on the network causes the class".'),
     ],
     claims=A_CLAIMS,
-    open=['Exact form of the mass variable (odd term).', 'Which u units combine which half-planes into radial functions (rotation test running).',
-          'Neurons as statements on the network\'s own objects (E7/E11) and classes as conjunctions imposed causally (E8).',
+    open=['Where (or whether) M0 and M2 are multiplied: E15\'s read-out β does not separate sum from product (E15v); needs a read-out-free test that separates the combination rule from the pT-threshold features moved by the M0 edit.',
+          'Mass response 0.74–0.84 of the √(M0·M2) prediction rather than 1.',
+          'Neurons as statements on the network\'s own objects (E7/E11).',
           'Small transformers: does the same stage structure appear; do their masses recentre?'],
 ),
 dict(key='b', tab='Paper B', title='B — Turning a model into if-statements',

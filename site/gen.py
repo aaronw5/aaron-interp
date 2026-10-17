@@ -42,6 +42,7 @@ def claim(c):
 <h4>Result</h4><p>{e(d['result'])}</p>
 {tabs_}{figs}
 <h4>Verification</h4><p>{e(d['verification'])}</p>
+{('<h4>Statistics</h4><p>' + e(d['statistics']) + '</p>') if d.get('statistics') else ''}
 <p class="mut">Files: {e(d['files'])}</p>
 </div></details>'''
 
