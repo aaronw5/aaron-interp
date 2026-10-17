@@ -17,16 +17,24 @@ running statistics (training data), jet pT vs the JetClass range [500, 1000] GeV
 (b): unedited 4-vectors with only ln kT += ln c, only ln m² += 2 ln c, or both (checked against (b)).
   ./part_job.sh p2v-run 'python -m interp.p2v_verify_part'          -> results/part/p2v_verify.json
   ./part_job.sh p2v-quick 'python -m interp.p2v_verify_part 50'     (50 jets per class, smoke)
+  python -m interp.p2v_verify_part --table                          -> results/site/T12b_part_routes_stats.png
 """
-import json, math, sys, time
+import json, math, os, sys, time
 from pathlib import Path
 import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from interp.part_core import ParTNetwork, inputs, sample, kin, build, jmass, OUT, CL
-from interp.p1v_verify_part import Ridge, r2, split, fwd
 
 log = lambda *a: print(*a, flush=True)
-iW, iZ, iHbb = CL.index('Wqq'), CL.index('Zqq'), CL.index('Hbb')
+OUT = Path(os.environ.get('AI_RESULTS', 'results')) / 'part'
+iHbb, iZ, iW = 1, 6, 7          # part_core.CL order: QCD, Hbb, Hcc, Hgg, H4q, Hqql, Zqq, Wqq, Tbqq, Tbl (checked in main)
+
+
+def _imports():
+    """the ParT stack (torch, weaver, uproot) only for the run, so that --table needs matplotlib alone"""
+    from interp import part_core as pc, p1v_verify_part as p1v
+    assert (pc.CL.index('Hbb'), pc.CL.index('Zqq'), pc.CL.index('Wqq')) == (iHbb, iZ, iW)
+    globals().update(ParTNetwork=pc.ParTNetwork, inputs=pc.inputs, sample=pc.sample, kin=pc.kin, build=pc.build, jmass=pc.jmass,
+                     Ridge=p1v.Ridge, r2=p1v.r2, split=p1v.split, fwd=p1v.fwd)
 EDITS = [('ang', 0.9), ('ang', 1.1), ('ang', 1.25), ('pt', 0.8), ('pt', 1.25), ('pt', 0.9), ('ang', 1.0), ('pt', 1.0), ('rot', 0.06)]
 MAIN = ['ang0.9', 'ang1.1', 'ang1.25', 'pt0.8', 'pt1.25']
 VAR = ('a', 'b', 'c')
@@ -199,7 +207,7 @@ def shifted_forward(net, x, v, m, shift):
 
 # ------------------------------------------------------------------------------------------------ main
 def main():
-    t0 = time.time(); OUT.mkdir(parents=True, exist_ok=True)
+    _imports(); t0 = time.time(); OUT.mkdir(parents=True, exist_ok=True)
     PER = int(sys.argv[1]) if len(sys.argv) > 1 else 1000
     SM = {start: prep(PER, start) for start in (3000, 6000)}
     log(f'samples ready ({time.time() - t0:.0f} s); true Δlog m: ' + '; '.join(f'{s}: ' + ', '.join(f'{k} {v:+.4f}' for k, v in SM[s]['dlogm_true'].items()) for s in SM))
@@ -292,5 +300,56 @@ def main():
     json.dump(res, open(fn, 'w'), indent=1); log(f'wrote {fn}'); log(f'P2v DONE ({time.time() - t0:.0f} s)')
 
 
+
+
+# ------------------------------------------------------------------------------------------------ table (site/tables.py style)
+def table():
+    import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+    res = json.load(open(OUT / 'p2v_verify.json')); SITE = OUT.parent / 'site'
+    lab = {'ang0.9': 'angles × 0.9', 'ang1.1': 'angles × 1.1', 'ang1.25': 'angles × 1.25', 'pt0.8': 'pT × 0.8', 'pt0.9': 'pT × 0.9', 'pt1.25': 'pT × 1.25'}
+    F = res['samples']['6000']; P = res['samples']['3000']
+    z = lambda x: f'{x:.2f}'.replace('-0.00', '0.00')
+    sci = lambda s, key: f'{z(s[key])} [{z(s[key + "_ci"][0])}, {z(s[key + "_ci"][1])}]'
+    pp = lambda p: '≤ 0.001' if p <= 0.0011 else f'{p:.3f}'
+    rows = []
+    for n in ('full', 'kin'):
+        for e in lab:
+            E = F['models'][n]['edits'][e]; S = E['share']; Mc = F['models'][n]['mcnemar'][e]['W_to_Z']; L = S['dlogit_WZ_on_W']
+            ch = f'{100 * E["mean"]["b"]["changed"]:.1f} [{100 * E["ci"]["b"]["changed"][0]:.1f}, {100 * E["ci"]["b"]["changed"][1]:.1f}]'
+            nec = f'{z(1 - L["perparticle"])} [{z(1 - L["perparticle_ci"][1])}, {z(1 - L["perparticle_ci"][0])}]'
+            rows.append([f'ParT_{n}', f'{lab[e]}  ({F["dlogm_true"][e]:+.3f})', f'{L["a"]:+.2f}', sci(L, 'pair'), nec, f'{L["sum"]:.2f}',
+                         f'{pp(L["p_pair_eq0_boot"])} / {pp(L["p_pair_eq1_boot"])}', sci(S['dW_to_Z'], 'pair'),
+                         f'{sci(S["dlogm_hat"], "pair")}', sci(S['dlogm_hat'], 'perparticle'), ch,
+                         f'{Mc["n01"]} / {Mc["n10"]}, p {Mc["p"]:.0e}', f'{P["models"][n]["edits"][e]["share"]["dlogit_WZ_on_W"]["pair"]:.2f}'])
+    cols = ['model', 'edit  (true Δlog m)', 'Δ(logit W − Z)\non W, (a)', 'pair share (b)/(a)\nof Δ(logit W − Z), W jets', '1 − (c)/(a): drop when\npair route removed',
+            '[(b)+(c)]/(a)', 'bootstrap p, H0: pair\nshare = 0 / share = 1', 'pair share (b)/(a)\nof ΔW→Z', 'read-out Δlog m:\npair share (b)/(a)',
+            'read-out Δlog m:\nper-particle (c)/(a)', '(b) calls\nchanged [%]', 'McNemar (b) vs unedited,\nW→Z: gained / lost, p', 'P2 rows 3000–4000:\npair share Δlogit']
+    widths = [0.85, 1.75, 1.2, 1.8, 1.8, 0.95, 1.8, 1.6, 1.65, 1.65, 1.2, 2.0, 1.65]
+    nf = F['models']['full']['edits']['rot0.06']['mean']['b']['changed']; nk = F['models']['kin']['edits']['rot0.06']['mean']['b']['changed']
+    nkc = F['models']['kin']['edits']['rot0.06']['ci']['b']['changed']
+    kb = F['models']['kin']['edits']['pt0.8']; sp = F['models']['kin']['pt_shift_split']['pt0.8']; bj = kb['by_jet_pt']
+    note = ('Sample: rows 6,000–7,000 of each class\'s first JetClass test file (10,000 jets; fresh); last column: P2\'s rows 3,000–4,000 through the same code. Intervals: 2,000 bootstrap '
+            'resamples over jets, stratified by class, [2.5 %, 97.5 %].\n(a) full edit; (b) pair route only (4-vectors edited, every per-particle input unedited); (c) per-particle route only. '
+            'Logit columns are the primary measure; read-out columns use P2\'s ridge of log m refitted on the unedited class token (secondary).\n'
+            f'Noise floor of the pair route ((b) of a rigid φ + 0.06 shift, pair features invariant): ParT_full {100 * nf:.2f} %, ParT_kin {100 * nk:.2f} % [{100 * nkc[0]:.2f}, {100 * nkc[1]:.2f}] of calls changed; '
+            'factor-1.0 controls: 0.00 % (both). McNemar p values unadjusted; all W→Z tests survive Holm over 15 tests per model.\n'
+            f'ParT_kin pT × 0.8, (b): W→H→bb {kb["calls_from_W"]["b"][1]:.2f} of W jets ({bj["in_range"]["W_to_Hbb"]["b"]:.2f} for jets whose scaled pT stays in [500, 1000] GeV, '
+            f'{bj["out_of_range"]["W_to_Hbb"]["b"]:.2f} below 500 GeV); unedited 4-vectors with ln m² − 0.446 only: {sp["lnm2_only"]["W_to_Hbb"]:.2f}, with ln kT − 0.223 only: {sp["lnkT_only"]["W_to_Hbb"]:.3f}. '
+            'No edited pair feature lies outside the unedited range.')
+    SITE.mkdir(parents=True, exist_ok=True)
+    Wd = sum(widths); Ht, Hn = 0.34 * (len(rows) + 1.8), 1.05; H = Ht + 0.45 + Hn
+    fig = plt.figure(figsize=(Wd, H), dpi=160); ax = fig.add_axes([0.003, Hn / H, 0.994, Ht / H]); ax.axis('off')
+    t = ax.table(cellText=rows, colLabels=cols, colWidths=[w / Wd for w in widths], bbox=[0, 0, 1, 1], cellLoc='left', colLoc='left')
+    t.auto_set_font_size(False); t.set_fontsize(8.5)
+    for (r, c), cell in t.get_celld().items():
+        cell.set_edgecolor('#d8d4ca'); cell.PAD = 0.03
+        if r == 0: cell.set_facecolor('#eeebe3'); cell.set_text_props(weight='bold'); cell.set_height(cell.get_height() * 1.8)
+        elif r % 2 == 0: cell.set_facecolor('#f8f7f3')
+    fig.text(0.003, 1 - 0.12 / H, 'ParT: input routes of the response to a real mass change, with 95 % intervals and tests (P2v)', va='top', fontsize=11, weight='bold')
+    fig.text(0.003, (Hn - 0.08) / H, note, va='top', fontsize=7.8, color='#555', linespacing=1.45)
+    fig.savefig(SITE / 'T12b_part_routes_stats.png', bbox_inches='tight', pad_inches=0.1); log(f'wrote {SITE / "T12b_part_routes_stats.png"}')
+
+
 if __name__ == '__main__':
-    main()
+    if sys.argv[1:] == ['--table']: table()
+    else: main()
