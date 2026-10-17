@@ -96,3 +96,16 @@ table('T11_e11_faithfulness.png', 'If-statement programs vs JEDI-linear on ordin
  [4.6, 2.2, 1.8, 2.4, 2.1, 2.1, 2.1],
  note='All three programs agree with the network on 92.5–94.8 % of ordinary jets. Under the rigid shift (invariant mass unchanged) only the nested programs reproduce the network\'s W → Z response:\n'
       'they compute the mass the way the network does (radial sums at P and S, then a product). The direct formula uses the invariant mass and does not respond. W rejection at 50 % efficiency: program 0.70× the network\'s [0.50, 0.95].')
+table('T17_atlas_tally.png', 'Neuron atlas (E16): how many live units have one main job, related jobs, unrelated jobs, or no description (20,000 test jets)',
+ ['layer', 'live units', 'one main job', 'related jobs\n(same observable, two jet populations)', 'unrelated jobs', 'unexplained\n(best description R² < 0.5)'],
+ [['P  first-round objects', '12', '0', '12', '0', '0'],
+  ['g  jet context', '11', '3', '5', '3', '0'],
+  ['S  second-round objects', '19', '1', '17', '0', '1'],
+  ['h4', '54', '13', '30', '7', '4'],
+  ['h5', '32', '10', '12', '8', '2'],
+  ['z  class neurons', '16', '4', '6', '6', '0'],
+  ['all', '144', '31  (21.5 %)', '82  (56.9 %)', '24  (16.7 %)', '7  (4.9 %)'],
+  ['all, weighted by decision cost', '', '13.6 %', '72.5 %', '12.5 %', '1.4 %']],
+ [3.0, 1.1, 1.7, 3.0, 1.6, 2.2],
+ note='One main job: one cluster of the jets where the unit is on holds ≥ 80 % of its activation. Related: every cluster with ≥ 10 % of the activation is best described by an observable with |Spearman ρ| ≥ 0.7 to the unit\'s own\n'
+      '(mostly the same quantity over a lower- and a higher-mass population). Steering (setting the unit to its 99th percentile) changes a median 9.9 % of calls, the same as for a random unit of the same layer (9.8 %): steering is specific only for the class neurons z.')

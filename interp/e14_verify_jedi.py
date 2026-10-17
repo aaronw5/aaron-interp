@@ -440,7 +440,52 @@ def ci_main():
     log(f'wrote {out_p} ({time.time()-t0:.0f}s)')
 
 
+def range_main():
+    """--range: do the hybrid / transplanted S vectors of --head leave the d4 input quantizer's range (fixed point, WRAP)?
+    Per construction: fraction of jets with any live d4 input outside [LO, HI] (LO = −2^i if signed else 0, HI = 2^i − 2^−f),
+    fraction with any negative S; and the hybrid / transplant read-out with S clipped into [LO, HI] before the fixed head."""
+    from interp.jedi_core import Jedi, sample
+    t0 = time.time(); OUT.mkdir(parents=True, exist_ok=True); np.seterr(all='ignore')
+    x, y, Q = sample(PER, seed=SEED); x = np.asarray(x, np.float32); J = len(x); del Q
+    net = Jedi(64); LO, HI = E.range_tables(net); prog = E.Program(net)
+    q = net.L['d4'].iq.quantizer
+    k_, i_, f_ = (np.asarray(getattr(q, a_), np.float64).reshape(-1) for a_ in ('k', 'i', 'f'))
+    LOd = np.where(k_ > 0, -2.0 ** i_, 0.0); HId = 2.0 ** i_ - 2.0 ** -f_; md = prog.md['d4'] > 0
+    R0 = E.fixed(net, x, keep=('g', 'S', 'h5')); g0 = R0['g']; S0 = R0['S']
+    lm = np.log(np.maximum(E.inv_mass(x), 1e-3)); half = np.random.default_rng(SEED + 1).permutation(J) < J // 2
+    rd = E.ridge(R0['h5'][half], lm[half]); lm0 = rd(R0['h5'])
+    BR = E.fixed(net, preflect(x), keep=('S',), g_jet=g0)['S']
+    res = dict(N=J, seed=SEED, d4_signed_live=int((k_[md] > 0).sum()), d4_live=int(md.sum()), d4_range={'LO': LOd.tolist(), 'HI': HId.tolist()}, edits={})
+
+    def oor(S): return ((S < LOd) | (S > HId)) & md
+    res['unedited'] = dict(frac_jets_out_of_range=float(oor(S0).any(1).mean()), frac_jets_neg=float((S0 < 0).any(1).mean()))
+    log(f'--range: d4 live inputs {md.sum()}, signed {(k_[md] > 0).sum()}; unedited S: jets with any out-of-range live input {res["unedited"]["frac_jets_out_of_range"]:.4f}')
+    by = {k: {} for k in ('hybrid', 'hybrid_clipped', 'transplant', 'transplant_clipped')}
+    for dd in DELTAS:
+        for name, (de, dp) in DIRS.items():
+            xe = E.shift(x, de * dd, dp * dd)
+            Se = E.fixed(net, xe, keep=('S',), g_jet=g0)['S']; SeR = E.fixed(net, preflect(xe), keep=('S',), g_jet=g0)['S']
+            dSx = Se - S0; dSmx = SeR - BR; cons = dict(real_edit=S0 + dSx, hybrid=S0 + 0.5 * (dSx + dSmx), transplant=S0 + dSmx, symnet=0.5 * (Se + SeR))
+            row = {k: dict(frac_jets_out_of_range=float(oor(S).any(1).mean()), frac_jets_neg=float((S < 0).any(1).mean()),
+                           frac_entries_out_of_range=float(oor(S).mean() / max(md.mean(), 1e-9))) for k, S in cons.items()}
+            for k in ('hybrid', 'transplant'):
+                m_raw = rd(head_fixed(net, x, cons[k])['h5']) - lm0; m_clip = rd(head_fixed(net, x, np.clip(cons[k], LOd, HId))['h5']) - lm0
+                w = ~oor(cons[k]).any(1)
+                row[k].update(mass=float(m_raw.mean()), mass_clipped=float(m_clip.mean()), mass_in_range_jets_only=float(m_raw[w].mean()) if w.any() else None)
+                by[k][f'{dd}_{name}'] = float(m_raw.mean()); by[k + '_clipped'][f'{dd}_{name}'] = float(m_clip.mean())
+            res['edits'][f'{dd}_{name}'] = row
+            log(f'{dd}_{name:6s} ' + ' | '.join(f"{k}: out-of-range jets {v['frac_jets_out_of_range']:.3f}, neg-S jets {v['frac_jets_neg']:.3f}" +
+                                                (f", Δlog m̂ {v['mass']:+.4f} clipped {v['mass_clipped']:+.4f}" if 'mass' in v else '') for k, v in row.items()) + f'  ({time.time()-t0:.0f}s)')
+    res['summary'] = {}
+    for dd in DELTAS:
+        res['summary'][str(dd)] = {k: eo({n: by[k][f'{dd}_{n}'] for n in DIRS}) for k in by}
+        log(f'δ = {dd}: odd/even η φ diag: ' + '; '.join(f"{k} " + ' '.join(E.fmt(v[a]['odd_over_even'], '{:+.3f}') for a in AXES) for k, v in res['summary'][str(dd)].items()))
+    res['log'] = _LOG
+    out_p = OUT / 'e14_verify_range.json'; out_p.write_text(json.dumps(E.clean(res))); log(f'wrote {out_p} ({time.time()-t0:.0f}s)')
+
+
 if __name__ == '__main__':
     if '--head' in sys.argv: head_main()
     elif '--ci' in sys.argv: ci_main()
+    elif '--range' in sys.argv: range_main()
     else: main()

@@ -431,6 +431,27 @@ SMALL_EXPLAINER = [
   'so the formation of each unit during training can be followed.', None),
 ]
 
+ATLAS_EXPLAINER = [
+ ('Question', 'Following Cammarata (Goodfire, "Neural Networks Are Already Clean"): does each unit of JEDI-linear have one main job that can be stated as a physical pattern?', None),
+ ('Method',
+  'For each of the 144 live units (20,000 test jets): the distribution of its value per class; average jet images (pT-weighted, in the network\'s frame and rotated to the jet\'s principal axis) for the jets where it is strongest (top 1 %), '
+  'moderately on (90–99 %), weakly on (50–90 %), and for class neurons the most negative 1 %; the median of 10 physical quantities in each of these bins; the best one- and two-quantity description out of 539 candidates (held-out $R^2$); '
+  'a clustering of the jets where it is on (main job vs other jobs); which earlier units feed it and which class scores it moves; and steering: set the unit to its 99th percentile on jets where it is off, compared with doing the same to a random unit of the same layer.', None),
+ ('Example: z0, the W neuron', 'Strongest on jets with $\\sum p_T r^2$ around 6.2 GeV·rad² (≈ 80 GeV of mass): 97 % of its top 1 % are W jets, two prongs, jet mass 79 GeV. '
+  'Its negative side is top jets (82 % of its lowest 1 %; jet mass 170 GeV, three prongs). It pushes the W score up (+0.75 per spread) and the Z score down (−1.13). Steering it on turns Z calls into W calls.', 'results/site/C_card_z0.png'),
+ ('Example: S29, the largest second-round object', 'Described by $\\sum p_T r^2$ over pT ranks 8–63 above 8.8 GeV·rad² ($R^2$ 0.94). Its two clusters (lower and higher mass) are described by the same quantity, so it counts as "related jobs". Steering it on sends 98.6 % of the affected jets to top.', 'results/site/C_card_S29.png'),
+ ('Tally',
+  'One main job: 31 units (21.5 %); related jobs (the same quantity over two jet populations, mostly lower and higher mass): 82 (56.9 %); unrelated jobs: 24 (16.7 %); no description with $R^2 \\ge 0.5$: 7 (4.9 %). '
+  'Weighted by how much each unit affects the decisions: 13.6 / 72.5 / 12.5 / 1.4 %. So 78 % of units (86 % by decision weight) have one quantity that describes them; unrelated or unexplained units are concentrated in h4, h5 and z. '
+  'For comparison, Goodfire reports about 90 % one main job, 7 % two related jobs and 2–4 % unexplained for language-model neurons, with different definitions.', 'results/site/T17_atlas_tally.png'),
+ ('Limits', 'Steering is not specific except for class neurons: setting a unit to its 99th percentile changes a median 9.9 % of calls, the same as for a random unit (9.8 %). The categories depend on thresholds (R² 0.5, 80 %, ρ 0.7), stated in the table.', None),
+ ('Corrections to earlier claims',
+  'The first layer has 13 live cuts: 4 pT ramps and 9 half-planes (an earlier count of 6 pT ramps included two units that are constant on data). '
+  'z10, previously called the "top gate", is on in 74 % of jets and is best described by $\\sum p_T r$ > 38.9 GeV·rad ($R^2$ 0.70); its strongest 1 % are 95 % top jets at a median 160 GeV. '
+  'z9 is on for $\\sqrt{M_0 M_2}$ < 77.9 GeV or 120–163 GeV, with its strongest jets mostly g and q; an earlier one-term fit ("$\\sqrt{M_0 M_2}$ > 143 GeV") was too simple.', 'results/site/C_card_z10.png'),
+ ('Why it matters', 'Most units of a trained trigger network can be described by one physical quantity, which supports writing the network as named formulas; the units that cannot are listed and are where the formula program loses accuracy.', None),
+]
+
 # per-paper explainers, rendered inside the paper's tab (title, steps)
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
@@ -438,7 +459,8 @@ PAPER_EXPLAINERS = {
           ('Result 2 explained: the context round and the second-round objects (claims A2, A3)', A23_EXPLAINER, False),
           ('Result 3 explained: the network\'s mass variable (claim A4; same test on ParT in Paper C, claim C3; axis consequence in Paper D, claim D4)', MASS_EXPLAINER, False),
           ('Result 4 explained: variables appear over the layers in order of complexity (claim A9)', A9_EXPLAINER, False),
-          ('Result 5 explained: small comparison models trained on the same inputs (claims A8/A10)', SMALL_EXPLAINER, False)],
+          ('Result 5 explained: small comparison models trained on the same inputs (claims A8/A10)', SMALL_EXPLAINER, False),
+          ('Result 6 explained: the neuron atlas, one card per unit (claim A11)', ATLAS_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True)],
     'c': [('Result explained: ParT\'s mass comes mostly through the axis-relative inputs, not the pair features (claim C3)', C3_EXPLAINER, True),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
