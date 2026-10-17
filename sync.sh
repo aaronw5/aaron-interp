@@ -14,7 +14,10 @@ cd "$REPO"
 LIST=$(mktemp); trap 'rm -f "$LIST"' EXIT
 git ls-files -co --exclude-standard -z > "$LIST"
 kubectl -n $NS exec "$POD" -- mkdir -p "$DEST"
-COPYFILE_DISABLE=1 tar cf - --null -T "$LIST" .git | kubectl -n $NS exec -i "$POD" -- tar xf - -C "$DEST" --no-same-owner --unlink-first
+# working files and mutable .git state (refs, index, HEAD, logs) overwrite; .git/objects are content-addressed and
+# read-only once written, so existing ones are skipped (overwriting them made tar exit with "Cannot open: File exists")
+COPYFILE_DISABLE=1 tar cf - --null -T "$LIST" --exclude=.git/objects .git | kubectl -n $NS exec -i "$POD" -- tar xf - -C "$DEST" --no-same-owner --overwrite
+COPYFILE_DISABLE=1 tar cf - .git/objects | kubectl -n $NS exec -i "$POD" -- tar xf - -C "$DEST" --no-same-owner --skip-old-files
 echo "synced $(tr -cd '\0' < "$LIST" | wc -c | tr -d ' ') files + .git -> $POD:$DEST"
 REMOTE=$(kubectl -n $NS exec "$POD" -- find "$DEST" -type f -not -path "$DEST/.git/*" -not -path '*/__pycache__/*' | sed "s|^$DEST/||")
 STALE=$(comm -23 <(printf '%s\n' "$REMOTE" | sort) <(tr '\0' '\n' < "$LIST" | sort) | grep -v '^$' || true)

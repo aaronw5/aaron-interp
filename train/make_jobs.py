@@ -1,6 +1,6 @@
 """Write the k8s Job YAMLs for the small-tagger training set to train/jobs/.
 
-    python train/make_jobs.py [--only n32-s0,n64-s1] [--suffix -b] [--conc 7] [--cpu 6] [--mem 16]
+    python train/make_jobs.py [--only n32-s0,n64-s1] [--suffix=-b] [--conc 7] [--cpu 6] [--mem 16]
     kubectl apply -f train/jobs/<job>.yaml
 
 Set: 7 models x N in {32, 64} x seeds {0, 1} = 28 runs, grouped into 4 jobs by (N, seed), the 7 models of a job training
@@ -36,7 +36,9 @@ metadata:
   namespace: cms-ml
   labels: {{owner: anrunw, study: aaron-interp, set: small-taggers}}
 spec:
-  backoffLimit: 0
+  # 1 retry: anrunw-ai-train-n32-s1 (2026-10-16) failed 32 min after start with its pod gone before the container ran
+  # (no log, no snapshot) and backoffLimit 0 ended the Job. A retry is safe: gpu_job.sh skips runs that have test.json.
+  backoffLimit: 1
   ttlSecondsAfterFinished: 86400
   template:
     metadata:

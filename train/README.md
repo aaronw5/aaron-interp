@@ -53,7 +53,7 @@ python train/make_jobs.py                   # -> train/jobs/n{32,64}-s{0,1}.yaml
 kubectl apply -f train/jobs/n32-s0.yaml     # one job first; check utilisation in logs/train-n32-s0.log, then the rest
 ```
 Each job: `gpu_job.sh <job> <concurrency> <model:N:seed>...`; a run whose directory already has `test.json` is skipped,
-so a resubmitted job (`make_jobs.py --suffix -b`) only redoes what is missing. Job names `anrunw-ai-train-<job>`,
+so a resubmitted job (`make_jobs.py --suffix=-b`) only redoes what is missing. Job names `anrunw-ai-train-<job>`,
 labels `owner=anrunw, study=aaron-interp, set=small-taggers`, 1 GPU, limits = requests.
 
 ## The exact set launched

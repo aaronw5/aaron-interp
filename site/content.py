@@ -15,7 +15,7 @@ OVERVIEW = dict(
         ('E5v', 'done: A2 verified; A3 verified in corrected form (10 of 17 objects radial, 3 directional)'),
         ('E11', 'done: the whole network as a 6,064-if-statement program reproduces 94.0 % of calls at 80.72 % vs 80.42 %; verification E11v running'),
         ('P1 / P1v', 'verified: ParT is not translation invariant (ParT_full through the deltaR input only); WTA-axis inputs change 11.7 % / 34.1 % of calls (full / kin); JEDI axis test (E17) next'),
-        ('Small transformers', 'first set trained (N = 32, seed 0, 30 epochs): tf-2b-d32 77.2 %, dsets-d64 77.8 %, linf-2b-d32-k8 78.4 % vs JEDI n32 78.0 %; the other three jobs queued; per-epoch checkpoints saved'),
+        ('Small taggers', '21 of 28 runs done. N = 64 (seed 0 / 1): Linformer 2 blocks 81.1 / 80.8 %, Deep Sets 80.6 / 80.8 %, JEDI 80.9 %; plain transformers 69–76 % (two runs early-stopped; rerun with patience 30 and a 100-epoch d64 transformer queued)'),
         ('Models and data', 'ParticleNet JetClass weights copied; no released L-GATr weights exist, so it is trained in-house; LorentzNet ships top-tagging and QG checkpoints; top-tagging and QG data on the volume'),
     ],
     decisions=[
