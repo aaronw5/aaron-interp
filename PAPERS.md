@@ -186,6 +186,8 @@ per-particle angular term; the half-plane P units reach round two through g for 
 Narrative order: architecture identity (A1) → objects (A2, A3) → how mass is computed (A4) → neurons and classes (A5, A6)
 → universality (A7) → a larger model (A8).
 
+R2 corrections (2026-10-17, statistics on fresh jets): A3 radial objects reduced to 5 significant under every rotation/reflection (10 only at 180°); A2 four-object set not unique (S58 replaceable by S17/S13/S43); A1 float+masks cost −0.29 [−0.55, −0.03] points; Linformer vs JEDI accuracy not distinguishable with two seeds.
+
 ## Paper B: method — turning a model into if-statements, and the statement–object decomposition
 
 **Thesis (v2, 2026-10-16; user: "write about the MARS fit method … turning model into if statements. Or explore it"):**
@@ -217,6 +219,8 @@ E11v (verified, 2026-10-17): no leakage; standalone program identical (94.02 %);
 −0.31 ± 0.17 points; W rejection 0.70×. Under the 0.06 rad shift the nested program reproduces the network (W → Z 77.6 % vs 74.5 %);
 a formula fitted directly on physics observables (92.5 % agreement on ordinary jets) does not (0.1 %). This is Paper B's central
 result: compositional fits are faithful under mechanism-separating edits, direct surrogates are not.
+
+R2: program W rejection 1.13× [0.96, 1.42] on fresh jets (E11v's 0.70× not reproduced; only 60 background jets pass): rejection not resolved at these counts; accuracy difference −0.04 [−0.35, 0.26].
 
 Open questions for B: does the MARS fit on hand observables match the network on substitution tests as well as the object
 formula does? If yes, B is one section of A. Which if-statement form transfers across architectures?
