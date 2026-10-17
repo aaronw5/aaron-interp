@@ -10,6 +10,12 @@ Fields follow v2: Name, Title, Short Hypothesis, Related Work, Abstract, Experim
 - The working thesis and its version history live in `PAPERS.md`.
 - A novelty check against the literature runs before each paper's write-up starts.
 
+## Phase (user, 2026-10-17): exploration
+"Don't freeze paper right, we should explore more." Theses are working hypotheses; no freezing, no confirmatory-only rounds yet.
+Each round mixes rigour on existing claims with exploration: new phenomena, other models (ParticleNet, LorentzNet, L-GATr,
+PELICAN-type invariant models), other datasets (top tagging, quark–gluon), other physics quantities (beyond mass: N-subjettiness,
+multiplicity, b-tagging, leptons), and other methods (DAS, SAEs, EFP bases). Statistics rules still apply to every result.
+
 ## Loops per paper (user, 2026-10-16)
 One science loop per paper. When the evidence diverges from a paper's thesis, or a result points to a paper that does not
 exist yet, a new thesis goes into PAPERS.md and a new loop starts on it. At most 3 loops run at once. Papers that become too similar, or that cannot stand alone, are combined (criteria in PAPERS.md).
