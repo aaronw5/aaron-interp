@@ -3,6 +3,7 @@ import base64, html, pathlib, sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'site'))
 import content as C
+import explain as X
 
 OUT = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'results' / 'site' / 'index.html'
 e = html.escape
@@ -21,14 +22,17 @@ def table(cols, rows):
 
 
 def claim(c):
-    d = c['detail']
+    d = c['detail']; xp = X.CLAIMS.get(c['id'], {})
     conf = f'<span class="bar"><i style="width:{int(c["confidence"]*100)}%"></i></span> {c["confidence"]:.2f}'
     tabs_ = ''.join(f'<h4>{e(t)}</h4>{table(cols, rows)}' for t, cols, rows in d.get('tables', []))
     figs = ''.join(f'<figure>{img(f)}<figcaption>{e(cap)}</figcaption></figure>' for f, cap in d.get('figures', []))
     return f'''<details class="claim"><summary><span class="cid">{e(c['id'])}</span> {e(c['statement'])}
+<span class="plain">{e(xp.get('plain', ''))}</span>
 <span class="meta">{e(c['status'])} · confidence {conf} · {e(c['evidence'])}</span></summary>
 <div class="body">
-<h4>What the claim is</h4><p>{e(d['what'])}</p>
+<h4>Background</h4><p>{e(xp.get('background', '—'))}</p>
+<h4>Why we test it</h4><p>{e(xp.get('motivation', '—'))}</p>
+<h4>What exactly is claimed</h4><p>{e(d['what'])}</p>
 <h4>Procedure</h4><p>{e(d['procedure'])}</p>
 <h4>Result</h4><p>{e(d['result'])}</p>
 {tabs_}{figs}
@@ -43,6 +47,7 @@ def paper(p):
     opens = ''.join(f'<li>{e(o)}</li>' for o in p['open'])
     return f'''<section id="tab-{p['key']}" class="tab" hidden>
 <h2>{e(p['title'])}</h2>
+<p>{e(X.PAPER_MOTIVATION.get(p['key'], ''))}</p>
 <h3>Thesis (current)</h3><p class="thesis">{e(p['thesis'])}</p>
 <details><summary>Thesis history</summary><ul>{log}</ul></details>
 <h3>Claims (open each for procedure, numbers, tables, figures)</h3>{claims}
@@ -53,6 +58,9 @@ def paper(p):
 ov = C.OVERVIEW
 overview = f'''<section id="tab-overview" class="tab">
 <h2>{e(ov['title'])}</h2><p>{e(ov['intro'])}</p>
+<h3>Main results, explained</h3>{''.join(f'<h4>{e(t)}</h4><p>{e(x)}</p><figure>{img(f)}</figure>' for t, x, f in X.KEY_RESULTS)}
+<h3>Background</h3>{''.join(f'<h4>{e(t)}</h4><p>{e(x)}</p>' for t, x in X.BACKGROUND)}
+<details><summary>Glossary</summary>{table(['term', 'meaning'], X.GLOSSARY)}</details>
 <h3>Running</h3>{table(['what', 'state'], ov['status'])}
 <h3>Decisions</h3>{table(['date', 'decision'], ov['decisions'])}
 <h3>Papers</h3>{table(['tab', 'title', 'claims verified / total'], [(p['tab'], p['title'], f"{sum(1 for c in p['claims'] if c['status'].startswith('verified'))} / {len(p['claims'])}") for p in C.PAPERS])}
@@ -81,7 +89,7 @@ th,td{{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);verti
 .mut{{color:var(--mut)}} details{{margin:6px 0}} summary{{cursor:pointer;color:var(--acc)}} ul{{padding-left:20px}} li{{margin:3px 0}}
 details.claim{{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin:8px 0}} details.claim summary{{color:var(--fg);list-style:none;display:block}}
 details.claim summary::before{{content:'▸ ';color:var(--acc)}} details.claim[open] summary::before{{content:'▾ '}}
-.cid{{font-weight:700;color:var(--acc);margin-right:4px}} .meta{{display:block;font-size:.82rem;color:var(--mut);margin-top:2px}}
+.cid{{font-weight:700;color:var(--acc);margin-right:4px}} .plain{{display:block;margin-top:4px;color:var(--fg);font-size:.92rem;max-width:90ch}} .meta{{display:block;font-size:.82rem;color:var(--mut);margin-top:2px}}
 details.claim .body{{border-top:1px solid var(--line);margin-top:8px;padding-top:4px}} h4{{font-size:.82rem;margin:14px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}}
 </style>
 <main>
@@ -91,6 +99,9 @@ details.claim .body{{border-top:1px solid var(--line);margin-top:8px;padding-top
 {overview}
 {''.join(paper(p) for p in C.PAPERS)}
 </main>
+
+<script>window.MathJax={{tex:{{inlineMath:[['$','$']],displayMath:[['$$','$$']]}},svg:{{fontCache:'global'}},options:{{skipHtmlTags:['script','noscript','style','textarea','pre','code']}}}};</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
 <script>
 (function(){{
   var bs=document.querySelectorAll('nav button'),tabs=document.querySelectorAll('.tab');

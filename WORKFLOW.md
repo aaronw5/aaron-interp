@@ -56,6 +56,12 @@ stage is limited to keeping PAPERS.md (theses, claims, confidence per claim) cur
 - It lists the weaknesses and the experiments that would address them.
 - Each weakness becomes a node in TREE.md, at stage 2–4.
 
+## Documents (user 2026-10-16)
+- Math in LaTeX: `$...$` in Markdown files (GitHub renders it) and on the results page (MathJax); no Unicode pseudo-math in documents.
+- Explain and motivate everything: every claim, figure and table on the page has background (what the reader needs to know),
+  motivation (why it is tested), the physics meaning and why it matters, and a plain one-line summary (site/explain.py).
+- Use explanatory figures (diagrams on real jets) where a result is not obvious from numbers (site/explain_figs.py).
+
 ## Writing rule (all text: ledger, reports, later papers)
 No mannered prose: no metaphor or flourish in place of a direct statement ("a dial worth turning" → "a parameter worth
 varying"). When a literal phrase exists, use it. No editorial or declarative language; interpretations scoped to the
