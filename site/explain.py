@@ -374,12 +374,17 @@ D4_EXPLAINER = [
   'an 80 GeV W jet reads 80–113 GeV, which crosses the Z window. The hardest single particle can sit in the softer prong ($z < 0.5$), which gives larger factors. For the example jet: $106/81.3 = 1.30$ ($z = 0.59$, WTA on the harder prong) '
   'and $125/81.3 = 1.53$ ($z = 0.43$, hardest particle in the softer prong). One-prong jets (light quarks, gluons) have their WTA axis close to the centre (median 0.030 rad for QCD jets on JetClass), so their reading changes little; '
   'this is why the changed decisions are mostly W → Z and Z → q.', None),
- ('Three-prong jets (top) and why they change less',
-  'The same algebra applies to a top jet with three prongs: about an axis on one prong, $M_0 M_2$ includes the full squared distances to the other two prongs, so the reading grows. For a symmetric three-prong jet '
-  '(equal momentum fractions, equal separations) $m^2 = \\tfrac13 p_T^2\\theta^2$ while $M_0 M_2$ about one prong is $\\tfrac23 p_T^2\\theta^2$, a factor $\\sqrt2$ in the reading. '
-  'Measured decisions (WTA axis): JEDI-linear changes 68 % of W calls and 44 % of Z calls but only 14 % of top calls, although top jets have the largest axis displacement (median 0.084 rad); top accuracy stays at 82–83 %. '
-  'ParT_full: top (t → bqq\') 95.4 → 92.8 %; ParT_kin: 90.4 → 55.9 %, and H → gg 72 → 24 %. One candidate explanation for JEDI-linear: the W and Z windows are bounded on both sides and next to each other, while no class is heavier than top, so a heavier reading of a top jet stays on the top side. '
-  'Which class neurons carry the top decision is being identified from the network itself (the neuron atlas found that z10, earlier called the top gate, is on in 74 % of jets); E19 measures per-class mass-reading changes against the prediction and those neurons\' states.', None),
+ ('Three-prong jets (top): the reading rises, the call mostly stays (E19)',
+  'The same algebra applies to a top jet with three prongs: about an axis on one prong, $M_0 M_2$ includes the full squared distances to the other two prongs. For a symmetric three-prong jet '
+  '$m^2 = \\tfrac13 p_T^2\\theta^2$ while $M_0 M_2$ about one prong is $\\tfrac23 p_T^2\\theta^2$, a factor $\\sqrt2$ in the reading; on real top jets with three resolved subjets the factor has median 1.18. '
+  'Measured (E19, WTA axis, fresh jets): JEDI-linear\'s mass reading for top jets rises from a median 146 to 175 GeV; the calibrated ratio to the $\\sqrt{M_0 M_2}$ prediction is 1.02 [0.98, 1.06] (p for "no change" $10^{-296}$). '
+  'Yet only 12.2 % [11.2, 13.2] of top calls change and top accuracy goes 84.0 → 83.2 % (McNemar p = 0.095, not significant). '
+  'The reason is in the three class neurons that push the top score: z10 (+), z8 (+), z13 (−, counts against top). On unedited jets z13 switches off above about 143–170 GeV and z8 is on from about 110 GeV, both one-sided; '
+  'z10 is on between about 100 and 220 GeV and off above, two-sided. A heavier reading turns z13 off (on-fraction 0.52 → 0.28), keeps z8 on (0.95 → 0.98) and turns some z10 off (0.97 → 0.66): the top score drops by 1.21 but the margin over the next class stays positive (2.33 → 1.79). '
+  'For W and Z the windows are narrow and next to each other, so the same kind of increase crosses into the neighbouring class (68 % and 45 % of calls change). '
+  'ParT_full keeps its top calls (95.5 → 92.1 %); ParT_kin loses 42 % of them, mostly to t → bℓν, while its top mass reading rises only 0.45 of the prediction, so that change does not follow the mass reading. '
+  'Caveat: ParT_full\'s read-out fits top jets poorly (per-class $R^2$ 0.37).', 'results/site/F9_top_axis.png'),
+ ('Per-class numbers', 'Read-out change vs prediction, calibrated ratio, calls changed and accuracy per class for the three models (E19).', 'results/site/T16_axis_by_class.png'),
  ('Where these axes are used',
   'The standard (E-scheme) axis is the direction of the summed four-momentum and is how anti-$k_T$ jets are usually defined. The winner-take-all recombination scheme was proposed so that the axis is not moved by soft radiation '
   '(recoil-free); it is used, for example, for the axes of N-subjettiness, and the angle between the standard and WTA axes has itself been studied as an observable of soft radiation. Trigger-level jet finding can build jets around a seed particle. '
