@@ -126,8 +126,9 @@ class Boot:
         self.y = np.asarray(y); self.B = B or NBOOT; self.seed = seed
         self.groups = [np.flatnonzero(self.y == c) for c in np.unique(self.y)] if strat else [np.arange(len(self.y))]
 
-    def chunks(self, size=200):
+    def chunks(self, size=None):
         rng = np.random.default_rng(self.seed); J = len(self.y); done = 0
+        size = size or max(1, min(200, int(4e6 // J)))          # weight matrix <= ~16 MB
         while done < self.B:
             b = min(size, self.B - done); W = np.zeros((b, J), np.float32)
             for g in self.groups:
@@ -265,7 +266,7 @@ def part_a1units():
                 return V
             cr = calls_jetwise(net, x, st, m, getv)
             chm, chr_ = cm != call, cr != call; Ch += [chm, chr_]
-            r = dict(stage=st, unit=int(k), name=f'{st}{k}', dead_on_real=bool(dead[k]), sd_real=float(sd[k]),
+            r = dict(stage=st, unit=int(k), name=f'{st}:{k}' if len(st) > 1 else f'{st}{k}', dead_on_real=bool(dead[k]), sd_real=float(sd[k]),
                      mean_cost=prop(chm.sum(), J), resample_cost=prop(chr_.sum(), J),
                      mean_vs_resample=dict(mean_only=int((chm & ~chr_).sum()), resample_only=int((~chm & chr_).sum()),
                                            p_mcnemar=mcnemar(int((chm & ~chr_).sum()), int((~chm & chr_).sum()))),
@@ -666,11 +667,16 @@ def part_a9():
                                first_09=int(F[0.9][oi]), first_07=int(F[0.7][oi]))
     # jet bootstrap of the held-out R² (probes fixed): R²* = 1 - Σw(t - p)² / (Σw t² - (Σw t)² / n)
     RES2 = ((TC[:, None, :] - PRED) ** 2).reshape(nO * nS, -1); n_te = len(te)
+    TCc = TC - TC.mean(1, keepdims=True)                          # R² is shift invariant; centring keeps the float32 sums exact enough
+    w1 = np.ones((1, n_te), np.float32)
+    chk = 1 - (RES2 @ w1.T).reshape(nO, nS) / np.maximum((TCc ** 2) @ w1.T - (TCc @ w1.T) ** 2 / n_te, 1e-30)
+    res['jet_bootstrap_identity_check_max_abs'] = float(np.abs(chk - R2)[R2 != 0].max())
+    log(f"jet-bootstrap R² with unit weights vs point R²: max |diff| {res['jet_bootstrap_identity_check_max_abs']:.2e}")
     rngj = np.random.default_rng(SEED + 1); FJ = {0.9: [], 0.7: []}
     done = 0
     while done < NJ:
         b = min(100, NJ - done); W = np.stack([np.bincount(rngj.integers(0, n_te, n_te), minlength=n_te) for _ in range(b)]).astype(np.float32)
-        rss = (RES2 @ W.T).reshape(nO, nS, b); st1 = TC @ W.T; st2 = (TC ** 2) @ W.T; tss = st2 - st1 ** 2 / n_te
+        rss = (RES2 @ W.T).reshape(nO, nS, b); st1 = TCc @ W.T; st2 = (TCc ** 2) @ W.T; tss = st2 - st1 ** 2 / n_te
         Rb = 1 - rss / np.maximum(tss, 1e-30)[:, None, :]
         for thr in (0.9, 0.7): FJ[thr].append(first(np.moveaxis(Rb, 2, 0), thr))
         done += b
@@ -730,7 +736,7 @@ def rej_boot(V, lo_p, lo_n, y, B, seed=SEED):
             lr.append(np.log(a_) - np.log(b_) if np.isfinite(a_) or np.isfinite(b_) else np.nan)
         lr = np.array(lr); lf = lr[~np.isnan(lr)]
         q = lambda v: (float(np.exp(v)) if np.isfinite(v) else None)
-        lo_, hi_ = (np.percentile(lf, [2.5, 97.5]) if len(lf) else (np.nan, np.nan))
+        lo_, hi_ = (np.percentile(lf, [2.5, 97.5], method='inverted_cdf') if len(lf) else (np.nan, np.nan))   # no interpolation: ±inf replicates allowed
         p2 = float(min(1.0, 2 * min((lf <= 0).mean(), (lf >= 0).mean()))) if len(lf) else None
         out[name] = dict(program=rp if np.isfinite(rp) else None, network=rn if np.isfinite(rn) else None,
                          ratio=float(rp / rn) if np.isfinite(rp) and np.isfinite(rn) else None, ci=[q(lo_), q(hi_)], p_ratio_eq_1=p2,
@@ -882,6 +888,28 @@ def part_small():
 
 
 # ============================================================================================================ table
+def a1_vs_e1(A):
+    """seed-61 mean-ablation cost vs E1's seed-0 cost (results/jedi/e1_e3.json, 10,000 jets) per tested unit: two-proportion
+    z-test (the two samples share 791 jets; treated as independent, which makes the test conservative), Holm over the units"""
+    from scipy.stats import norm
+    p = RES / 'jedi' / 'e1_e3.json'
+    if not p.exists(): return None
+    n0 = json.loads(p.read_text())['N']; out = []
+    for r in A['units']:
+        p0 = r['e1_seed0_cost']
+        if p0 is None: continue
+        p1, n1 = r['mean_cost']['est'], r['mean_cost']['n']; se = np.sqrt(p1 * (1 - p1) / n1 + p0 * (1 - p0) / n0)
+        z = (p1 - p0) / se if se > 0 else 0.0
+        out.append(dict(name=r['name'], seed61=p1, seed0=p0, z=float(z), p=float(2 * norm.sf(abs(z)))))
+    adj = holm([o['p'] for o in out])
+    for o, a in zip(out, adj): o['p_holm'] = float(a)
+    res = dict(n_seed0=n0, n_units=len(out), differ_holm01=[o['name'] for o in out if o['p_holm'] < 0.01],
+               differ_holm05=[o['name'] for o in out if o['p_holm'] < 0.05], units=out)
+    (OUT / f'r2_a1units_vs_e1{"_smoke" if SMOKE else ""}.json').write_text(json.dumps(jsonable(res), indent=1))
+    log(f"A1 seed 61 vs E1 seed 0: {len(out)} units, differ at Holm 0.01: {res['differ_holm01']}; at 0.05: {res['differ_holm05']}")
+    return res
+
+
 def part_table():
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
     L = {}
@@ -890,102 +918,125 @@ def part_table():
         if p.exists(): L[k] = json.loads(p.read_text())
     pc = lambda v, d=2: '—' if v is None else f'{v * 100:.{d}f} %'
     iv = lambda c, d=2: '—' if c is None or c[0] is None else f'[{c[0] * 100:.{d}f}, {c[1] * 100:.{d}f}] %'
-    pv = lambda p: '—' if p is None else ('< 1e-300' if p == 0 else (f'{p:.1e}' if p < 1e-3 else f'{p:.3f}'))
-    vd = lambda p: '—' if p is None else ('H0 rejected' if p < 0.01 else 'not rejected')
+    pv = lambda p: '—' if p is None else ('< 1e-300' if p == 0 else (f'{p:.1e}' if p < 1e-3 else (f'{p:.3g}' if p < 0.1 else f'{p:.3f}')))
+    vd = lambda p: '—' if p is None else ('H0 rejected' if p < 0.01 else 'H0 not rejected')
     rows = []
     if 'a1units' in L:
-        A = L['a1units']; st = A['stages']; o = ['a', 'P', 'g', 's', 'u', 'S', 'h4', 'h5', 'z']
-        rows.append(['A1', 'units with mean-ablation cost > 1 % of calls, per stage a/P/g/s/u/S/h4/h5/z (point count)',
-                     '/'.join(str(st[s]['point_ge_1pct']) for s in o), '—',
-                     'H0 cost ≤ 1 %, binomial, Holm over ' + str(A['family']['n_tested']) + ' tested units',
-                     'counts at Holm 0.05', '/'.join(str(st[s]['above_1pct']) for s in o) + ' above; ' + '/'.join(str(st[s]['unresolved_1pct']) for s in o) + ' unresolved'])
-        rows.append(['A1', 'units with cost > 0.1 % (point count; E11 live set)', '/'.join(str(st[s]['point_ge_0p1pct']) for s in o), '—',
-                     'H0 cost ≤ 0.1 %, binomial, Holm', 'counts at Holm 0.05', '/'.join(str(st[s]['above_0p1pct']) for s in o) + ' above'])
+        A = L['a1units']; st = A['stages']; o = ['a', 'P', 'g', 's', 'u', 'S', 'h4', 'h5', 'z']; nt = A['family']['n_tested']
+        cnt = lambda key: '/'.join(str(st[s][key]) for s in o)
+        unres = lambda lab: '/'.join(str(st[s]['tested'] - st[s][f'above_{lab}_a01'] - st[s][f'below_{lab}_a01']) for s in o)
+        rows.append(['A1', 'units with cost > 1 % of calls (point count per stage)', cnt('point_ge_1pct'), '—',
+                     f'H0 cost ≤ 1 % per unit; binomial; Holm over {nt} units', '—', f"rejected {cnt('above_1pct_a01')}; unresolved {unres('1pct')}"])
+        rows.append(['A1', 'units with cost > 0.1 % (point count; E11 live set P12 g11 S19 h4 54 h5 32 z16)', cnt('point_ge_0p1pct'), '—',
+                     'H0 cost ≤ 0.1 % per unit; Holm', '—', f"rejected {cnt('above_0p1pct_a01')}"])
+        diff01 = sum(r['mean_vs_resample']['p_holm'] < 0.01 for r in A['units']); larger = sum(r['mean_vs_resample']['p_holm'] < 0.01 and r['resample_cost']['k'] > r['mean_cost']['k'] for r in A['units'])
+        rows.append(['A1', 'mean ablation vs resample ablation (value from another jet)', f'{diff01} of {nt} units differ', '—',
+                     'H0 equal cost per unit; McNemar; Holm', '—', f'rejected for {diff01} ({larger} resample larger)'])
+        cmp_ = a1_vs_e1(A)
+        if cmp_: rows.append(['A1', 'seed-61 cost vs E1 seed-0 cost (10,000 jets)', f"{len(cmp_['differ_holm01'])} of {cmp_['n_units']} units differ", '—',
+                              'H0 equal cost; two-proportion z; Holm', '—', ('rejected for ' + ', '.join(cmp_['differ_holm01'])) if cmp_['differ_holm01'] else 'not rejected for any'])
         U = {r['name']: r for r in A['units']}
-        for nm in ('a32', 'S29', 'h4_49', 'z1'):
-            nm2 = nm.replace('_', '')
-            if nm2 in U:
-                r = U[nm2]
-                rows.append(['A1', f'cost of {nm2} (mean ablation) vs resample ablation', pc(r['mean_cost']['est']), iv(r['mean_cost']['ci_boot']),
-                             f"resample {pc(r['resample_cost']['est'])}", pv(r['mean_vs_resample']['p_mcnemar']), vd(r['mean_vs_resample']['p_mcnemar']) + ' (mean = resample)'])
+        for nm in ('a32', 'S29', 'h4:49'):
+            if nm in U:
+                r = U[nm]
+                rows.append(['A1', f'cost of {nm}, mean ablation (resample ablation in the null column)', pc(r['mean_cost']['est']), iv(r['mean_cost']['ci_boot']),
+                             f"resample {pc(r['resample_cost']['est'])}; H0 equal (McNemar)", pv(r['mean_vs_resample']['p_mcnemar']), vd(r['mean_vs_resample']['p_mcnemar'])])
     if 'a1float' in L:
-        F = L['a1float']['variants']['mask']
-        rows.append(['A1', 'float + zero-bit masks: same call as fixed point', pc(F['same_call']['est']), iv(F['same_call']['ci']), '—', '—', '—'])
-        rows.append(['A1', 'float + masks accuracy − fixed point', pc(F['acc_minus_fixed']['diff']), iv(F['acc_minus_fixed']['ci']), 'H0 equal accuracy (McNemar)',
+        F = L['a1float']['variants']['mask']; G = L['a1float']['variants']['float']
+        rows.append(['A1', 'float + zero-bit masks: same call as fixed point', pc(F['same_call']['est']), iv(F['same_call']['ci']), 'fully float: ' + pc(G['same_call']['est']), '—', '—'])
+        rows.append(['A1', 'float + masks accuracy − fixed-point accuracy', pc(F['acc_minus_fixed']['diff']), iv(F['acc_minus_fixed']['ci']), 'H0 equal accuracy (McNemar)',
                      pv(F['acc_minus_fixed']['p_mcnemar']), vd(F['acc_minus_fixed']['p_mcnemar'])])
     if 'a2' in L:
         A = L['a2']; g = A['edits']['g_to_mean']; t4 = A['top4']; nu = A['null']['four_of_the_other_live']; na = A['null']['four_of_all_live']
-        rows.append(['A2', 'g → mean: calls changed', pc(g['calls_changed']['est']), iv(g['calls_changed']['ci']), 'rerun unedited: 0', '0 (exact)', 'H0 rejected'])
-        rows.append(['A2', 'S0, S30, S31, S58 → mean-context value: calls changed', pc(t4['calls_changed']['est']), iv(t4['calls_changed']['ci']),
-                     f"4 of the other {len(nu['pool'])} live S ({nu['n_subsets']} subsets): max {pc(nu['null_cost_max'])}", pv(nu['p_cost']), vd(nu['p_cost'])])
-        rows.append(['A2', 'same 4: rank among all 4-subsets of the live S objects', pc(t4['calls_changed']['est']), '—',
-                     f"{na['n_subsets']} subsets: max {pc(na['null_cost_max'])}", pv(na['p_cost']), vd(na['p_cost'])])
+        rows.append(['A2', 'g → mean: calls changed', pc(g['calls_changed']['est']), iv(g['calls_changed']['ci']), 'H0 no call changes (rerun unedited: 0)', '0', 'H0 rejected'])
+        rows.append(['A2', 'S0, S30, S31, S58 → mean-context values: calls changed', pc(t4['calls_changed']['est']), iv(t4['calls_changed']['ci']),
+                     f"all {nu['n_subsets']} 4-subsets of the other {len(nu['pool'])} live S: max {pc(nu['null_cost_max'])}", pv(nu['p_cost']), vd(nu['p_cost'])])
+        top = na['top5_subsets']; better = [t for t in top if t['cost'] > na['observed_cost']]
+        rows.append(['A2', f"same, ranked among all {na['n_subsets']} 4-subsets of the {len(na['pool'])} live S", pc(t4['calls_changed']['est']), '—',
+                     f"{len(better)} subsets higher, max {pc(na['null_cost_max'])} (S{', S'.join(map(str, top[0]['units']))})", pv(na['p_cost']), vd(na['p_cost'])])
         rows.append(['A2', 'same 4: same call as g → mean on the jets g → mean changes', pc(t4['same_as_g_to_mean_on_its_changed']['est'], 1),
-                     iv(t4['same_as_g_to_mean_on_its_changed']['ci'], 1), f"other 4-subsets: max {pc(nu['null_agree_max'], 1)}", pv(nu['p_agree']), vd(nu['p_agree'])])
+                     iv(t4['same_as_g_to_mean_on_its_changed']['ci'], 1), f"other 15: max {pc(nu['null_agree_max'], 1)}; highest of all {na['n_subsets']}", pv(na['p_agree']), vd(na['p_agree'])])
     if 'a3' in L:
         A = L['a3']
-        for e in ('rot180', 'rot45'):
+        for e, lab in (('rot180', 'rotation 180°'), ('rot45', 'rotation 45°')):
             r = A['edits'][e]; gc = r['control_gaussian_matched_rms']
-            rows.append(['A3', f"{e.replace('rot', 'rotation ')}°: calls changed", pc(r['calls_changed']['est']), iv(r['calls_changed']['ci']),
-                         f"rerun 0; matched-rms noise {gc['rate_min'] * 100:.2f}–{gc['rate_max'] * 100:.2f} %", pv(gc['edit_vs_draw0']['p_mcnemar']) + ' (vs noise)',
-                         vd(gc['edit_vs_draw0']['p_mcnemar']) + ' (edit = noise)'])
+            rows.append(['A3', f'{lab}: calls changed', pc(r['calls_changed']['est']), iv(r['calls_changed']['ci']),
+                         f"H0 = matched-rms noise on S ({gc['rate_min'] * 100:.1f}–{gc['rate_max'] * 100:.1f} %); McNemar", pv(gc['edit_vs_draw0']['p_mcnemar']), vd(gc['edit_vs_draw0']['p_mcnemar'])])
         r = A['edits']['rot180']
-        rows.append(['A3', 'rotation 180°: calls changed > 3 % (E5v threshold)', pc(r['calls_changed']['est']), iv(r['calls_changed']['ci']), 'H0 rate ≤ 3 %, binomial',
+        rows.append(['A3', 'rotation 180°: calls changed above 3 % (E5v threshold)', pc(r['calls_changed']['est']), iv(r['calls_changed']['ci']), 'H0 rate ≤ 3 % (binomial)',
                      pv(r['p_gt_3pct']), vd(r['p_gt_3pct'])])
         q = A['cochran_q_r_preserving']
-        rows.append(['A3', 'five r-preserving edits change the same fraction of calls', '—', '—', "Cochran's Q", pv(q['p']), vd(q['p'])])
-        s = A['objects_summary']['max_r_preserving']; n = s['n_objects']
-        rows.append(['A3', 'objects with rms shift / SD > 0.1 (largest of the five edits)', f"{len(s['above_holm01'])} of {n} (Holm 0.01)", '—',
-                     'H0 ≤ 0.1 SD per object, bootstrap 10,000, Holm', '—', ', '.join(s['above_holm01'])[:60]])
-        rows.append(['A3', 'objects with rms shift / SD < 0.1 (largest of the five edits)', f"{len(s['below_holm01'])} of {n} (Holm 0.01)", '—',
-                     'H0 ≥ 0.1 SD per object', '—', 'unresolved: ' + (', '.join(s['unresolved05']) or 'none')[:60]])
+        rows.append(['A3', 'five r-preserving edits: equal fraction of calls changed', '3.78–4.13 %' if not SMOKE else '—', '—', "H0 equal (Cochran's Q)", pv(q['p']), vd(q['p'])])
+        n = A['objects_summary']['rot180']['n_objects']
+        for key, lab in (('rot180', 'rotation 180°'), ('max_r_preserving', 'largest of the five r-preserving edits')):
+            s_ = A['objects_summary'][key]
+            rows.append(['A3', f'objects with rms ΔS / SD(S) < 0.1, {lab}', f"{len(s_['below_holm01'])} of {n}", '—', 'H0 ≥ 0.1 SD per object; bootstrap 10,000; Holm', '—',
+                         'rejected: ' + ' '.join(s_['below_holm01'])])
+            rows.append(['A3', f'objects with rms ΔS / SD(S) > 0.1, {lab}', f"{len(s_['above_holm01'])} of {n}", '—', 'H0 ≤ 0.1 SD per object; Holm', '—',
+                         'rejected: ' + ' '.join(s_['above_holm01'])])
     if 'a9' in L:
         for thr, lab in (('09', 'R² ≥ 0.9'), ('07', 'R² ≥ 0.7')):
             e = L['a9']['spearman']['all'][thr]
-            rows.append(['A9', f'Spearman ρ depth vs first stage ({lab}; 45 observables)', f"{e['rho']:.2f}",
-                         f"obs. [{e['ci_boot_observables'][0]:.2f}, {e['ci_boot_observables'][1]:.2f}]; jets+obs. [{e['ci_boot_jets_and_observables'][0]:.2f}, {e['ci_boot_jets_and_observables'][1]:.2f}]",
-                         'depth labels permuted (10,000)', pv(e['p_perm_one_sided']), vd(e['p_perm_one_sided'])])
+            rows.append(['A9', f'Spearman ρ, depth vs first stage ({lab}; 45 observables)', f"{e['rho']:.3f}",
+                         f"[{e['ci_boot_jets_and_observables'][0]:.2f}, {e['ci_boot_jets_and_observables'][1]:.2f}]",
+                         'H0 depth labels exchangeable (10,000 permutations)', pv(e['p_perm_one_sided']), vd(e['p_perm_one_sided'])])
     if 'b2' in L:
-        P = L['b2']['programs']['e11_nested']
-        rows.append(['B2', 'nested program: same call as the network (fresh jets)', pc(P['same_call']['est']), iv(P['same_call']['ci']), '—', '—', '—'])
-        rows.append(['B2', 'accuracy program − network', pc(P['acc_minus_network']['diff']), iv(P['acc_minus_network']['ci']), 'H0 equal (McNemar)',
+        P = L['b2']['programs']['e11_nested']; nB = L['b2']['info']['n']
+        rows.append(['B2', f'nested program: same call as the network ({nB:,} fresh jets)', pc(P['same_call']['est']), iv(P['same_call']['ci']), '—', '—', '—'])
+        rows.append(['B2', 'accuracy, program − network', pc(P['acc_minus_network']['diff']), iv(P['acc_minus_network']['ci']), 'H0 equal (McNemar)',
                      pv(P['acc_minus_network']['p_mcnemar']), vd(P['acc_minus_network']['p_mcnemar'])])
         w = P['rejection50']['W vs rest']
-        rows.append(['B2', 'W-vs-rest rejection at 50 % eff., program / network', '—' if w['ratio'] is None else f"{w['ratio']:.2f}×",
-                     '—' if w['ci'][0] is None else f"[{w['ci'][0]:.2f}, {w['ci'][1] if w['ci'][1] is not None else float('inf'):.2f}]×",
+        rows.append(['B2', 'W-vs-rest rejection at 50 % efficiency, program / network', '—' if w['ratio'] is None else f"{w['ratio']:.2f}×",
+                     '—' if w['ci'][0] is None else f"[{w['ci'][0]:.2f}, {w['ci'][1]:.2f}]×" if w['ci'][1] is not None else f"[{w['ci'][0]:.2f}, ∞)×",
                      f"H0 ratio = 1 (bootstrap 2,000); {w['bkg_passing_network']} bkg jets pass", pv(w['p_ratio_eq_1']), vd(w['p_ratio_eq_1'])])
         nv = L['b2']['nested_vs_direct_same_call']['e11_nested vs e11_z_on_physics']
-        rows.append(['B3', 'unedited jets: same call, nested − direct formula', pc(nv['diff']), iv(nv['ci']), 'H0 equal (McNemar)', pv(nv['p_mcnemar']), vd(nv['p_mcnemar'])])
+        rows.append(['B3', 'ordinary jets: same call, nested program − direct formula', pc(nv['diff']), iv(nv['ci']), f"direct {pc(nv['b']['est'])}; H0 equal (McNemar)", pv(nv['p_mcnemar']), vd(nv['p_mcnemar'])])
     if 'b3' in L:
-        nv = L['b3']['nested_vs_direct']['shift_eta_0p06']['e11_nested vs e11_z_on_physics']
-        rows.append(['B3', 'η shift 0.06: same call, nested − direct formula', pc(nv['diff'], 1), iv(nv['ci'], 1),
-                     f"nested {pc(nv['a']['est'], 1)}, direct {pc(nv['b']['est'], 1)}; McNemar", pv(nv['p_mcnemar']), vd(nv['p_mcnemar'])])
+        for k, lab in (('shift_eta_0p06', 'η shift 0.06 rad'), ('pt_x0p8', 'pT × 0.8')):
+            nv = L['b3']['nested_vs_direct'][k]['e11_nested vs e11_z_on_physics']
+            rows.append(['B3', f'{lab}: same call, nested program − direct formula', pc(nv['diff'], 1), iv(nv['ci'], 1),
+                         f"nested {pc(nv['a']['est'], 1)}, direct {pc(nv['b']['est'], 1)}; McNemar", pv(nv['p_mcnemar']), vd(nv['p_mcnemar'])])
         w = L['b3']['flows']['shift_eta_0p06']['W->Z']
-        rows.append(['B3', 'η shift 0.06: W → Z, nested program − network', pc(w['e11_nested_minus_network']['diff'], 1), '—',
-                     f"network {pc(w['network']['est'], 1)}, nested {pc(w['e11_nested']['est'], 1)}, direct {pc(w['e11_z_on_physics']['est'], 1)}",
+        rows.append(['B3', 'η shift 0.06 rad: W called Z, nested program − network', pc(w['e11_nested_minus_network']['diff'], 1), '—',
+                     f"network {pc(w['network']['est'], 1)} {iv(w['network']['ci'], 1)}, direct {pc(w['e11_z_on_physics']['est'], 1)}; McNemar",
                      pv(w['e11_nested_minus_network']['p_mcnemar']), vd(w['e11_nested_minus_network']['p_mcnemar'])])
     if 'small' in L:
         S = L['small']
-        for a in ('linf-2b-d32-k8', 'dsets-d64'):
+        for a, lab in (('linf-2b-d32-k8-n64', 'Linformer 2b'), ('dsets-d64-n64', 'Deep Sets')):
             if a not in S['architectures']: continue
             r = S['architectures'][a]
-            for sd in ('seed0', 'seed1'):
-                n = r[sd]; m = S['runs'][n]['minus_jedi']
-                rows.append(['small', f'{a} {sd} − JEDI-linear accuracy (260,000 jets)', pc(m['diff'], 3), iv(m['ci'], 3), 'H0 equal (McNemar)', pv(m['p_mcnemar']), vd(m['p_mcnemar'])])
+            for sd, sl in (('seed0', 'seed 0'), ('seed1', 'seed 1')):
+                m = S['runs'][r[sd]]['minus_jedi']
+                rows.append(['small', f'{lab} {sl} − JEDI-linear accuracy (260,000 test jets)', pc(m['diff'], 3), iv(m['ci'], 3), 'H0 equal (McNemar)', pv(m['p_mcnemar']), vd(m['p_mcnemar'])])
             m = r['seed1_minus_seed0']
-            rows.append(['small', f'{a} seed 1 − seed 0', pc(m['diff'], 3), iv(m['ci'], 3), 'H0 equal (McNemar)', pv(m['p_mcnemar']), vd(m['p_mcnemar'])])
+            rows.append(['small', f'{lab}: seed 1 − seed 0', pc(m['diff'], 3), iv(m['ci'], 3), 'H0 equal (McNemar)', pv(m['p_mcnemar']), vd(m['p_mcnemar'])])
+            rows.append(['small', f'{lab}: mean of 2 seeds (t, 1 df; JEDI {S["jedi"]["acc"]["est"] * 100:.2f} %)', pc(r['mean'], 2), iv(r['seed_t_interval_1df'], 2),
+                         'seed spread only', '—', 'contains JEDI' if r['seed_t_interval_1df'][0] <= S['jedi']['acc']['est'] <= r['seed_t_interval_1df'][1] else 'excludes JEDI'])
     cols = ['claim', 'quantity', 'estimate', '95 % interval', 'null / control', 'p-value', 'verdict at 0.01']
-    widths = [0.55, 4.6, 1.5, 2.6, 3.6, 0.95, 2.2]
-    fig, ax = plt.subplots(figsize=(sum(widths), 0.9 + 0.36 * len(rows)), dpi=160); ax.axis('off')
-    t = ax.table(cellText=rows, colLabels=cols, colWidths=[w / sum(widths) for w in widths], loc='upper center', cellLoc='left', colLoc='left')
-    t.auto_set_font_size(False); t.set_fontsize(8); t.scale(1, 1.55)
+    widths = [0.5, 4.5, 2.25, 1.65, 4.0, 0.8, 3.5]
+    CPI = 12.5                                                        # characters per inch at font size 7.6
+    wrap = lambda t, w: '\n'.join(__import__('textwrap').wrap(t, int(w * CPI))) if len(t) > w * CPI else t
+    cells = [[wrap(str(c), w) for c, w in zip(r, widths)] for r in rows]
+    nl = [max(c.count('\n') + 1 for c in r) for r in cells]
+    H = 0.75 + 0.2 * (sum(nl) + len(nl) * 0.55)
+    fig, ax = plt.subplots(figsize=(sum(widths), H), dpi=160); ax.axis('off')
+    t = ax.table(cellText=cells, colLabels=cols, colWidths=[w / sum(widths) for w in widths], bbox=[0, 0, 1, 1], cellLoc='left', colLoc='left')
+    t.auto_set_font_size(False); t.set_fontsize(7.6)
+    tot = sum(nl) + len(nl) * 0.55 + 1.6
     for (r, c), cell in t.get_celld().items():
         cell.set_edgecolor('#d8d4ca'); cell.PAD = 0.02
+        cell.set_height(((nl[r - 1] + 0.55) if r > 0 else 1.6) / tot)
         if r == 0: cell.set_facecolor('#eeebe3'); cell.set_text_props(weight='bold')
         elif r % 2 == 0: cell.set_facecolor('#f8f7f3')
-    ax.set_title('Claim statistics (R2): JEDI-linear claims A1, A2, A3, A9, B2, B3 and the small taggers; fresh jets (sample seed 61)', loc='left', fontsize=10, weight='bold', pad=6)
+    ax.set_title('Claim statistics (R2): JEDI-linear claims A1, A2, A3, A9, B2, B3 and the small taggers; fresh jets (jedi_core.sample seed 61)',
+                 loc='left', fontsize=9.5, weight='bold', pad=6)
+    note = ('A1–A3, A9: 20,000 jets (4,000/class). B2: 19,683 jets (seed 61 minus the rows of seeds 0/11/31); B3: 10,000 of them. Intervals 95 %: '
+            'class-stratified bootstrap (2,000; A3 objects 10,000), Wilson for proportions, plain bootstrap for rejection ratios and for the 260,000 test jets; '
+            'A9 interval: bootstrap over held-out jets and observables. McNemar = exact binomial test on the discordant pairs. Holm within each family; '
+            '"unresolved" = neither one-sided H0 rejected at 0.01. Stage counts in the order a/P/g/s/u/S/h4/h5/z.')
+    ax.text(0, -0.006, '\n'.join(__import__('textwrap').wrap(note, int(sum(widths) * CPI * 1.1))), transform=ax.transAxes, fontsize=6.8, color='#555', ha='left', va='top')
     SITE.mkdir(parents=True, exist_ok=True); p = SITE / f'T14_claim_stats{"_smoke" if SMOKE else ""}.png'
-    fig.tight_layout(); fig.savefig(p, bbox_inches='tight'); log('wrote', p)
+    fig.savefig(p, bbox_inches='tight'); log('wrote', p)
     (OUT / f'r2_table_rows{"_smoke" if SMOKE else ""}.json').write_text(json.dumps(dict(cols=cols, rows=rows), indent=1, ensure_ascii=False))
 
 
