@@ -14,11 +14,13 @@ Per live unit of P, g, S, h4, h5, z:
    principal axis -> Δη', hardest particle at Δη' > 0, the other particles' pT-weighted Δφ' > 0); class mix; medians of
    10 observables (OBS10).
  3 description: each candidate observable (the test file's Q library, E11's hand-built pT-rank-window sums incl. the
-   half-plane sums) as a 1-D binned response (20 quantile bins; bin means fit on half the jets, R² on the other half);
-   the best pair as 8 x 8 bins.  Pattern line = the range of the best observable where its response curve is above half
+   half-plane sums) as a 1-D response curve (20 quantile bins of the fit half; linear interpolation between the bins'
+   (mean q, mean activation), linear beyond the end bins; R² on the other half of the jets); pairs among the 12 best distinct singles (|Spearman| <
+   0.97) as the better of an additive model f1(q1) + f2(q2) (3 backfitting rounds) and an 8 x 8 table, same split.  Pattern line = the range of the best observable where its response curve is above half
    its span (plus the direction of the second observable when the pair adds >= 0.03 R²).
  4 main job vs offshoots: k-means on the 10 observables (clipped at their 1 / 99 % points, standardised over the on-jets)
-   of the on-jets; k = 2..4 by silhouette (3,000-jet subsample), k = 1 if the best silhouette < SIL_MIN.  Activation mass
+   of the on-jets, fitted on 3,000 on-jets drawn with probability proportional to the activation (so the clusters follow
+   the activation mass); k = 2..4 by silhouette on the same draw, k = 1 if the best silhouette < SIL_MIN.  Activation mass
    per cluster = Σ activation (positive part).  Each cluster with >= 10 % of the mass gets its own best observable
    (1-D binned R² inside the cluster) and |Spearman ρ| of that observable with the unit's best one over all jets.
    Category (in this order): unexplained if the best <= 2-observable R² < R2_MIN; one main job if a cluster holds >=
@@ -139,19 +141,51 @@ class Describer:
 
     @staticmethod
     def _r2(b, nb, t, tr, te):
+        """step function: bin means of the train jets, scored on the test jets"""
         cnt = np.bincount(b[tr], minlength=nb); s = np.bincount(b[tr], t[tr], minlength=nb)
         m = np.where(cnt > 0, s / np.maximum(cnt, 1), t[tr].mean())
         yt = t[te]; sst = ((yt - yt.mean()) ** 2).sum()
         return 1 - ((yt - m[b[te]]) ** 2).sum() / max(sst, 1e-300)
 
-    def r2_1d(self, t, tr=None, te=None):
+    def fit_curve(self, c, t, tr):
+        """response curve of target t on candidate c from the jets tr: knots (bin mean of q, bin mean of t), NB1 bins"""
+        b = self.B1[c][tr]; q = self.V[c][tr].astype(np.float64); nb = self.n1[c]
+        cnt = np.bincount(b, minlength=nb); ok = cnt > 0
+        qk = (np.bincount(b, q, nb)[ok] / cnt[ok]); mk = (np.bincount(b, t[tr], nb)[ok] / cnt[ok])
+        return qk, mk
+
+    def pred_curve(self, c, knots, idx):
+        """linear interpolation between the knots, linear extrapolation beyond the end knots (slope of the end segment)"""
+        qk, mk = knots; q = self.V[c][idx].astype(np.float64)
+        p = np.interp(q, qk, mk)
+        if len(qk) >= 2:
+            s0 = (mk[1] - mk[0]) / max(qk[1] - qk[0], 1e-12); s1 = (mk[-1] - mk[-2]) / max(qk[-1] - qk[-2], 1e-12)
+            lo = q < qk[0]; hi = q > qk[-1]
+            p[lo] = mk[0] + s0 * (q[lo] - qk[0]); p[hi] = mk[-1] + s1 * (q[hi] - qk[-1])
+        return p
+
+    def r2_c(self, c, t, tr=None, te=None):
+        """held-out R² of the 1-D response curve: linear interpolation between the train bins' (mean q, mean t)"""
         tr = self.tr if tr is None else tr; te = self.te if te is None else te
-        return np.array([self._r2(self.B1[c], self.n1[c], t, tr, te) for c in range(len(self.names))])
+        yt = t[te]; sst = ((yt - yt.mean()) ** 2).sum()
+        return 1 - ((yt - self.pred_curve(c, self.fit_curve(c, t, tr), te)) ** 2).sum() / max(sst, 1e-300)
+
+    def r2_1d(self, t, tr=None, te=None):
+        return np.array([self.r2_c(c, t, tr, te) for c in range(len(self.names))])
 
     def r2_2d(self, t, c1, c2, tr=None, te=None):
+        """best of (a) the additive model f1(q1) + f2(q2) (response curves, 3 backfitting rounds) and (b) an 8 x 8 table"""
         tr = self.tr if tr is None else tr; te = self.te if te is None else te
         b = self.B2[c1].astype(np.int64) * self.n2[c2] + self.B2[c2]
-        return self._r2(b, self.n2[c1] * self.n2[c2], t, tr, te)
+        r_tab = self._r2(b, self.n2[c1] * self.n2[c2], t, tr, te)
+        f2 = np.zeros(len(t)); mu = t[tr].mean()
+        for _ in range(3):
+            k1 = self.fit_curve(c1, t - f2, tr); f1 = np.zeros(len(t)); f1[tr] = self.pred_curve(c1, k1, tr)
+            k2 = self.fit_curve(c2, t - f1, tr); f2 = np.zeros(len(t)); f2[tr] = self.pred_curve(c2, k2, tr)
+        p = self.pred_curve(c1, k1, te) + self.pred_curve(c2, k2, te)
+        yt = t[te]; sst = ((yt - yt.mean()) ** 2).sum()
+        r_add = 1 - ((yt - p) ** 2).sum() / max(sst, 1e-300)
+        return max(r_tab, r_add)
 
     def curve(self, t, c):
         b = self.B1[c]; nb = self.n1[c]
@@ -230,6 +264,7 @@ def unit_of(name):
         if k.startswith('|M1|'): return ' GeV·rad'
         return ''
     if k == 'orientation_deg': return '°'
+    if '_over_' in k or k.startswith(('mratio', 'sj3_pairm')) or k.endswith('_over_m'): return ''
     if 'mass' in k or k in ('sum_pt', 'm01', 'm012') or re.fullmatch(r'pt_\d+|sum_pt_top\d+|soft\d+_pt|pt1_dr01', k): return ' GeV'
     if k in ('girth', 'max_dr', 'sd_rg', 'sj2_dr', 'centroid_offset') or re.fullmatch(r'dr.*|eta_\d+|phi_\d+|abseta_\d+|absphi_\d+|mean_eta|mean_phi|soft\d+_dr\d*|sj3_dr.*', k):
         return ' rad'
@@ -247,20 +282,22 @@ def fmt(v):
     return f'{v:.2g}'
 
 
-def pattern_line(desc, negate=False):
-    """the range of the best observable where the response is above half its span (negate: where it is most negative);
+def pattern_line(desc, negate=False, zero=False):
+    """the range of the best observable where the response is above half its span (zero: where it is > 0, if it crosses
+    0 — the on-region of a pre-ReLU neuron; negate: where it is most negative / < 0); the peak when it is interior;
     + the second observable's direction"""
     b = desc['best1']; q = np.array(b['curve']['q']); f = np.array(b['curve']['f']); lab = b['label']; un = unit_of(b['name'])
     if negate: f = -f
     if len(f) < 2 or f.max() - f.min() < 1e-9: return f'flat in {lab}'
-    above = f >= f.min() + 0.5 * (f.max() - f.min())
+    above = f > 0 if (zero and f.max() > 0 > f.min()) else f >= f.min() + 0.5 * (f.max() - f.min())
     i = np.flatnonzero(above); n = len(f)
     edge = lambda k: 0.5 * (q[k] + q[k + 1])
     pk = fmt(q[int(np.argmax(f))])
     if i[-1] - i[0] + 1 == len(i):
+        ia = int(np.argmax(f)); interior = 1 < ia < n - 2
         if i[0] == 0 and i[-1] == n - 1: s = f'flat in {lab}'
-        elif i[-1] == n - 1: s = f'{lab} > {fmt(edge(i[0] - 1))}{un}'
-        elif i[0] == 0: s = f'{lab} < {fmt(edge(i[-1]))}{un}'
+        elif i[-1] == n - 1: s = f'{lab} > {fmt(edge(i[0] - 1))}{un}' + (f' (peak {pk})' if interior else '')
+        elif i[0] == 0: s = f'{lab} < {fmt(edge(i[-1]))}{un}' + (f' (peak {pk})' if interior else '')
         else: s = f'{lab} {fmt(edge(i[0] - 1))}–{fmt(edge(i[-1]))}{un} (peak {pk})'
     else:
         lo_seg = above[0]; hi_seg = above[-1]
@@ -513,14 +550,16 @@ def clusters(F, act, on, y, O, D, desc, rng, tr_mask):
     idx = np.flatnonzero(on)
     if len(idx) < 60: return dict(k=0, note='fewer than 60 on-jets', clusters=[], main_share=1.0, main_share_forced=1.0)
     X = F[idx]; X = (X - X.mean(0)) / (X.std(0) + 1e-12)
-    sub = rng.choice(len(idx), min(3000, len(idx)), replace=False)
+    w = np.maximum(act[idx], 0)
+    if w.sum() <= 0: w = np.ones(len(idx))
+    # activation-weighted: the fit and the silhouette use 3,000 on-jets drawn with probability proportional to the activation
+    sub = rng.choice(len(idx), min(3000, len(idx)), replace=False, p=w / w.sum()) if (w > 0).sum() >= min(3000, len(idx)) \
+        else rng.choice(len(idx), min(3000, len(idx)), replace=False)
     sil, models = {}, {}
     for k in (2, 3, 4):
         km = KMeans(n_clusters=k, n_init=4, random_state=0).fit(X[sub])
         if len(set(km.labels_)) < 2: continue
         sil[k] = float(silhouette_score(X[sub], km.labels_)); models[k] = km
-    w = np.maximum(act[idx], 0)
-    if w.sum() <= 0: w = np.ones(len(idx))
     out = dict(silhouette=sil)
     kb = max(sil, key=sil.get) if sil else 1
 
@@ -542,7 +581,7 @@ def clusters(F, act, on, y, O, D, desc, rng, tr_mask):
             r1 = D.r2_1d(act, trs, tes); cb = int(np.argmax(r1))
             e['own_best'] = dict(name=D.names[cb], label=label(D.names[cb]), R2=float(r1[cb]))
             e['rho_with_unit_best'] = abs(D.rho(cb, c0))
-            e['unit_best_R2_in_cluster'] = float(D._r2(D.B1[c0], D.n1[c0], act, trs, tes))
+            e['unit_best_R2_in_cluster'] = float(D.r2_c(c0, act, trs, tes))
         return cl, lab2
 
     kf = kb
@@ -707,13 +746,13 @@ def run(stages, per_class, seed):
             # ---- description
             desc = D.describe(act)
             u['desc'] = {kk: vv for kk, vv in desc.items() if not kk.startswith('_')}
-            u['pattern'] = pattern_line(desc)
+            u['pattern'] = pattern_line(desc, zero=(st == 'z'))
             if st == 'z':      # the negative side alone: best observable for min(z, 0)
                 tneg = np.minimum(act, 0)
                 if tneg.std() > 1e-9:
                     dn = D.describe(tneg)
                     u['neg_desc'] = dict(best1={kk: vv for kk, vv in dn['best1'].items() if kk != 'curve'}, R2_1=dn['R2_1'], R2_2=dn['R2_2'],
-                                         pattern=pattern_line(dn, negate=True), curve=dn['best1']['curve'])
+                                         pattern=pattern_line(dn, negate=True, zero=True), curve=dn['best1']['curve'])
             # ---- clusters
             cl = clusters(F, act, on, y, O, D, desc, rng, tr_mask)
             u['clusters'] = cl
@@ -884,6 +923,20 @@ def run_a(N, alpha, beta, rng0):
     return dict(cost=cost.tolist(), acc_ablated=accab.tolist(), live=live, units=units, _imgs=imgs)
 
 
+def refresh(st):
+    """recompute the pattern lines of a stage's JSON from the stored response curves (no network); rewrite the JSON"""
+    p = OUT / f'atlas_{st}.json'
+    d = json.loads(p.read_text())
+    if st == 'a': return d
+    for u in d['units']:
+        u['pattern'] = pattern_line(u['desc'], zero=(st == 'z'))
+        nd = u.get('neg_desc')
+        if nd and 'curve' in nd:
+            nd['pattern'] = pattern_line(dict(best1=dict(nd['best1'], curve=nd['curve']), R2_1=nd.get('R2_1', 0), R2_2=nd['R2_2']), negate=True, zero=True)
+    p.write_text(json.dumps(d, indent=1))
+    return d
+
+
 # ================================================================== summary
 def summary():
     from interp.e16_plot import summary_png
@@ -892,7 +945,7 @@ def summary():
     for st in ALL_STAGES:
         p = OUT / f'atlas_{st}.json'
         if not p.exists(): continue
-        d = json.loads(p.read_text()); per_stage[st] = d
+        d = refresh(st); per_stage[st] = d
     for st, d in per_stage.items():
         T = {'one main job': 0, 'related jobs': 0, 'unrelated jobs': 0, 'unexplained': 0}; Tf = dict(T)
         for u in d['units']:
@@ -955,6 +1008,8 @@ if __name__ == '__main__':
         run(stages, a.per_class, a.seed)
     elif a.mode == 'cards':
         from interp.e16_plot import cards
+        for st in stages:
+            if (OUT / f'atlas_{st}.json').exists(): refresh(st)
         for st in stages:
             if (OUT / f'atlas_{st}.json').exists(): cards(st)
     else:

@@ -18,7 +18,8 @@ STAGE_NAME = dict(a='first-layer particle cut', P='first-round object P (pooled 
 OBS10 = ['mass', 'sum_pt', 'n_particles', 'girth', 'tau21', 'tau32', 'D2', 'z_0', 'dr01', 'sd_mass']
 OBS_LAB = dict(mass='jet mass [GeV]', sum_pt='ΣpT [GeV]', n_particles='multiplicity', girth='girth Σz·ΔR [rad]', tau21='τ21', tau32='τ32',
                D2='D2', z_0='leading pT / ΣpT', dr01='ΔR of 2 hardest [rad]', sd_mass='soft-drop mass [GeV]')
-ROWS = ['pT per bin, network frame [GeV]', 'particles per bin, network frame', 'pT per bin, aligned [GeV]']
+ROWS = ['pT per bin [GeV]', 'particles per bin', 'pT per bin [GeV]']
+FRAME = ['network frame', 'network frame', 'aligned frame']
 plt.rcParams.update({'font.size': 10.5, 'axes.edgecolor': MUTED, 'axes.labelcolor': INK, 'xtick.color': MUTED, 'ytick.color': MUTED,
                      'axes.spines.top': False, 'axes.spines.right': False, 'figure.facecolor': SURF, 'axes.facecolor': SURF,
                      'savefig.facecolor': SURF})
@@ -87,7 +88,7 @@ def images_block(fig, u, imgs, x0, y_top, w, h, gap=0.008, vgap=0.03, cut=None):
             ax = fig.add_axes([x0 + j * (w + gap), y_top - (r + 1) * h - r * vgap, w, h])
             im = ax.imshow(np.maximum(stack[j].T, vmax * 1e-3), origin='lower', extent=[-0.4, 0.4, -0.4, 0.4], cmap=SEQ, norm=norm,
                            interpolation='nearest')
-            ax.set_xticks([-0.4, 0, 0.4]); ax.set_yticks([-0.4, 0, 0.4]); ax.tick_params(labelsize=8.5, length=2)
+            ax.set_xticks([-0.3, 0, 0.3]); ax.set_yticks([-0.3, 0, 0.3]); ax.tick_params(labelsize=8.5, length=2)
             for sp in ax.spines.values(): sp.set_visible(True); sp.set_color(GRID)
             if j == 0:
                 ax.set_ylabel("Δφ' [rad]" if r == 2 else 'Δφ [rad]', fontsize=9.5)
@@ -103,9 +104,10 @@ def images_block(fig, u, imgs, x0, y_top, w, h, gap=0.008, vgap=0.03, cut=None):
             if cut is not None and r < 2: halfplane(ax, *cut)
         cax = fig.add_axes([x0 + nb * (w + gap) + 0.002, y_top - (r + 1) * h - r * vgap + 0.01, 0.007, h - 0.02])
         cb = fig.colorbar(im, cax=cax); cb.ax.tick_params(labelsize=8); cb.outline.set_visible(False)
-        fig.text(x0 + nb * (w + gap) + 0.03, y_top - (r + 0.5) * h - r * vgap, ROWS[r], rotation=90, va='center', ha='center', fontsize=9.5, color=MUTED)
+        cb.set_label(ROWS[r] + ' per jet', fontsize=9, color=MUTED)
+        fig.text(0.006, y_top - (r + 0.5) * h - r * vgap, FRAME[r], rotation=90, va='center', ha='left', fontsize=10, color=INK)
     # class mix under each column
-    yb = y_top - 3 * h - 2 * vgap - 0.045
+    yb = y_top - 3 * h - 2 * vgap - 0.062
     for j in range(nb):
         ax = fig.add_axes([x0 + j * (w + gap), yb, w, 0.025])
         mixbar(ax, u['bins'][names[j]]['class_mix'])
@@ -133,7 +135,12 @@ def curve_panel(ax, u):
     b = u['desc']['best1']; q = np.array(b['curve']['q']); f = np.array(b['curve']['f']); sd = np.array(b['curve']['sd'])
     ax.fill_between(q, f - sd, f + sd, color='#b7b0ec', alpha=0.5, lw=0)
     ax.plot(q, f, color='#2a1f7a', lw=2, marker='o', ms=3.5)
-    ax.set_xlabel(short(b['label'], 48), fontsize=9.5); ax.set_ylabel(f'mean {u["id"]} (± SD)', fontsize=9.5)
+    try:
+        from interp.e16_atlas import unit_of
+        un = unit_of(b['name']).strip()
+    except Exception:
+        un = ''
+    ax.set_xlabel(short(b['label'], 48) + (f' [{un}]' if un else ''), fontsize=9.5); ax.set_ylabel(f'mean {u["id"]} (± SD)', fontsize=9.5)
     ax.set_title(f'response to the best single observable (held-out R² {b["R2"]:.2f})', fontsize=10, loc='left', color=INK)
     ax.grid(color=GRID, lw=0.6)
     if u['stage'] == 'z': ax.axhline(0, color=MUTED, lw=0.8)
@@ -168,6 +175,20 @@ def flow_panel(ax, s, title):
     ax.set_xlabel('call after', fontsize=9); ax.set_ylabel('call before', fontsize=9); ax.tick_params(labelsize=9, length=0)
     for sp in ax.spines.values(): sp.set_visible(False)
     ax.set_title(title, fontsize=9.5, loc='left', color=INK)
+
+
+def hinge_panel(ax, u):
+    up = u['upstream']; T = np.array(up['table']); n = np.array(up['table_n'])
+    T = np.where(n > 0, T, np.nan)
+    im = ax.imshow(T, origin='lower', aspect='auto', cmap=SEQ, vmin=0, vmax=np.nanmax(T) if np.isfinite(T).any() else 1)
+    pe, re_ = up['pT_edges'], up['r_edges']
+    ax.set_yticks(np.arange(len(pe) - 1)); ax.set_yticklabels([f'{fmt(pe[i])}–{fmt(pe[i + 1]) if pe[i + 1] < 1e4 else "∞"}' for i in range(len(pe) - 1)], fontsize=8)
+    ax.set_xticks(np.arange(len(re_) - 1)); ax.set_xticklabels([f'{re_[i]:g}' for i in range(len(re_) - 1)], fontsize=8)
+    ax.set_xlabel('r = ΔR to the axis [rad], bin lower edge', fontsize=8.5); ax.set_ylabel('particle pT [GeV]', fontsize=8.5)
+    ax.tick_params(length=0)
+    for sp in ax.spines.values(): sp.set_visible(False)
+    cb = plt.colorbar(im, ax=ax, fraction=0.06, pad=0.02); cb.outline.set_visible(False); cb.ax.tick_params(labelsize=7.5)
+    ax.set_title(f'per-particle u{u["unit"]}: mean in (pT, r) cells', fontsize=9.5, loc='left', color=INK)
 
 
 def dlogit_panel(ax, u):
@@ -209,16 +230,20 @@ def card(u, imgs, labs, path, cut=None):
     fig.text(0.012, 0.889, ctext, fontsize=10.5, color=MUTED, va='top')
     # ---- images (left), histogram + response curve + table (right)
     nb = len(u['bin_names'])
-    w = 0.088 if nb <= 3 else 0.080
+    w = 0.084 if nb <= 3 else 0.078
     h = w * 21 / 13.5
-    yb = images_block(fig, u, imgs, 0.045, 0.835, w, h, cut=cut)
-    xr = 0.045 + nb * (w + 0.008) + 0.085
+    yb = images_block(fig, u, imgs, 0.052, 0.835, w, h, cut=cut)
+    xr = 0.052 + nb * (w + 0.008) + 0.075
     av = 0.985 - xr
     ax = fig.add_axes([xr, 0.665, 0.5 * av - 0.04, 0.165]); hist_panel(ax, u)
     ax = fig.add_axes([xr + 0.5 * av + 0.03, 0.665, 0.5 * av - 0.035, 0.165]); curve_panel(ax, u)
-    ax = fig.add_axes([xr, 0.375, av, 0.235]); obs_table(ax, u)
+    if u['upstream'].get('kind') == 'hinge':
+        ax = fig.add_axes([xr, 0.375, 0.66 * av, 0.235]); obs_table(ax, u)
+        ax = fig.add_axes([xr + 0.74 * av, 0.40, 0.24 * av, 0.19]); hinge_panel(ax, u)
+    else:
+        ax = fig.add_axes([xr, 0.375, av, 0.235]); obs_table(ax, u)
     # ---- bottom band: weak range / negative pole / clusters | upstream | downstream | steering
-    ytop = 0.305
+    ytop = 0.288
     lines = []
     if u.get('weak_vs_top'):
         lines.append('weak range (50–90 %) vs top 1 %, medians: ' + '; '.join(f'{OBS_LAB[v["obs"]].split(" [")[0]} {fmt(v["med_ref"])} → {fmt(v["med"])}'
@@ -255,27 +280,28 @@ def card(u, imgs, labs, path, cut=None):
     dl = []
     dn = u['downstream']
     if 'weights' in dn:
-        dl.append('last-layer weight (× spread of ReLU z):')
-        for e in dn['weights']: dl.append(f'  {e["cls"]}: {e["w"]:+.2f} ({e["w_x_spread"]:+.2f})')
+        dl.append('last-layer weight on ReLU(z) (× its spread):')
+        W_ = dn['weights']
+        dl.append('  ' + ',  '.join(f'{e["cls"]} {e["w"]:+.2f} ({e["w_x_spread"]:+.2f})' for e in W_[:3]))
+        dl.append('  ' + ',  '.join(f'{e["cls"]} {e["w"]:+.2f} ({e["w_x_spread"]:+.2f})' for e in W_[3:]))
     elif dn.get('units'):
         dl.append('read by (|weight × spread|):')
         for e in dn.get('units', [])[:4]:
             dl.append(f'  {e["unit"]:>5s} w {e["w"]:+.2f}, {e["score"]:.2f}: {short(labs.get(e["unit"], ""), 26)}')
     xd = 0.645
     text_block(fig, xd, ytop, dl, size=9.3, title='downstream')
-    ax = fig.add_axes([xd + 0.015, 0.045, 0.15, 0.10]); dlogit_panel(ax, u)
+    ax = fig.add_axes([xd + 0.015, 0.035, 0.15, 0.095]); dlogit_panel(ax, u)
     s = u['steer']; c = u.get('control', {})
     xs = 0.855
-    fig.text(xs - 0.01, ytop, 'steering', fontsize=10, color=INK, fontweight='bold', va='top')
     if st == 'z' and 'steer_neg' in u:
-        ax = fig.add_axes([xs, 0.175, 0.11, 0.085])
-        flow_panel(ax, s, f'p99 = {fmt(s["value"])} on {s["n"]} off jets:\n{pct(s["changed"])} change; control {c.get("unit", "-")} {pct(c.get("changed", 0))}')
+        ax = fig.add_axes([xs, 0.165, 0.11, 0.075])
+        flow_panel(ax, s, f'steer to p99 = {fmt(s["value"])}, {s["n"]} off jets:\n{pct(s["changed"])} change; control {c.get("unit", "-")} {pct(c.get("changed", 0))}')
         sn = u['steer_neg']; cn = u.get('control_neg', {})
-        ax = fig.add_axes([xs, 0.035, 0.11, 0.085])
-        flow_panel(ax, sn, f'p1 = {fmt(sn["value"])} on {sn["n"]} on-jets:\n{pct(sn["changed"])} change; control {cn.get("unit", "-")} {pct(cn.get("changed", 0))}')
+        ax = fig.add_axes([xs, 0.03, 0.11, 0.075])
+        flow_panel(ax, sn, f'steer to p1 = {fmt(sn["value"])}, {sn["n"]} on-jets:\n{pct(sn["changed"])} change; control {cn.get("unit", "-")} {pct(cn.get("changed", 0))}')
     else:
-        ax = fig.add_axes([xs, 0.04, 0.12, 0.18])
-        flow_panel(ax, s, f'p99 = {fmt(s["value"])} on {s["n"]} {"off jets" if s["rule"] == "off jets" else "jets < p10"}:\n'
+        ax = fig.add_axes([xs, 0.035, 0.12, 0.195])
+        flow_panel(ax, s, f'steer to p99 = {fmt(s["value"])} on {s["n"]} {"off jets" if s["rule"] == "off jets" else "jets < p10"}:\n'
                           f'{pct(s["changed"])} change; control {c.get("unit", "-")} {pct(c.get("changed", 0))}')
     fig.savefig(path, dpi=80)
     plt.close(fig)
