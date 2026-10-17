@@ -117,6 +117,24 @@ PAPER_MOTIVATION = {
 }
 
 # Main results explained (overview tab): title, explanation, figure
+KEY_RESULTS_HOW = (
+    'How we found it, step by step',
+    'There is no single "mass neuron". The evidence comes in four steps. '
+    '(1) Read-out: a linear fit from a layer\'s values to the jet mass computed from the particles predicts it on held-out jets with $R^2$ = 0.73 at the first pooled layer P, '
+    '0.977 at S and 0.991 at h4. This says the mass can be read from S onward; it does not say the network uses it. '
+    '(2) Which units behave like a mass: we edit jets in two ways with known effects. Scaling all angles by $k$ multiplies the mass by $k$, $M_2$ by $k^2$ and leaves $M_0$; '
+    'scaling all pT by $c$ multiplies the mass by $c$, $M_0$ by $c$ and $M_2$ by $c$. For each unit we take the ratio $\\rho$ of its response to the two edits (in log): '
+    'a function of the mass has $\\rho = 1$, a function of $M_2$ alone $\\rho = 2$, of $M_0$ alone $\\rho = 0$. Units with $\\rho \\approx 1$: 2 in S, 9 in h4, 8 in h5, 3 in z. '
+    'The pieces: S29 and S50 carry $M_2$ (sums of $p_T r^2$ over rank windows), S0 carries $M_0$ (summed pT of the 14 hardest particles, fed through the context unit g49). '
+    'Freezing S0 halves the pT response of the h4/h5 mass units, so the product is formed in h4/h5. '
+    '(3) The decision uses it: the W neuron z0 peaks at 75–77 GeV of input mass, the Z neurons z7/z14 at 94–98 GeV, the top gate z10 at 135–148 GeV, and W jets switch to Z calls '
+    'between 80 and 90 GeV of edited mass, under both the angle and the pT edit. '
+    '(4) Which mass: on ordinary jets the invariant mass $m$ and $\\sqrt{M_0 M_2}$ about the axis agree to a correlation of 0.99999, so no ordinary jet can tell them apart. '
+    'The shift edit separates them ($m$ fixed, $\\sqrt{M_0 M_2}$ grows). The network\'s mass read-out grows at 0.74–0.84 of the $\\sqrt{M_0 M_2}$ prediction; other candidates '
+    '($\\sum p_T r$, $\\sqrt{\\sum r^2}$) predict 1.7× and 2.1× too much. Not settled: the response is 0.74–0.84 rather than 1, a direction-dependent part of 12–20 % remains, '
+    'and the network also uses the total pT at fixed mass (pT × 0.8 at fixed mass sends 78 % of W jets to top). So the internal variable is "mass about the given axis" to within these numbers, '
+    'not an exact copy of any one formula.')
+
 KEY_RESULTS = [
     ('The networks\' mass is not the invariant mass',
      'Physics defines the jet mass from the angles between pairs of particles: for small angles '
@@ -129,6 +147,7 @@ KEY_RESULTS = [
      'so the invariant mass does not change; $M_2$ grows. JEDI-linear\'s internal mass grows by 0.74–0.84 of the $M_0 M_2$ prediction and 77 % of W jets (80 GeV) are called Z (91 GeV) at '
      '$\\delta = 0.06$ rad; ParT_full\'s grows by 0.66–0.77 of the prediction and true-W → Z rises from 12 % to 31 %. Both networks compute the momentum-weighted spread about the axis, not the invariant mass.',
      'results/site/X1_mass_shift.png'),
+    (KEY_RESULTS_HOW[0], KEY_RESULTS_HOW[1], 'results/site/T2_mass_and_windows.png'),
     ('Why this matters: the jet axis is a convention',
      'The axis from which particle positions are measured is a choice. The standard axis (E-scheme) is the summed momentum direction; the winner-take-all (WTA) axis follows the '
      'harder branch when the jet is reclustered and is used for some substructure measurements because soft radiation does not move it; a trigger may use a seed particle. '
