@@ -236,10 +236,12 @@ def T_ratios(L, jets=None):
         out[tn] = dict(n=int(s_.sum()), gain_c=mg, k_over_c=mk / mg, k_over_c_se=float((bk / bg).std()), c0_over_c=m0 / mg,
                        c0_over_c_se=float((b0 / bg).std()), consistency=m0 / mg + 0.5 * mk / mg)
         boots[tn] = (bk / bg, b0 / bg)
-    out['high_over_low'] = dict(k_over_c=out['high']['k_over_c'] / out['low']['k_over_c'],
-                                k_over_c_se=float((boots['high'][0] / boots['low'][0]).std()),
-                                c0_over_c=out['high']['c0_over_c'] / out['low']['c0_over_c'],
-                                c0_over_c_se=float((boots['high'][1] / boots['low'][1]).std()))
+    dv = lambda a, b: a / b if abs(b) > 1e-9 else None
+    with np.errstate(divide='ignore', invalid='ignore'):
+        out['high_over_low'] = dict(k_over_c=dv(out['high']['k_over_c'], out['low']['k_over_c']),
+                                    k_over_c_se=float(np.nanstd(boots['high'][0] / boots['low'][0])) if abs(out['low']['k_over_c']) > 1e-9 else None,
+                                    c0_over_c=dv(out['high']['c0_over_c'], out['low']['c0_over_c']),
+                                    c0_over_c_se=float(np.nanstd(boots['high'][1] / boots['low'][1])) if abs(out['low']['c0_over_c']) > 1e-9 else None)
     return out
 
 

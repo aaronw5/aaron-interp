@@ -40,6 +40,8 @@ for j in cand[:300]:
     w = wta_axis(pt, de, dp)
     if 0.065 < np.hypot(*w) < 0.09: J = j; break
 m0, s0, c0 = masses(de, dp)
+import json
+RO = json.load(open(ROOT / 'results' / 'jedi' / 'x_readout_example.json')) if (ROOT / 'results' / 'jedi' / 'x_readout_example.json').exists() else None
 fs = 10
 # ---------------- X1: the shift
 fig, ax = plt.subplots(1, 3, figsize=(15, 4.8), dpi=150)
@@ -57,12 +59,18 @@ a = ax[2]
 a.axhspan(74.7, 76.6, color='#2d7a4f', alpha=.18); a.text(0.0915, 75.6, 'W-neuron peak', va='center', fontsize=fs - 1, color='#2d7a4f')
 a.axhspan(94.0, 98.3, color='#9a6b00', alpha=.18); a.text(0.0915, 96.1, 'Z-neuron peaks', va='center', fontsize=fs - 1, color='#9a6b00')
 a.plot(ds, mm, c='k', lw=2, label='invariant mass m (what physics uses)')
-a.plot(ds, ss, c='#b4562b', lw=2, label='√(M0·M2) about the axis (what the networks read)')
-a.set_xlabel('shift δ of every particle [rad]'); a.set_ylabel('GeV'); a.set_xlim(0, 0.09); a.legend(fontsize=fs - 1, loc='upper left')
+a.plot(ds, ss, c='#b4562b', lw=2, label='√(M0·M2) about the axis (formula, computed from the particles)')
+if RO:
+    dd = np.array([e['delta'] for e in RO['shift']]); rr = np.array([e['network_readout'] for e in RO['shift']]); cc = [e['call'] for e in RO['shift']]
+    a.plot(dd, rr, c='#1f5f8b', lw=2, ls='--', label=f"JEDI-linear's own mass read-out (linear map from h4, R² {RO['readout_r2']:.2f})")
+    prev = None
+    for d_, r_, c_ in zip(dd, rr, cc):
+        if c_ != prev: a.annotate(f'called {c_}', (d_, r_), (d_, r_ + 4), fontsize=8.5, color='#1f5f8b', arrowprops=dict(arrowstyle='-', lw=.6, color='#1f5f8b')); prev = c_
+a.set_xlabel('shift δ of every particle [rad]'); a.set_ylabel('GeV'); a.set_xlim(0, 0.09); a.legend(fontsize=fs - 2, loc='upper left')
 a.set_title('Mass as δ grows', fontsize=fs + 1, loc='left')
 fig.suptitle('Why a shifted jet is called Z: the true mass does not change, the networks\' mass variable does (one W jet from the hls4ml test set)', fontsize=fs + 2, x=0.01, ha='left')
 fig.text(0.01, 0.005, 'm² ≈ M0·M2 − |M1|² with M0 = Σ pT, M1 = Σ pT·r⃗, M2 = Σ pT·r². On real jets the axis is the pT-weighted centre, so M1 ≈ 0 and both curves start at the same value.\n'
-         'Measured on 10,000 jets: JEDI-linear calls 77 % of W jets Z at δ = 0.06; ParT_full 31 % (12 % unshifted).', fontsize=fs - 1, color='#444')
+         'Measured on 10,000 jets: JEDI-linear calls 77 % of W jets Z at δ = 0.06; ParT_full 31 % (12 % unshifted). The read-out is a linear map fitted on ordinary jets; on this jet it reads 90 GeV unshifted (true 81).', fontsize=fs - 1, color='#444')
 fig.tight_layout(rect=(0, 0.07, 1, 0.94)); fig.savefig(OUT / 'X1_mass_shift.png'); plt.close(fig)
 
 # ---------------- X2: the axis
@@ -77,10 +85,14 @@ a.legend(fontsize=fs - 1, loc='upper center', bbox_to_anchor=(0.5, -0.13), ncol=
 a = ax[1]; rows = []
 for name, c in [('stored (E-scheme)', np.zeros(2)), ('winner-take-all', w), ('hardest particle', h)]:
     m, s, _ = masses(de - c[0], dp - c[1]); rows.append((name, m, s))
-names = [r[0] for r in rows]; xs = np.arange(3)
-a.bar(xs - 0.18, [r[1] for r in rows], 0.36, color='k', label='invariant mass m')
-a.bar(xs + 0.18, [r[2] for r in rows], 0.36, color='#b4562b', label='√(M0·M2) about that axis')
-for i, r in enumerate(rows): a.text(i + 0.18, r[2] + 1, f'{r[2]:.0f}', ha='center', fontsize=fs); a.text(i - 0.18, r[1] + 1, f'{r[1]:.0f}', ha='center', fontsize=fs)
+names = [r[0] for r in rows]; xs = np.arange(3); W_ = 0.26
+a.bar(xs - W_, [r[1] for r in rows], W_, color='k', label='invariant mass m (formula)')
+a.bar(xs, [r[2] for r in rows], W_, color='#b4562b', label='√(M0·M2) about that axis (formula)')
+for i, r in enumerate(rows): a.text(i, r[2] + 1, f'{r[2]:.0f}', ha='center', fontsize=fs - 1); a.text(i - W_, r[1] + 1, f'{r[1]:.0f}', ha='center', fontsize=fs - 1)
+if RO:
+    ro = [e['network_readout'] for e in RO['axes']]; calls = [e['call'] for e in RO['axes']]
+    a.bar(xs + W_, ro, W_, color='#1f5f8b', label='JEDI-linear\'s own mass read-out (h4)')
+    for i, (v, c_) in enumerate(zip(ro, calls)): a.text(i + W_, v + 1, f'{v:.0f}\ncalled {c_}', ha='center', fontsize=fs - 1, color='#1f5f8b')
 a.axhspan(94.0, 98.3, color='#9a6b00', alpha=.18); a.axhspan(74.7, 76.6, color='#2d7a4f', alpha=.18)
 a.set_xticks(xs); a.set_xticklabels(names); a.set_ylabel('GeV'); a.legend(fontsize=fs - 1, loc='upper left'); a.set_ylim(0, max(r[2] for r in rows) * 1.25)
 a.set_title('Mass variable about each axis', fontsize=fs + 1, loc='left')
