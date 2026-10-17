@@ -137,17 +137,10 @@ KEY_RESULTS_HOW = (
 
 KEY_RESULTS = [
     ('The networks\' mass is not the invariant mass',
-     'Physics defines the jet mass from the angles between pairs of particles: for small angles '
-     '$m^2 \\approx \\sum_{i<j} p_{T,i}\\, p_{T,j}\\, \\Delta R_{ij}^2$. The same number can be written with positions measured from any reference point: '
-     '$m^2 = M_0 M_2 - |\\vec M_1|^2$, where $M_0 = \\sum_i p_{T,i}$ is the total momentum, $M_2 = \\sum_i p_{T,i} r_i^2$ the momentum-weighted spread around the reference, '
-     'and $\\vec M_1 = \\sum_i p_{T,i}\\vec r_i$ the offset of the jet\'s centre from the reference. The networks receive each particle\'s position relative to the jet axis, '
-     'and in the training data the axis is always the jet\'s pT-weighted centre, so $\\vec M_1 = 0$ and $m^2 = M_0 M_2$ on every training jet. A network can therefore '
-     'compute the mass as $M_0 M_2$ (two sums and one product, which a sum-pooling network does easily) and never needs the correction term. '
-     'To find out which formula a network uses, we shift all particles of a jet together by $\\delta$ while keeping the axis fixed. The angles between particles do not change, '
-     'so the invariant mass does not change; $M_2$ grows. JEDI-linear\'s internal mass grows by 0.74–0.84 of the $M_0 M_2$ prediction and 77 % of W jets (80 GeV) are called Z (91 GeV) at '
-     '$\\delta = 0.06$ rad; ParT_full\'s grows by 0.66–0.77 of the prediction and true-W → Z rises from 12 % to 31 %. Both networks compute the momentum-weighted spread about the axis, not the invariant mass.',
+     'Summary (full step-by-step explanation in the Explained tab): JEDI-linear and ParT compute the jet mass as the momentum-weighted spread of the particles about the given axis, '
+     '$\\sqrt{M_0 M_2}$, not as the invariant mass $m$. On every training jet the two are equal; when all particles are shifted together (true mass unchanged), the networks\' mass rises '
+     'and W jets are called Z (JEDI-linear 77 %, ParT_full 31 %).',
      'results/site/X1_mass_shift.png'),
-    (KEY_RESULTS_HOW[0], KEY_RESULTS_HOW[1], 'results/site/T2_mass_and_windows.png'),
     ('Why this matters: the jet axis is a convention',
      'The axis from which particle positions are measured is a choice. The standard axis (E-scheme) is the summed momentum direction; the winner-take-all (WTA) axis follows the '
      'harder branch when the jet is reclustered and is used for some substructure measurements because soft radiation does not move it; a trigger may use a seed particle. '
@@ -162,4 +155,54 @@ KEY_RESULTS = [
      '(94.6 % with half-plane sums as inputs) with 80.72 % accuracy against the network\'s 80.42 %. Read from these fits, mass-type terms carry 0 % of the formula weight in the first '
      'layers and 13 %, 21 %, 28 % in h4, h5 and the class neurons: the mass is formed in the dense layers. Verification is running.',
      'results/site/T5_e11_program.png'),
+]
+
+
+# A dedicated, ordered explanation of the mass result (rendered as its own tab). (heading, text, figure or None)
+MASS_EXPLAINER = [
+ ('1. Two quantities that are both called "mass"',
+  'The invariant mass of a jet is the mass of the particle that produced it (W: 80.4 GeV, Z: 91.2 GeV, top: 173 GeV). It is computed from the particles\' momenta. '
+  'For small angles it depends only on the angles between pairs of particles:'
+  '$$m^2 \\approx \\sum_{i<j} p_{T,i}\\, p_{T,j}\\, \\Delta R_{ij}^2 .$$'
+  'The networks do not receive pair angles. They receive each particle\'s position $\\vec r_i = (\\Delta\\eta_i, \\Delta\\phi_i)$ measured from the jet axis. Written with those positions, the same sum is exactly'
+  '$$m^2 = M_0 M_2 - |\\vec M_1|^2, \\qquad M_0 = \\sum_i p_{T,i},\\quad M_2 = \\sum_i p_{T,i}\\, r_i^2,\\quad \\vec M_1 = \\sum_i p_{T,i}\\, \\vec r_i .$$'
+  '$M_0$ is the total momentum, $M_2$ the momentum-weighted spread of the particles around the axis, and $\\vec M_1$ measures how far the jet\'s momentum-weighted centre is from the axis. '
+  'If the last term is dropped, the result is a second quantity, the "mass about the axis" $\\sqrt{M_0 M_2}$. The two are equal whenever the axis is at the centre ($\\vec M_1 = 0$).', None),
+ ('2. Why the difference never shows in the data',
+  'In both datasets the jet axis is defined as the summed momentum direction, which is the momentum-weighted centre of the particles. So $\\vec M_1 \\approx 0$ on every jet '
+  '(median $|\\vec M_1|^2/(M_0 M_2) = 3.5\\times10^{-4}$ on hls4ml jets) and the two masses agree with correlation 0.99999. A network trained on these jets gets the same answer from either formula. '
+  '$\\sqrt{M_0 M_2}$ is simpler for these networks: it is two sums over particles and one product, which is the kind of operation JEDI-linear\'s sum-then-dense structure computes directly.', None),
+ ('3. Question',
+  'Does the network compute a mass at all, where, and which of the two?', None),
+ ('4. Can the mass be read from the network?',
+  'We fit a linear map from each layer\'s values to the jet mass (computed from the particles) on half of 15,000 jets and test it on the other half. Held-out $R^2$: '
+  'P 0.73, g 0.76, S 0.977, h4 0.991, h5 0.985, z 0.967. From S onward the mass is almost fully readable. This shows the information is present; it does not show the network uses it.', None),
+ ('5. Which units behave like a mass?',
+  'We change the jets in two ways whose effect on each quantity is known. Scaling all angles by $k$ multiplies $m$ by $k$, $M_2$ by $k^2$ and leaves $M_0$ unchanged. '
+  'Scaling all pT by $c$ multiplies $m$ by $c$, $M_0$ by $c$ and $M_2$ by $c$. For each unit we measure its response to both edits and take the ratio '
+  '$\\rho = \\dfrac{dU/d\\log k}{dU/d\\log c}$. A unit that depends on the jet only through $m$ has $\\rho = 1$; through $M_2$ alone $\\rho = 2$; through $M_0$ alone $\\rho = 0$. '
+  'Units with $\\rho \\approx 1$: none in P, 2 in S, 9 in h4, 8 in h5, 3 in z. In S the units follow $M_2$ (S29, S50; $\\rho \\approx 2$) or $M_0$ (S0; $\\rho = 0$) separately.', None),
+ ('6. Where the pieces come from and where they are combined',
+  '$M_0$: the first-layer unit a15 is linear in pT for every particle, so its sum P15 is $\\sum p_T$; the context unit g49 takes 72 % of its value from P15 and feeds the second-round object S0, '
+  'the summed pT of the 14 hardest particles. $M_2$: the second-round objects S29 and S50 are sums of a hinge in $(\\ln p_T, r)$ that track $\\sum p_T r^2$ (held-out $R^2$ 0.98, 0.94); '
+  'moving particles outward changes S29 by the amount the hinge predicts (slope 0.99). The product: when S0 is frozen at each jet\'s own unedited value, the pT response of the h4/h5 mass units halves '
+  'and their $\\rho$ rises from about 1 to 2–5 ($M_2$-like). So $M_0$ and $M_2$ are formed separately at S and multiplied in h4/h5. In the if-statement fit of the whole network (E11), the h4 unit with the '
+  'largest effect (h4:49) is written mainly as $\\sqrt{M_0 M_2} < 100.6$ GeV ($R^2$ 0.991).', 'results/site/X3_mass_path.png'),
+ ('7. How the decision uses it',
+  'The class neurons respond to the mass variable with windows: the W neuron z0 peaks at 75–77 GeV of input mass, the Z neurons z7 and z14 at 94–98 GeV, the top gate z10 at 135–148 GeV. '
+  'Changing only the mass of W jets (by the angle or the pT edit) switches their calls to Z between 80 and 90 GeV of edited mass.', 'results/site/T2_mass_and_windows.png'),
+ ('8. Which mass: the shift test',
+  'To separate the two masses we move every particle of a jet by the same small angle $\\delta$ and leave the axis where it is. Angles between particles do not change, so $m$ does not change; '
+  '$\\vec M_1$ becomes $M_0\\vec\\delta$ and $M_2$ grows by $M_0\\delta^2$ (plus $2\\vec\\delta\\cdot\\vec M_1 \\approx 0$). Predictions for the network\'s read-out mass: '
+  'invariant mass, no change; $\\sqrt{M_0 M_2}$, an increase of $\\tfrac12\\Delta\\log M_2$. Measured on 10,000 fresh jets at $\\delta = 0.06$ rad: the read-out rises by 0.24–0.29 in log against 0.30 predicted '
+  '(0.74–0.84 of the prediction at every $\\delta \\ge 0.02$, growing as $\\delta^2$), and 77 % of W jets are called Z (3 % unshifted). Two other candidates are excluded: $\\sum p_T r$ and $\\sqrt{\\sum r^2}$ '
+  'predict 1.7× and 2.1× larger changes with a different dependence on $\\delta$. ParT, a different architecture, gives the same picture (0.66–0.77 of the prediction; true-W → Z 12 % → 31 %).', 'results/site/X1_mass_shift.png'),
+ ('9. What is not settled',
+  'The response is 0.74–0.84 of the $\\sqrt{M_0 M_2}$ prediction rather than 1. A part that depends on the direction of the shift remains (12–20 % of the response), consistent with the network building $r$ '
+  'from nine directional cuts. The network also uses the total pT at fixed mass: lowering pT by 20 % while keeping $m$ fixed sends 78 % of W jets to top. So the internal variable is "mass about the given axis" '
+  'to within these numbers, plus a separate dependence on total pT; it is not an exact copy of one formula.', None),
+ ('10. Why it matters',
+  'For interpretability: the network computes a different formula from the physics one, and the two can only be told apart away from the training data; the formula predicts how the network fails there. '
+  'For physics: the jet axis is a convention (summed momentum, winner-take-all, or a seed particle in a trigger). The invariant mass does not depend on it; the networks\' mass variable does. '
+  'With the winner-take-all axis, ParT_full changes 11.7 % of its decisions and ParT_kin 34.1 %; JEDI-linear under the same test is running (E17).', 'results/site/X2_axis.png'),
 ]
