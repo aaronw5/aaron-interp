@@ -13,3 +13,7 @@ Cluster jobs keep running while agents are paused. On resume:
 4. E5v: job anrunw-ai-e5v launched by the main session (user OK'd); when done, copy results/jedi/e5_verify.json back and file inbox/E5v_verify.md.
 5. Merge inbox → ledger (EXPERIMENTS/TREE/PAPERS/site/content.py), regenerate the page (python3 site/gen.py <scratchpad>/results_page.html), publish
    the artifact, send new PNGs to the user, commit + push.
+
+Note (2026-10-17): the loop script was edited during round 5 (exploration rule). To resume round 5 (wf_d4e53fbf-fcc) from cache, use the pre-edit copy
+  /Users/anrunw/.claude/projects/-Users-anrunw-Documents-distill-part/97edd5f4-0297-498c-b0c4-c84a470a6b9f/workflows/scripts/science-loop-jedi-cluster-wf_af611821-cfb-r5.js
+with resumeFromRunId wf_d4e53fbf-fcc and the same args. Round 6 onward uses the edited script.
