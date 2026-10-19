@@ -15,7 +15,9 @@ CLAIM = {
         "barely does, and shifting the window moves the response with it. So the first half of this network is exactly a "
         "set of cuts, counts and sums over pT-ranked particles. Not shown in general: in other official checkpoints the "
         "pT-or-direction split is about what random placement of the few nonzero weights gives, the window effect appears "
-        "only at the hardest-particle edge, and a variant without rank windows is as accurate."
+        "only at the hardest-particle edge, and a variant without rank windows is as accurate. The window-edge response "
+        "also appears when the trained weights are rearranged but the zero-bit masks are kept, so it shows where the "
+        "masks put the window, not that the trained weights use it beyond the masks."
     ),
     'A2': (
         "Before the second round of cuts the network computes jet-level numbers from the first-round sums, mainly the "
@@ -108,7 +110,10 @@ CLAIM = {
         "the ordering comes from the architecture. Not general: the size of the mass response varies widely between "
         "architectures and even between two seeds of one model, and JEDI-linear's sparse first layer of pure pT or pure "
         "direction cuts does not appear in Deep Sets, whose first-layer units mostly mix the two. ParT has been compared "
-        "only on the mass result, and none of this has been rerun independently."
+        "only on the mass result. Later tests (2026-10-19) add Deep Sets trained with L1 or fixed-point training, a "
+        "Particle Flow Network and an Energy Flow Network: all respond to the shift, through the pT-weighted spread about "
+        "the axis, while networks without trained function do not. Rank windows, pure cuts above chance and nearly exact "
+        "radial objects were found only in JEDI-linear."
     ),
     'B1': (
         "The identity that a ReLU unit summed over particles equals the number of passing particles times its bias plus its "
@@ -471,6 +476,35 @@ EXPLAINER = {
         "respond to that control with W-to-Z changes, so they read a second, shift-invariant spread besides the formula. "
         "So the direction and most of the size of the axis effect follow the formula, the rest is general sensitivity to "
         "moved inputs, and the verifier's confidence is low."
+    ),
+    'X8_EXPLAINER': (
+        "Networks with the same layers, inputs and fixed-point masks but no trained function (labels shuffled, or trained "
+        "weights rearranged) do not turn W calls into Z when the jet is shifted, while all three trained networks do, so "
+        "that response is learned. The rank-window swap response, in contrast, appears just as strongly with rearranged "
+        "weights as long as the zero-bit masks stay in place, so that test shows where the masks put the window, not that "
+        "training uses it. The trained unit that tracks the pT-weighted spread follows it more closely than any null unit, "
+        "but per unit of that correlation null units respond as much. The accuracy loss under the WTA axis is matched by a "
+        "random shift of the same size. Taking a unit's value from another jet ranks units as replacing it with its "
+        "average does; the context round then changes about 28 % of decisions instead of 15 %."
+    ),
+    'X5_EXPLAINER': (
+        "A Deep Sets network trained in three ways (ordinary floating point, with an L1 sparsity penalty, and with the "
+        "fixed-point HGQ method) on JEDI-linear's inputs always turns W calls into Z when the jet is shifted, with a mass "
+        "read-out change of about the predicted size, so this response does not need fixed-point training. With L1 at "
+        "JEDI-linear's sparsity every remaining first-layer unit uses pT only or angles only, but random placement of that "
+        "many weights gives the same. Only the HGQ-trained models have more such units than random placement, in two of "
+        "three seeds, and their training script also differs in optimizer and length, so quantization is not isolated. "
+        "No model formed rank windows; short HGQ training did not form slot masks, so where windows come from is open."
+    ),
+    'X9_EXPLAINER': (
+        "Two standard set networks of the field, a Particle Flow Network at the same accuracy and an Energy Flow Network at "
+        "74 %, trained on the same inputs, also turn W calls into Z when the jet is shifted, and their mass read-out moves "
+        "like a real mass increase. When the shifted jet's angles are shrunk so that the pT-weighted spread about the axis "
+        "is unchanged, almost all of this disappears in all five networks, so the response runs through that spread. Only "
+        "JEDI-linear responds to the pT-rank window edge, has first-layer units that are more often pT-only or angle-only "
+        "than chance, and has nearly exactly radial objects; the flow networks cannot have rank windows by design, and the "
+        "cut purity comparison mixes architecture with fixed-point training. Swapping the program's variables between jets "
+        "agrees with the network no better than swapping random directions in the same space."
     ),
 }
 

@@ -143,7 +143,7 @@ class Flow:
         x = np.asarray(x, np.float64); real = x[..., 0] > 0
         if self.arch == 'efn':
             pt = x[..., 0] * real; z = pt / np.maximum(pt.sum(1, keepdims=True), 1e-12)
-            return z, x[..., 1:3] * real[..., None], real
+            return z, x[..., 1:3] / self.info.get('ang_scale', 1.0) * real[..., None], real
         xn = (x - self.shift) / self.scale
         return None, xn * real[..., None], real
 
@@ -179,7 +179,7 @@ class Flow:
     def phi_map(self, pts, eta, phi):
         """Φ (last Φ layer) on single particles: arrays of equal shape (physical units) -> (..., ell)"""
         sh = np.shape(eta); pt = np.broadcast_to(pts, sh).ravel(); e = np.ravel(eta); p = np.ravel(phi)
-        if self.arch == 'efn': h = np.stack([e, p], -1)
+        if self.arch == 'efn': h = np.stack([e, p], -1) / self.info.get('ang_scale', 1.0)
         else: h = (np.stack([pt, e, p], -1) - self.shift) / self.scale
         for K, b in self.phi: h = np.maximum(h @ K + b, 0)
         return h.reshape(*sh, -1)
@@ -366,7 +366,7 @@ def main(a):
             if tot == 0: out.append(('constant', None, 0.0)); continue
             fpt, fang = wpt / tot, wang / tot
             # line distance from the axis in physical units (rad): α_ang·a + (α_pT·median pT + β) = 0
-            if M.arch == 'efn': al = Kmat[:, u]; beta = b1[u]; dist = abs(beta) / max(np.hypot(*al), 1e-12)
+            if M.arch == 'efn': al = Kmat[:, u] / M.info.get('ang_scale', 1.0); beta = b1[u]; dist = abs(beta) / max(np.hypot(*al), 1e-12)
             else:
                 al = Kmat[:, u] / M.scale; beta = b1[u] - (Kmat[:, u] * M.shift / M.scale).sum()
                 dist = abs(beta + al[0] * phys_med_pt) / max(np.hypot(al[1], al[2]), 1e-12)
@@ -423,7 +423,7 @@ def main(a):
     for k in live1:   # control: first-layer units (half-planes are not radial)
         K, b = M.phi[0]
         def l1map(p):
-            if M.arch == 'efn': hh = np.stack([RRg * np.cos(TTg), RRg * np.sin(TTg)], -1)
+            if M.arch == 'efn': hh = np.stack([RRg * np.cos(TTg), RRg * np.sin(TTg)], -1) / M.info.get('ang_scale', 1.0)
             else: hh = (np.stack([np.full_like(RRg, p), RRg * np.cos(TTg), RRg * np.sin(TTg)], -1) - M.shift) / M.scale
             return np.maximum(hh @ K[:, k] + b[k], 0)
         f = np.stack([l1map(p) for p in PTG]); tot = ((f - f.mean()) ** 2).sum(); az = ((f - f.mean(-1, keepdims=True)) ** 2).sum()
@@ -509,7 +509,7 @@ def main(a):
         return {('model', 'L'): rd[('model', 'L')](rm['L']) - rd[('model', 'L')](LT), ('model', 'h'): rd[('model', 'h')](rm['h']) - rd[('model', 'h')](hT),
                 ('jedi', 'S'): rd[('jedi', 'S')](rj['S']) - rd[('jedi', 'S')](RJ['S']), ('jedi', 'z'): rd[('jedi', 'z')](rj['z']) - rd[('jedi', 'z')](RJ['z'])}
 
-    def edit_block(lab, xe, pred, ctrl=None, cal=True):
+    def edit_block(lab, xe, pred, ctrl=None, cal=True, ctrl2=None):
         rm, rj = run_both(xe); cm, cj = rm['logits'].argmax(1), rj['logits'].argmax(1); dm = mhat(rm, rj)
         out = dict(pred_mean=float(pred.mean()), pred_median=float(np.median(pred)), true_dlogm_max=float(np.abs(moments(xe)['logm'] - MT['logm'])[MT['m'] > 1].max()))
         if cal:
@@ -521,6 +521,10 @@ def main(a):
                                          acc=float((c == yT).mean()))
             if ctrl is not None:
                 o['mcnemar_W_to_Z_vs_control'] = mcnemar(ctrl[who][isW] == Z_, wz)
+                o['mcnemar_calls_changed_vs_control'] = mcnemar(ctrl[who] != c0, c != c0)
+            if ctrl2 is not None:                     # random-direction translation of equal size (paired call changes)
+                o['mcnemar_calls_changed_vs_random_dir'] = mcnemar(ctrl2[who] != c0, c != c0)
+                o['mcnemar_W_to_Z_vs_random_dir'] = mcnemar(ctrl2[who][isW] == Z_, wz)
             for st in (('L', 'h') if who == 'model' else ('S', 'z')):
                 d = dm[(who, st)]; ci, bv = boot(lambda i: d[i].mean(), J)
                 o[f'dlogm_hat_{st}'] = float(d.mean()); o[f'dlogm_hat_{st}_ci'] = ci; o[f'p_vs_0_{st}'] = boot_p(bv, 0.0)
@@ -556,13 +560,13 @@ def main(a):
     xr = rotate_matched(xT, 0.06, np.random.default_rng(66)); predr = 0.5 * np.log(moments(xr)['M2'] / MT['M2'])
     E['rotation_matched'], crot = edit_block('matched rotation (control)', xr, predr, cal=False)
     th = np.random.default_rng(67).uniform(0, 2 * np.pi, J); xq = translate(xT, 0.06, th)
-    E['translation_random_dir'], _ = edit_block('translation 0.06 random direction per jet', xq, 0.5 * np.log(moments(xq)['M2'] / MT['M2']), ctrl=crot)
+    E['translation_random_dir'], crand = edit_block('translation 0.06 random direction per jet', xq, 0.5 * np.log(moments(xq)['M2'] / MT['M2']), ctrl=crot)
     for lab, th_ in (('eta', 0.0), ('phi', np.pi / 2)):
         xe = translate(xT, 0.06, th_); pred = 0.5 * np.log(moments(xe)['M2'] / MT['M2'])
-        E[f'translation_{lab}'], _ = edit_block(f'translation 0.06 +{lab}', xe, pred, ctrl=crot)
+        E[f'translation_{lab}'], _ = edit_block(f'translation 0.06 +{lab}', xe, pred, ctrl=crot, ctrl2=crand)
     from interp.e17_axis_jedi import axis_set, reaxis, wta_selftest
     E['wta_selftest'] = wta_selftest(); A, ainfo = axis_set(xT); xw = reaxis(xT, *A['wta']); Mw = moments(xw)
-    E['wta_axis'], _ = edit_block('WTA axis', xw, 0.5 * np.log(Mw['M0'] * Mw['M2'] / (MT['M0'] * MT['M2'])), ctrl=crot)
+    E['wta_axis'], _ = edit_block('WTA axis', xw, 0.5 * np.log(Mw['M0'] * Mw['M2'] / (MT['M0'] * MT['M2'])), ctrl=crot, ctrl2=crand)
     E['wta_axis']['axis_info'] = ainfo; E['wta_axis']['disp_median'] = float(np.median(np.hypot(*A['wta'])))
     R['step3']['edits'] = E; save()
     # rank-window swap

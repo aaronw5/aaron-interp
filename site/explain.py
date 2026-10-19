@@ -793,6 +793,77 @@ H3_EXPLAINER = [
  ('Physical significance', 'The earlier physics edits hold at 10× statistics. JEDI-linear\'s W/Z/top calls depend on $\\sum p_T$ through a boost that leaves every invariant shape unchanged; ParT\'s b tagging counts significantly displaced tracks; no tested network checks that one subjet pair has the W mass inside a top jet.', None),
 ]
 
+X8_EXPLAINER = [
+ ('Question', 'Do the headline edit responses of JEDI-linear (translation W → Z, WTA re-axis, rank-window swap, radial response) require its trained weights, or do networks with the same architecture, inputs and quantizer masks but no trained function give the same responses? Do the unit costs found by mean ablation hold when a unit is instead given its value on another jet?', None),
+ ('Background',
+  'An edit response can come from the geometry of the inputs and layers rather than from learned function: for example, any sum of ReLU units over particles grows when particles move outward. Functional nulls remove the learned function while keeping the architecture. '
+  'Shuffled-label training uses the same data with the labels permuted once; weight permutation keeps every weight value and rearranges them within a matrix. For JEDI-linear three permutations were used: (a) nonzero kernel entries permuted, zero-bit masks in place; (c) as (a), plus the per-slot number formats permuted per channel; (b) all entries and all quantizer tables permuted. '
+  'Mean ablation sets a unit to $\\bar h_c$, a value no jet may have; resample ablation sets it to $h_c(\\pi(j))$, its value on another jet $\\pi(j)$, with $\\pi$ a random derangement.', None),
+ ('Method',
+  'Sample: sample(per_class=2000, seed=307), $N = 10{,}000$ jets, $N_W = 2{,}000$. Models: trained JEDI-linear and 15 permuted copies (5 per variant); Deep Sets (dsets-d64) and a float JEDI-style model with a context round (jedis-d64), each with trained seeds 0 and 1, shuffled-label seeds 0 and 1 and 5 permuted copies. '
+  'Edits, each with a matched null edit: T, translation by 0.06 rad along $\\Delta\\eta$ (null: random direction); W, inputs about the WTA axis (null: translation of the same per-jet length in a random direction); K, angles $\\times 1.1$ at fixed $p_T$ (null: rotation with equal displacement); angle swap of ranks 13|14 (across the window edge) vs 5|6 (inside). '
+  'Statistics: H1 $\\Delta_{W\\to Z} = \\frac{1}{N_W}\\sum_{j\\in W}\\big([c_T(j)=Z]-[c_0(j)=Z]\\big)$; H2 share of calls changed under W; H3 across/inside ratio of $\\overline{|\\Delta S_c|}/\\mathrm{sd}(S_c)$ over the live S units with a mask edge at 13|14; H4 response under K, in s.d., of the S unit with the largest $|\\rho|$ with $\\sum_i p_{T,i} r_i^2$. '
+  '$H_0$: $\\theta_{\\rm trained}\\le\\theta_{\\rm null}$ for some null; $p_{\\rm IUT}=\\max_i p_i$ over nulls from a paired jet bootstrap (1,000 resamples), Holm over 12 tests; exact McNemar for paired call changes against each matched null edit.', None),
+ ('Result',
+  'Trained against null range. H1 W → Z flow: JEDI-linear 0.752 [0.730, 0.771] vs −0.107 to 0.135; Deep Sets 0.676 / 0.724 vs ≤ 0.016; JEDI-style float 0.660 / 0.734 vs ≤ 0.0005 (Holm $p = 0.012$, the floor, for all three). '
+  'H2 calls changed under W: JEDI-linear 0.298 vs 0 to 0.627 (Holm $p = 1$); the accuracy drop under W is 0.219 vs ≤ 0.020. '
+  'H3 ratio: 5.22 [4.99, 5.48] vs 0.52–9.27 (variant a) and 3.2–11.1 plus two $\\infty$ (variant c); all variant-b copies give a constant call. '
+  'H4: S50 (selected by the frozen rule, $\\rho = 0.93$) moves 0.200 [0.196, 0.205] s.d. vs ≤ 0.129. '
+  'Ablation: mean and resample costs rank the 43 live units the same way (Spearman 0.965 [0.954, 0.973]); the context round g changes 14.6 % [13.9, 15.3] of calls under mean ablation and 27.8 % [27.3, 28.3] under resample ablation (McNemar $p = 7\\times10^{-174}$).', 'results/jedi/x8_nulls.png'),
+ ('Checks',
+  'The script\'s forward pass equals Jedi.run exactly before and after the permutations; small-model forwards equal the torch modules; shuffled-label models are at chance on true labels; each matched null edit gives ≈ 0 radial response (Kr 0.0006). '
+  'The frozen radial rule chose S50, not S29 (S29: 0.261 s.d.). Many permuted copies give a constant call, so for them "calls changed" is 0 by construction.', None),
+ ('Verification (X8v, fresh sample seed 7307, confidence 0.65)',
+  'All JEDI-linear numbers return within their intervals: H1 0.744 [0.724, 0.765] vs ≤ 0.109 (now also against three untrained redraws that keep the trained mean and s.d.); H3 5.19; H4 0.205; g 14.85 % → 27.88 %; Spearman 0.965 over 44 units. Added controls: '
+  '(1) on the trained network, live S units without a mask edge at 13|14 give an across/inside ratio of 1.45, edge units 5.19, and non-degenerate mask-keeping permuted copies 2.07–11.34, so the ratio follows the mask edge with any weights; '
+  '(2) dividing the radial response by $|\\rho|\\,E_Q$ ($E_Q$ = expected change of $\\sum p_T r^2$ in s.d.) gives 0.98 for the trained unit and 0.95–1.13 for constant-output nulls, so the gap comes from how closely the trained unit tracks $\\sum p_T r^2$ ($\\rho$ 0.93 vs ≤ 0.70); '
+  '(3) the random-direction translation of the WTA length lowers accuracy by 0.250, more than the WTA re-axis (0.218), and changes more calls (McNemar 323 vs 641, $p = 7\\times10^{-25}$). The small models were not rerun.', None),
+ ('Why it matters',
+  'The translation response that defines the un-recentred mass variable (claim A4) needs the trained weights in three architectures. The rank-window asymmetry measured by the angle-swap edit (claims A1, A3) is produced by the zero-bit mask layout, so it describes the masks fixed during HGQ training rather than a use of the window by the trained weights beyond the masks. The WTA accuracy loss (claim D4) follows the size of the displacement. Unit costs, and the role of the context round, hold under resample ablation, where g\'s share of calls is about twice the mean-ablation figure.', None),
+]
+
+X5_EXPLAINER = [
+ ('Question', 'Do the elements found in JEDI-linear (pure pT-only or angle-only first-layer cuts, pT-rank windows, count-weighted radial objects, the response to a rigid shift) come from its fixed-point (HGQ) training, or from the task and inputs?', None),
+ ('Background',
+  'JEDI-linear is a Deep-Sets-like network trained with HGQ, which learns a bit width per weight and per input slot; zero bits remove a weight or a slot. Its first layer keeps 20 of 192 weights, and every live unit depends on $p_T$ only or on $(\\Delta\\eta,\\Delta\\phi)$ only. '
+  'A permutation null (X6v) showed that random placement of 20 nonzero weights gives this purity often ($p$ 0.16–0.48). Training the same Deep Sets without quantization, or with an L1 penalty that only produces sparsity, separates the sources.', None),
+ ('Method',
+  'Deep Sets $S_c=\\sum_i \\phi_2(\\phi_1(x_i))_c$ followed by $\\rho(S)$, trained on the same 3-feature, 64-particle inputs, 3 seeds each: float; L1 on $\\phi_1$ with $\\lambda=3\\times10^{-2}$ (0.89–0.91 zero weights; JEDI-linear 0.896); HGQ for 10 epochs at $\\beta=3\\times10^{-4}$ (largest zero fraction reached, ≤ 0.094) and $\\beta=10^{-8}$ (accuracy within 1 point). '
+  'On 10,000 test jets (seed 311): (a) share of live first-layer units with ≥ 90 % of their input variance from $p_T$ alone or from the angles alone, against weights permuted across units (200 draws); (b) swap the angles of ranks $k, k{+}1$ for $k = 0\\ldots16$ and look for an edge (contrast ≥ 1.5); (c) single-particle scans of each pooled unit for a radial, count-weighted profile; (d) translate every particle by 0.06 rad and compare the log-mass read-out change with $\\tfrac12\\Delta\\log(M_0M_2)$, calibrated by a real angular scaling, and with a rotation of equal displacement. '
+  'An element is present in a regime when it passes Holm $\\alpha = 0.05$ in ≥ 2 of 3 seeds; regimes compared by an exact permutation test over 1,680 relabellings.', None),
+ ('Result',
+  'The shift response appears in every regime: W → Z 0.02–0.08 → 0.49–0.87 (rotation 0.02–0.09), calibrated read-out 0.72–1.26 of the $\\sqrt{M_0M_2}$ prediction (float 0.72–0.88, L1 0.82–0.95, HGQ 0.92–1.26). '
+  'Pure cuts: float 0.31–0.39 ($p$ 0.47–0.96); L1 1.00 with a null of 0.86–1.0 ($p$ 0.55–0.74); HGQ 0.30–0.50, above the null in seeds 0 and 2. No regime has rank windows (edge contrast 1.03–1.05) or more than 2 count-weighted radial objects. Regime differences after Holm: $p \\ge 0.095$.', 'results/jedi/x5_dsets_sparsity.png'),
+ ('Checks',
+  'Each network\'s forward reproduces its stored test probabilities (argmax agreement 1.000). HGQ at 10 epochs set ≤ 1 % of pooling-input slots to zero bits, so it formed no slot masks; whether longer HGQ training forms windows is not tested. HGQ $\\beta = 3\\times10^{-4}$ models are 3–5 points below float (flagged).', None),
+ ('Verification (X5v, fresh sample seed 4242, confidence 0.72)',
+  'With a 2,000-draw null, HGQ purity $p$ is 0.0005 / 0.175 / 0.0015 ($\\beta = 3\\times10^{-4}$) and 0.0010 / 0.062 / 0.0005 ($\\beta = 10^{-8}$); L1 0.56–0.72; float 0.45–0.96. At a 0.95 threshold the $\\beta = 10^{-8}$ arm holds in 1 of 3 seeds. The two HGQ arms have near-identical first layers at equal seed (per-unit $p_T$-share correlation 0.976–0.987), so they are one result. '
+  'The HGQ training script also differs from the float one in optimizer (Adam vs AdamW), batch-norm folding, epochs, learning rate, batch size and initialisation; no float model trained with the HGQ script exists, so the purity is not attributed to quantization. '
+  'Translations along $\\pm\\Delta\\eta$: W → Z 0.43–0.89 vs rotation 0.022–0.075; read-out ratio 0.71–1.29 (rotation −0.005 to 0.007). The calibration edit (angles $\\times 1.35$) overflows a later HGQ quantizer in 19–28 % of jets.', None),
+ ('Why it matters', 'The un-recentred shift response of claim A4 is present in this architecture without fixed-point training (claim A10). The purity of a very sparse first layer is what sparsity alone gives (L1 equals its null); above-null purity appears only with the HGQ training script and is not separated from its other training differences. Rank windows did not form in any regime tested, so their origin in HGQ training remains open (X5w).', None),
+]
+
+X9_EXPLAINER = [
+ ('Question', 'Are the elements found in JEDI-linear (pT-weighted radial objects over pT-rank windows; a mass variable that is not recentred on the jet axis) a property of JEDI-linear, or do the standard set architectures of the field, trained on the same inputs, show them too?', None),
+ ('Background',
+  'An Energy Flow Network computes $L_k=\\sum_i z_i\\,\\Phi_k(\\Delta\\eta_i,\\Delta\\phi_i)$ with $z_i=p_{T,i}/\\sum_j p_{T,j}$ (IRC safe); a Particle Flow Network computes $L_k=\\sum_i \\Phi_k(p_{T,i},\\Delta\\eta_i,\\Delta\\phi_i)$. Both are permutation invariant, so they cannot use a particle\'s pT rank. Both see the angles about the stored jet axis, as JEDI-linear does. '
+  'The un-recentred mass variable is $\\tfrac12\\log(M_0M_2)$ with $M_0=\\sum_i p_{T,i}$, $M_2=\\sum_i p_{T,i}r_i^2$; the invariant mass satisfies $m^2\\approx M_0M_2-|M_1|^2$ with $M_1=\\sum_i p_{T,i}(\\Delta\\eta_i,\\Delta\\phi_i)$. A rigid translation by $\\vec\\delta$ leaves $m$ unchanged and raises $M_2$ by $2\\,\\vec\\delta\\cdot\\vec M_1+\\delta^2 M_0$.', None),
+ ('Method',
+  'EFN ($\\Phi$ 100-100-128) and PFN ($\\Phi$ 64-64-32), $F$ 100-100-100, trained with energyflow on the same 595k jets (64 particles, seeds 0 and 1); $\\Phi$ size chosen on dev accuracy within 1 point of 80.9 % (the EFN reached 74 % at best). An exact numpy forward pass next to JEDI-linear makes every comparison paired on the same jets. '
+  'On 10,000 test jets (seed 313): (1) first-layer cuts typed against a shuffled-kernel null; (2) each live latent unit fitted with MARS (≤ 15 terms) on the E11 observable library; (3) 0.06 rad translation vs a rotation of equal displacement, mass read-out calibrated against a real angular scaling of the same predicted size, WTA re-axis, angle swap of ranks 13|14 vs 11|12; (4) interchange interventions per named unit vs permuted alignments and random rotations.', None),
+ ('Result',
+  'Translation W → Z: JEDI-linear 61–77 %, PFN 51–82 %, EFN 37–77 %; rotation 1.5–2.9 %. Calibrated read-out ratio 0.97–1.30 in all three (0 would be an invariant-mass read-out). '
+  'Rank-14 swap ratio: JEDI-linear 5.25 (X6\'s edge units), PFN/EFN 0.79–0.84 (expected from the pT-share gaps: 0.72). PFN pure first-layer fraction 0.11, equal to its null; JEDI-linear 13/13. Latent naming: median MARS $R^2$ JEDI-linear 0.98, PFN 0.85–0.87, EFN 0.73–0.82. '
+  'Mean effective IIA: JEDI-linear 0.70, PFN 0.53–0.58, EFN 0.52–0.58, each above permuted alignment ($p = 0.005$) and none above random rotations ($p_{\\rm rot}$ 0.44–0.95).', 'results/jedi/x9_compare.png'),
+ ('Checks', 'numpy forward reproduces TensorFlow ($|\\Delta p| < 10^{-5}$); two seeds per model; edits leave padding and $p_T$ untouched; paired bootstrap and McNemar tests, Holm within model; EFN accuracy gap (74 % vs 80.9 %) stated; an EFN with standardised angles reaches the same 74.4 %.', None),
+ ('Verification (X9v, fresh sample seed 2027, confidence 0.7)',
+  'Added control: translate by 0.06 rad in a random direction, then scale every angle by $s=\\sqrt{M_2/M_2\'}$, so $M_0$ and $M_2$ about the stored axis are unchanged while the jet stays displaced ($\\log m$ falls by 0.305). W → Z: plain translation 39–81 %, $M_2$-held translation 4.0 % (JEDI-linear), 11.1 / 6.9 % (PFN), 9.2 / 5.0 % (EFN), rotation 1.8–2.9 %. Read-out ratio under the $M_2$-held edit: 0.00, −0.18 / −0.13, 0.01 / 0.02 (an invariant-mass reader gives −1). Calls changed: 17–31 % vs 4–9 % under rotation. '
+  'Rank swap with JEDI-linear\'s units chosen as the flow models\' (top 10 by cost): 2.96 [2.88, 3.05] vs PFN/EFN 0.84–0.87; at 0|1 vs 3|4 JEDI-linear 1.93, PFN 1.97–2.20. The pure-cut comparison confounds architecture with HGQ quantization; the absence of windows in PFN/EFN holds by construction.', None),
+ ('Why it matters',
+  'The axis-dependent mass response (claims A4, D4) is measured in three set architectures trained on the same stored-axis inputs and runs mainly through $M_2$ about that axis in all of them (claim A10m); whether it comes from the input representation in general (recentred or augmented training) is not tested. The rank-window response, the pure cut types and the near-exactly radial objects are measured only in JEDI-linear. Interchange agreement of the S formulas is not above that of random rotations of the aligned subspace (claim B2m).', None),
+]
+
+
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
           ('Result 1 explained: the first layer is 13 cuts, and summing them gives objects (claim A1)', A1_EXPLAINER, False),
@@ -808,7 +879,10 @@ PAPER_EXPLAINERS = {
           ('Result 11 explained: is the mass a product of the moments? (claims A4, A9; E21)', E21_EXPLAINER, False),
           ('Result 12 explained: the same tests on other official JEDI-linear checkpoints (claims A1, A3, A4; X6)', X6_EXPLAINER, False),
           ('Result 13 explained: interchange interventions on the if-statement program (claim A5; E22; cross-reference Paper B)', E22_EXPLAINER, False),
-          ('Result 14 explained: naturally off-centre jets and recentring with the mass fixed (claims A4, D4; E23)', E23_EXPLAINER, False)],
+          ('Result 14 explained: naturally off-centre jets and recentring with the mass fixed (claims A4, D4; E23)', E23_EXPLAINER, False),
+          ('Result 15 explained: do the edit responses need the trained weights? Functional nulls and resample ablation (claims A1, A2, A3, A4, D4; X8)', X8_EXPLAINER, False),
+          ('Result 16 explained: Deep Sets trained float, with L1 and with HGQ (claims A1, A10; X5)', X5_EXPLAINER, False),
+          ('Result 17 explained: EFN and PFN on the same inputs (claims A4, A10, B2m; X9)', X9_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True),
           ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False),
           ('Result explained: interchange interventions, per variable (claim B2; E22)', E22_EXPLAINER, False),

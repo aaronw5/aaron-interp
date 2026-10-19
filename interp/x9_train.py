@@ -33,12 +33,12 @@ def load(prefix, rows=None):
     return np.asarray(X[rows, :N]).astype(np.float32), y[rows]
 
 
-def features(x, arch, st):
-    """raw particles (J, 64, 3) -> the model input"""
+def features(x, arch, st, ang_scale=1.0):
+    """raw particles (J, 64, 3) -> the model input (EFN angles divided by ang_scale; 1 = as stored)"""
     real = x[..., 0] > 0
     if arch == 'efn':
         pt = x[..., 0] * real; z = pt / np.maximum(pt.sum(1, keepdims=True), 1e-12)
-        return [z.astype(np.float32), (x[..., 1:3] * real[..., None]).astype(np.float32)]
+        return [z.astype(np.float32), (x[..., 1:3] / np.float32(ang_scale) * real[..., None]).astype(np.float32)]
     xn = (x - np.float32(st['shift'])) / np.float32(st['scale'])
     return (xn * real[..., None]).astype(np.float32)
 
@@ -74,6 +74,7 @@ def main():
     ap.add_argument('--seed', type=int, default=0); ap.add_argument('--epochs', type=int, default=40)
     ap.add_argument('--max_minutes', type=float, default=55.0); ap.add_argument('--batch', type=int, default=500)
     ap.add_argument('--tag', default='')
+    ap.add_argument('--ang_scale', type=float, default=1.0, help='EFN only, exploratory: angles divided by this (rad); 1 = as stored')
     a = ap.parse_args()
     import tensorflow as tf
     nthr = int(os.environ.get('OMP_NUM_THREADS', '1'))
@@ -94,7 +95,7 @@ def main():
     tr = np.setdiff1d(np.arange(len(y)), dev)
     log(f'train archive {len(y)} jets; training {len(tr)}, dev {len(dev)}')
     Y = np.eye(5, dtype=np.float32)
-    Xtr, Xdv = features(x[tr], a.arch, st), features(x[dev], a.arch, st); ytr, ydv = y[tr], y[dev]; del x
+    Xtr, Xdv = features(x[tr], a.arch, st, a.ang_scale), features(x[dev], a.arch, st, a.ang_scale); ytr, ydv = y[tr], y[dev]; del x
     if a.arch == 'efn':
         m = EFN(input_dim=2, Phi_sizes=phi, F_sizes=Fs, output_dim=5, summary=False)
     else:
@@ -112,13 +113,13 @@ def main():
     hist = {k: [float(v) for v in vs] for k, vs in h.history.items()}
     best = int(np.argmin(hist['val_loss'])) + 1
     pdv = m.predict(Xdv, batch_size=5000, verbose=0); acc_dev = float((pdv.argmax(1) == ydv).mean())
-    xt, yt = load('val'); pt_ = m.predict(features(xt, a.arch, st), batch_size=5000, verbose=0); acc_test = float((pt_.argmax(1) == yt).mean())
+    xt, yt = load('val'); pt_ = m.predict(features(xt, a.arch, st, a.ang_scale), batch_size=5000, verbose=0); acc_test = float((pt_.argmax(1) == yt).mean())
     ic = check_indices(); xc = np.asarray(np.load(DATA / 'n64' / 'full_test.npz', mmap_mode='r')['x'][ic]).astype(np.float32)
     assert np.array_equal(xc, xt[ic]), 'full_test.npz rows differ from the val archive'
-    pc = m.predict(features(xc, a.arch, st), batch_size=5000, verbose=0)
+    pc = m.predict(features(xc, a.arch, st, a.ang_scale), batch_size=5000, verbose=0)
     W, names = export(m.model)
     np.savez(out / 'weights.npz', **W); np.savez(out / 'check.npz', idx=ic, prob=pc.astype(np.float64))
-    info = dict(arch=a.arch, phi=phi, F=Fs, seed=a.seed, epochs_run=len(hist['loss']), best_epoch=best, train_seconds=train_s,
+    info = dict(arch=a.arch, ang_scale=a.ang_scale, phi=phi, F=Fs, seed=a.seed, epochs_run=len(hist['loss']), best_epoch=best, train_seconds=train_s,
                 seconds_per_epoch=train_s / max(len(hist['loss']), 1), acc_dev=acc_dev, acc_test=acc_test, n_train=int(len(tr)), n_dev=int(len(dev)),
                 n_test=int(len(yt)), layers=names, tensorflow=tf.__version__, energyflow=ef.__version__, batch=a.batch, threads=nthr,
                 per_class_test=[float((pt_.argmax(1)[yt == c] == c).mean()) for c in range(5)])

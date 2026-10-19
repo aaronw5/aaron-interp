@@ -217,7 +217,7 @@ class Ridge:
 def analyse(a):
     from interp.jedi_core import sample
     R = dict(regime=a.regime, seed=a.seed, dir=a.dir, plan='module docstring (frozen)', sample=dict(per_class=2000, seed=311))
-    JS = OUT / f'x5_{a.regime}_s{a.seed}.json'
+    JS = OUT / f'x5_{a.label or a.regime}_s{a.seed}.json'
     save = lambda: JS.write_text(json.dumps(clean(R), indent=1))
     rd = Path(a.dir)
     if a.regime == 'hgq':
@@ -434,13 +434,13 @@ def analyse(a):
 
 
 # ================================================================================================ combine
-def combine():
+def combine(hgq_label='hgq'):
     regs = ('float', 'l1', 'hgq'); D = {}
     for r in regs:
         for s in (0, 1, 2):
-            p = OUT / f'x5_{r}_s{s}.json'
+            p = OUT / f'x5_{hgq_label if r == "hgq" else r}_s{s}.json'
             if p.exists(): D[(r, s)] = json.loads(p.read_text())
-    C = dict(models=sorted(f'{r}_s{s}' for r, s in D), table={}, regime_tests={})
+    C = dict(hgq_label=hgq_label, models=sorted(f'{r}_s{s}' for r, s in D), table={}, regime_tests={})
     fl = [D[('float', s)]['step0']['test_json_acc'] for s in (0, 1, 2) if ('float', s) in D]; fm = float(np.mean(fl)) if fl else None
     C['accuracy'] = {f'{r}_s{s}': dict(sample=v['step0']['acc'], test=v['step0']['test_json_acc'], within_1pt=abs(v['step0']['test_json_acc'] - fm) <= 0.01,
                                        phi1_zero_frac=v['a']['phi1_zero_frac']) for (r, s), v in D.items()}
@@ -468,12 +468,14 @@ def combine():
                                      H0='element statistic equal across regimes', H1='HGQ mean differs from the float / L1 mean')
         pv.append(cnt / tot)
     for el, h_ in zip('abcd', holm(pv)): C['regime_tests'][el]['p_holm'] = float(h_)
-    (OUT / 'x5_combined.json').write_text(json.dumps(clean(C), indent=1)); log(json.dumps(clean(C), indent=1))
+    (OUT / ('x5_combined.json' if hgq_label == 'hgq' else f'x5_combined_{hgq_label}.json')).write_text(json.dumps(clean(C), indent=1)); log(json.dumps(clean(C), indent=1))
 
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--regime', choices=['float', 'l1', 'hgq']); ap.add_argument('--seed', type=int); ap.add_argument('--dir')
     ap.add_argument('--combine', action='store_true')
+    ap.add_argument('--label', default='', help='output file label (default: the regime), e.g. hgq_acc for a second HGQ arm')
+    ap.add_argument('--hgq_label', default='hgq', help='--combine: label of the HGQ arm')
     a = ap.parse_args()
-    combine() if a.combine else analyse(a)
+    combine(a.hgq_label) if a.combine else analyse(a)

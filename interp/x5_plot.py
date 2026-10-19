@@ -9,8 +9,9 @@ import matplotlib.pyplot as plt
 
 ROOT = Path(__file__).resolve().parents[1]
 RES = Path(os.environ.get('AI_RESULTS', ROOT / 'results')) / 'jedi'
-REG = [('float', 'float'), ('l1', 'L1 on first layer'), ('hgq', 'HGQ fixed point')]
-COL = {'float': '#4C72B0', 'l1': '#DD8452', 'hgq': '#55A868'}
+REG = [('float', 'float'), ('l1', 'L1\nsparsity\nmatched'), ('hgq', 'HGQ 3e-4\nmax\nsparsity'),
+       ('hgq_acc', 'HGQ 1e-8\naccuracy\nmatched')]
+COL = {'float': '#4C72B0', 'l1': '#DD8452', 'hgq': '#55A868', 'hgq_acc': '#2E7D4F'}
 D = {(r, s): json.loads((RES / f'x5_{r}_s{s}.json').read_text()) for r, _ in REG for s in (0, 1, 2) if (RES / f'x5_{r}_s{s}.json').exists()}
 
 
@@ -26,7 +27,7 @@ TIT = {'a': '(a) pure pT-only / angle-only cuts\namong live first-layer units',
        'c': '(c) count-weighted radial objects\n(fraction of live pooled units)',
        'd': '(d) response to a 0.06 rad shift\n÷ response to a matched mass change'}
 YL = {'a': 'fraction of live units', 'b': 'contrast $c_k$ (max over k)', 'c': 'fraction of live pooled units', 'd': 'calibrated read-out ratio'}
-fig, ax = plt.subplots(1, 4, figsize=(15, 4.2))
+fig, ax = plt.subplots(1, 4, figsize=(17, 4.6))
 for i, el in enumerate('abcd'):
     A = ax[i]
     for j, (r, lab) in enumerate(REG):
@@ -39,10 +40,10 @@ for i, el in enumerate('abcd'):
                        label=None)
             if nq is not None:
                 A.plot([x + 0.07, x + 0.07], [nq[0], nq[2]], color='0.6', lw=4, alpha=0.6, solid_capstyle='butt')
-    A.set_xticks(range(3)); A.set_xticklabels([l for _, l in REG], fontsize=9); A.set_title(TIT[el], fontsize=10)
+    A.set_xticks(range(len(REG))); A.set_xticklabels([l for _, l in REG], fontsize=7.5); A.set_title(TIT[el], fontsize=10)
     A.set_ylabel(YL[el], fontsize=9); A.grid(axis='y', alpha=0.3)
     if el == 'a':
-        A.axhline(1.0, color='k', ls=':', lw=1); A.text(2.45, 1.0, 'JEDI-linear\n13/13', fontsize=7, va='center')
+        A.axhline(1.0, color='k', ls=':', lw=1); A.text(-0.45, 1.02, 'JEDI-linear 13/13', fontsize=7)
         A.plot([], [], color='0.6', lw=4, alpha=0.6, label='null 95 % range\n(weights permuted)'); A.legend(fontsize=7, loc='lower right')
         A.set_ylim(0, 1.08)
     if el == 'b':
