@@ -232,7 +232,8 @@ CLAIM = {
         "the total pT, and does not check that a top jet contains a W. The momentum-scaling result was reproduced at 10 "
         "times the statistics on two fresh samples (W call 87 % → 27 %, rotation control unchanged). With a control that "
         "holds the W pair fixed, neither JEDI-linear nor ParT responds to the W-pair mass inside top, though ParT's top "
-        "call drops when the subjet-pair masses are rearranged in general."
+        "call drops when the subjet-pair masses are rearranged in general. This holds for models trained on the multi-class "
+        "hls4ml and JetClass data; top taggers trained on the Top Tagging Landscape do use the W-pair mass (claim D6)."
     ),
     'D2': (
         "In earlier physics edits on ParT_full (400 jets per class), making all tracks prompt removes most H → bb̄ calls "
@@ -260,8 +261,9 @@ CLAIM = {
         "value fixed still changes about a third as many decisions in centred-trained models, but with no W-to-Z flow; so "
         "the direction and most of the number of changes follow the formula, and the rest is general sensitivity to moved "
         "inputs. For hardest-trained models the same control moves many decisions toward Z, so they also read a second "
-        "spread that does not change under a shift. Confidence is limited, and a rotation about the axis turned out not to "
-        "be a valid control for these near-radial models."
+        "spread that does not change under a shift. A stand-in classifier that uses the mass about the given axis "
+        "reproduces JEDI-linear's axis response (37.7 vs 37.6 % of Z vs W calls), but only partly ParT's. Confidence is "
+        "limited, and a rotation about the axis turned out not to be a valid control for these near-radial models."
     ),
     'D3': (
         "With 10 times more jets, random JetClass rows, the corrected η build and a matched control for each edit, the "
@@ -278,23 +280,55 @@ CLAIM = {
         "particles. Splitting more particles, or removing the softest particle, moves the decisions along the particle "
         "count, so the taggers use multiplicity, which depends on hadronisation and detector granularity. A very soft added "
         "particle also changes decisions, but that particle is softer than any in the data and its effect depends on where "
-        "it is placed, so that test alone does not show counting."
+        "it is placed, so that test alone does not show counting. Quark–gluon taggers trained on Pythia jets are also not "
+        "collinear safe, but they do not count particles (claim D7), so the multiplicity part holds only for the hls4ml "
+        "and JetClass models tested."
     ),
     'D6': (
-        "This is set up but not yet tested on a network: for a classical top tagger, adding the mass of the best W-candidate "
-        "subjet pair to the jet mass and the three-prong ratio τ32 raises the QCD rejection by about 28 %, so the W mass "
-        "carries usable information. Whether ParT, ParticleNet and the energy-flow networks use it will be tested once "
-        "their training on the Top Tagging Landscape finishes."
+        "We changed the mass of the W-candidate subjet pair inside top jets while holding the total jet mass and the "
+        "three-prong measure τ32 fixed. ParT, ParticleNet and LorentzNet, trained on the Top Tagging Landscape, lowered "
+        "their top score about as much as a classifier given the W-pair mass, and 2 to 4 times more than a classifier that "
+        "sees only the edit's side effects (smaller subjets, lower τ21). So these taggers check the W mass inside the top, "
+        "unlike JEDI-linear on the multi-class data. PFN and EFN respond only at the side-effect level, and the most "
+        "extreme edits produce jets a classifier can tell from real ones."
     ),
     'D7': (
-        "This is set up but not yet tested on a network: in the quark–gluon sample, gluon jets carry 1.59 times as many "
-        "particles as quark jets (the leading-order colour-factor expectation is 9/4), and the particle count alone "
-        "separates them with AUC 0.84. Whether trained quark–gluon taggers count particles will be tested once their "
-        "training finishes."
+        "Trained quark–gluon taggers (ParT, ParticleNet, LorentzNet) do not count particles: adding a realistic soft "
+        "particle or removing the softest one changes their output by at most about 0.03 in logit, while a count-only "
+        "likelihood ratio moves 0.1. Splitting the hardest particle into two collinear pieces moves them toward gluon "
+        "whether or not the particle count changes, so their collinear unsafety comes from how the hard particles share "
+        "energy. Which function of that energy sharing they use is not identified, and the split jets are unrealistic."
+    ),
+    'D8': (
+        "For each tagger, the closest stand-in built from standard IRC-safe jet shapes (mass, N-subjettiness, energy-flow "
+        "polynomials) ranks W/QCD and top/QCD jets like the network in more than 90 % of signal–background pairs, but never "
+        "responds to the jet-axis convention, because it is axis-free by construction. Writing the mass as the mass about "
+        "the axis the network is given, which equals the invariant mass on natural jets, reproduces JEDI-linear's axis "
+        "response (37.7 vs 37.6 % of Z vs W calls changed). The networks' response to collinear splits and to the total "
+        "pT, and ParT's Z vs W ranking, are not described by either stand-in."
     ),
 }
 
 EXPLAINER = {
+    'H4_EXPLAINER': (
+        "At fixed jet mass and τ32, moving the W-candidate pair mass off 80 GeV lowers the top score of ParT, ParticleNet "
+        "and LorentzNet as much as a classifier that uses the W-pair mass, and 2 to 4 times more than a classifier of the "
+        "edit's side effects; a classifier with only mass and τ32 does not respond. These Top-Landscape taggers use the W "
+        "mass inside the top. For PFN and EFN the test does not separate W-mass use from the side effects."
+    ),
+    'H5_EXPLAINER': (
+        "A count-only quark–gluon discriminant moves by 0.1 in logit per added particle (Poisson counting would predict "
+        "0.46), but ParT, ParticleNet and LorentzNet barely move when a realistic soft particle is added or the softest "
+        "removed. They move toward gluon when the hardest particle is split, equally with the count held fixed. So they do "
+        "not count particles; the split response comes from the hard-particle energy sharing, in a form not yet identified."
+    ),
+    'H8_EXPLAINER': (
+        "Stand-ins built from standard jet shapes rank jets like the taggers on natural jets but change no decisions when "
+        "the jet axis is redefined, because they are axis-free. Replacing the invariant mass by the mass about the "
+        "network's axis, which is the same on natural jets, reproduces JEDI-linear's axis response, so that response is "
+        "mostly one known variable. The responses to collinear splits and to total pT, and ParT's Z vs W ranking, remain "
+        "unexplained."
+    ),
     'H1_EXPLAINER': (
         "Replacing one particle by two exactly collinear pieces leaves every IRC-safe jet shape unchanged and leaves an "
         "IRC-safe energy-flow network's decisions unchanged, but changes 1–5 % of the decisions of every trained tagger "

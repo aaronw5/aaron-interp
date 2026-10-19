@@ -896,6 +896,72 @@ X5_EXPLAINER = [
  ('Why it matters', 'The un-recentred shift response of claim A4 is present in this architecture without fixed-point training (claim A10). The purity of a very sparse first layer is what sparsity alone gives (L1 equals its null); above-null purity appears only with the HGQ training script and is not separated from its other training differences. Rank windows did not form in any regime tested, so their origin in HGQ training remains open (X5w).', None),
 ]
 
+H8_EXPLAINER = [
+ ('Question', 'If we describe each tagger by the best combination of standard IRC-safe jet shapes, does that description also predict how the tagger responds to the axis, translation, boost and collinear-split edits?', None),
+ ('Physics background: EFPs and ADO',
+  'Energy-flow polynomials (EFPs) form a linear basis of IRC-safe observables: for a multigraph $G$ with $N$ vertices and edges $(k,l)$, $\\mathrm{EFP}_G=\\sum_{i_1\\dots i_N} z_{i_1}\\cdots z_{i_N}\\prod_{(k,l)\\in G}\\theta_{i_k i_l}$ with $z_i=p_{T,i}/\\sum_j p_{T,j}$ and $\\theta_{ij}=\\Delta R_{ij}^{\\beta}$. '
+  'The single edge at $\\beta=2$ is $\\approx m^2/p_T^2$; the triangle is $e_3$, so $C_2=e_3/e_2^2$ and $D_2=e_3/e_2^3$. All EFPs depend only on pairwise angles, so they do not change when the jet axis is redefined or the particles are translated together. '
+  'Average decision ordering between two scores $f,g$: $\\mathrm{ADO}=\\Pr\\big[\\mathrm{sign}(f_s-f_b)=\\mathrm{sign}(g_s-g_b)\\big]$ over signal–background pairs $(s,b)$; ADO = 1 means the two rank every pair the same way (Faucett et al. 2021).', None),
+ ('Method',
+  'Networks: JEDI-linear (10,000 hls4ml jets, seed 801), ParT_full and ParT_kin (4,000 JetClass QCD/W/Z/top jets, 1,000 random rows per class, rng 802); binary score $s=\\log\\sum_{\\rm sig}p-\\log\\sum_{\\rm bkg}p$. '
+  'Pool: 303 EFPs ($d\\le5$, $\\beta\\in\\{0.5,1,2\\}$), $m$, $m_{SD}$, $\\tau_{21}$, $\\tau_{32}$, $C_2$, $D_2$. Guided search on one half of the jets: start with the observable of largest ADO with $s$; then repeatedly fit a boosted-tree surrogate, find the pairs it orders differently from $s$, and add the observable with the largest ADO on those pairs; stop when ADO gains $<0.002$ or at 8 observables. '
+  'On the other half, apply the WTA re-axis, a 0.06 rad translation, $p_T\\times0.9$ with angles $/0.9$, and the 5 %/95 % collinear split of the hardest particle, and compare % binary calls changed for network and surrogate (paired McNemar, BH over 36 tests). Null: the same networks with redrawn weights.', None),
+ ('Result',
+  'Natural jets: ADO 0.90–0.97 for W vs QCD and top vs QCD in all three networks, 0.977 for JEDI Z vs W ($m$, $C_2$), 0.66 and 0.75 for ParT_full and ParT_kin Z vs W. The first observables chosen are $\\tau_{21}$ (W vs QCD), $e_3$ with $\\tau_{32}$ (top vs QCD, ParT) and $m$ (Z vs W). '
+  'Edits: under the WTA re-axis the networks change 1.7–37.3 % of binary calls and the surrogates 0.0 %; under translation 0.9–52.8 % vs 0.0 %; under the split 0.1–3.5 % vs 0.0 % (outside 64-slot truncation). 33 of 36 network–surrogate differences have BH $q<0.05$. '
+  'Under the boost the surrogates change too (EFPs scale as $\\theta^\\beta$): JEDI Z vs W 17.5 % vs 0.8 %, ParT_full W vs QCD 1.9 % vs 6.6 %.', 'results/physics/h8_fig.png'),
+ ('Checks', 'Unedited accuracies: JEDI-linear 80.86 % (ref. 80.6 %), ParT_full 86.05 % (85.9 %), ParT_kin 73.71 % (74.5 %); JEDI WTA changes 30.5 % of 5-class calls (D4 30.3 %). '
+  'Observables change by more than $10^{-2}$ (relative) in at most 0.01 % of jets under WTA and translation; under the split only in hls4ml jets that fill all 64 slots. '
+  'A boosted-tree and an MLP surrogate give ADO within 0.02 and the same edit pattern. Redrawn ParT_full: ADO $\\le0.58$, yet 7–33 % of its calls change under the edits; redrawn JEDI gives a constant call.', None),
+ ('Verification (H8v): a positive control with the axis-moment mass',
+  'The surrogate\'s 0 % under WTA and translation holds by construction (the pool is axis-free), so those tests only show that the networks are not axis invariant (claim D4). '
+  'H8v replaced $m$ by the axis-moment mass $m_A=\\sqrt{M_0M_2}$ with $M_0=\\sum_i p_{T,i}$ and $M_2=\\sum_i p_{T,i}\\,\\Delta R_i^2$ about the axis the network is given (claim A4). On natural jets $m_A\\approx m$ (correlation of the logs 0.99999 on hls4ml), and the ADO is unchanged or higher in all 9 rows. '
+  'On fresh jets (seeds 811, 812) this surrogate changes 37.7 % of JEDI-linear\'s Z vs W calls under WTA against the network\'s 37.6 % (difference CI [−1.7, 1.5] points, per-jet $r=0.88$), and 22.5 vs 17.1 % for W vs QCD. For ParT it gives responses of the same order but larger (per-jet $r$ 0.3–0.6). '
+  'It does not reproduce the collinear-split response (0.0–0.4 % vs 0.1–3.4 %) or JEDI-linear\'s response to $p_T\\times0.9$. The redrawn ParT predicts one class for 99.95 % of jets, so its binary-call changes reflect a near-zero binary score.', None),
+ ('Physical significance', 'Standard IRC-safe shapes (mass, $\\tau_{21}$, $\\tau_{32}$, $e_3$) reproduce most of these taggers\' rankings on natural jets. '
+  'They give no response to the jet-axis convention, but natural jets cannot distinguish the invariant mass from the mass about the given axis, and the latter reproduces JEDI-linear\'s axis response; the axis dependence is therefore mostly one known variable. '
+  'Not described by either surrogate: the response to collinear splitting, JEDI-linear\'s response to the total $p_T$, and ParT\'s Z vs W ranking (ADO 0.66–0.76).', None),
+]
+
+H4_EXPLAINER = [
+ ('Question', 'Inside a top jet, do trained top taggers use the mass of the W-candidate subjet pair beyond the total jet mass and the three-prong measure $\\tau_{32}$ (claim D6)?', None),
+ ('Physics background',
+  '$t\\to bW\\to bq\\bar q\'$ gives three prongs with $m\\approx m_t$ and one pair with $m_{jj}\\approx m_W=80.4$ GeV. N-subjettiness $\\tau_N=\\frac{1}{R_0\\sum_i p_{T,i}}\\sum_i p_{T,i}\\min_k\\Delta R_{ik}$, and $\\tau_{32}=\\tau_3/\\tau_2$ is small for three-prong jets. '
+  'For three massive subjets $m^2=m_{12}^2+m_{13}^2+m_{23}^2-\\sum_k m_k^2$, so one pair mass can change at fixed $m$ if the other pairs compensate. The earlier result D1 found no W-pair-mass use in JEDI-linear and ParT trained on hls4ml / JetClass.', None),
+ ('Method',
+  'Sample: 5,000 top + 5,000 QCD Top Landscape test jets (seed 601, random rows) + 100k QCD. Three exclusive-$k_T$ subjets; W pair = pair with mass closest to 80.4 GeV. '
+  'Edit $W$: rescale the W pair\'s opening about its centroid until $m_W=60$ or 100 GeV (top) or 80.4 GeV (QCD); move the third subjet to restore $m$ ($|\\Delta m|<0.5$ GeV); rescale the subjet sizes by a common factor $h$ to restore $\\tau_{32}$ ($|\\Delta\\tau_{32}|<0.02$). '
+  'Control $N$: the same relative change on a non-W pair ($|\\Delta m_W|<2$ GeV). Score $s$ = log-odds of top; statistic $\\Delta_W-\\Delta_N$ with $\\Delta_E=\\langle s(E(j))-s(j)\\rangle$, paired bootstrap, Holm. '
+  'Positive controls: LR and MLP on $(m_{SD},\\tau_{32},m_W)$; negative: LR on $(m_{SD},\\tau_{32})$. Verification adds MLPx, an MLP on the edit\'s side-effect variables (subjet masses, $\\tau_{21}$, $\\tau_{1\\text{–}3}$, $N$, subjet $p_T$ fractions) without any pair mass, and MLPxW = MLPx + $m_W$.', None),
+ ('Result',
+  'Top jets, 80 → 60 GeV, $\\Delta_W-\\Delta_N$ (log-odds): ParT −1.73 [−1.91, −1.55], ParticleNet −1.80, LorentzNet −2.31, PFN −0.83, EFN −0.68, MLP($m_W$) −1.52, LR($m_{SD},\\tau_{32}$) +0.03 [−0.02, +0.07]. '
+  'At $\\varepsilon_S=0.5$: ParT pass rate 69.1 → 32.4 % (control 64.9 %; McNemar 204/23, $p=2\\times10^{-37}$). QCD jets with the pair moved onto 80.4 GeV: ParT +0.24 [+0.07, +0.42].', 'results/physics/h4_fig_wmass.png'),
+ ('Verification (H4v): side effects of the edit',
+  'Fresh sample (seed 611, H4 rows excluded): ParT −1.79 [−1.98, −1.60] at 60 GeV, −1.14 at 100 GeV. MLPx responds −0.63 [−0.71, −0.55] and −0.54, MLPxW −1.89 and −1.11. '
+  'ParT, ParticleNet and LorentzNet respond 2.1–4.1 times MLPx and as much as MLPxW; PFN (−0.77, −0.61) and EFN (−0.63, −0.66) equal MLPx within the intervals. '
+  'The edit shrinks the subjets ($h$ median 0.78 vs 0.97 for the control) and lowers $\\tau_{21}$; the 60 GeV jets are separable from natural ones (C2ST AUC 0.98), and on the natural-looking half of the 100 GeV edits ParT still responds (−0.66 [−0.91, −0.41]).', None),
+ ('Checks', 'Unedited AUC: ParT 0.9860 (R30 1493 vs published 1602), ParticleNet 0.9862, LorentzNet 0.9871 (released scores 0.9870), PFN 0.9806, EFN 0.9756. A rotation of equal displacement changes scores by at most 0.09.', None),
+ ('Physical significance', 'Top taggers trained on Top Landscape (ParT, ParticleNet, LorentzNet) check the W-pair mass inside the top, not only the total mass and three-prong shape; JEDI-linear and ParT trained on the multi-class hls4ml / JetClass tasks did not (D1). For PFN and EFN this edit cannot separate W-mass use from the side effects.', None),
+]
+
+H5_EXPLAINER = [
+ ('Question', 'Gluon jets have more particles than quark jets. Do trained quark–gluon taggers decide by counting particles, by the amount Casimir scaling with Poisson statistics predicts (claim D7)?', None),
+ ('Physics background',
+  'Gluons radiate with $C_A=3$, quarks with $C_F=4/3$; in this sample $\\langle N_g\\rangle/\\langle N_q\\rangle=1.589$ (H2). If $N_q\\sim\\mathrm{Poisson}(\\lambda_q)$ and $N_g\\sim\\mathrm{Poisson}(\\lambda_g)$, then $\\log\\mathrm{LR}(N)=N\\log(\\lambda_g/\\lambda_q)-(\\lambda_g-\\lambda_q)$, so one more particle adds $\\log1.589=0.463$. '
+  'A collinear split $p\\to(zp,(1-z)p)$ leaves IRC-safe observables (girth $\\sum_i z_i\\Delta R_i$, $C_1^{(\\beta)}=\\tfrac12\\sum_{ij}z_iz_j\\Delta R_{ij}^\\beta$) unchanged, adds one particle, and changes $p_T^D=\\sqrt{\\sum_i p_{T,i}^2}/\\sum_i p_{T,i}$.', None),
+ ('Method',
+  '10,000 Pythia test jets (5,000 per class, seed 701). Scorers: ParT and ParticleNet with and without particle ID, LorentzNet (released), PFN, EFN, the count-only LR($N$) from training histograms, a weight-permuted ParT. '
+  'Edits: split particle of rank 0 / 1 / 5 / softest ($\\Delta R=5\\times10^{-4}$); $k=1..5$ random splits; remove the softest; count-fixed control (merge the two softest and split the hardest, $\\Delta N=0$). Metric: mean $\\Delta\\,\\mathrm{logit}=\\Delta[\\log p_g-\\log p_q]$ with bootstrap CI; slope in $k$.', None),
+ ('Result',
+  'Slope per random split: networks 0.030–0.061, EFN 0.000, LR($N$) 0.095, Poisson 0.463. Split hardest: +0.10 to +0.20; count-fixed control: the same (restore fraction −0.11 to +0.14). Remove softest: −0.011 to +0.003 (LR($N$) −0.099). Split softest: toward quark (−0.01 to −0.05).', 'results/physics/h5_counting.png'),
+ ('Verification (H5v): an on-manifold count test',
+  'Fresh sample (seed 9137). Adding one soft particle at a realistic position (a classifier cannot tell these jets from real ones, C2ST AUC 0.50) moves the networks −0.024 to −0.004 (McNemar $p\\ge0.085$), against +0.097 for LR($N$) and +0.057 for the PFN; adding three moves LR($N$) +0.29 and the networks −0.003 to −0.071. '
+  'The hardest-split response is stable from $\\Delta R=5\\times10^{-4}$ to $5\\times10^{-3}$. Poisson overpredicts the LR($N$) slope by 4.8× because the measured multiplicity widths (13.3 for quarks, 15.7 for gluons) are about twice the Poisson widths (5.8, 7.3). '
+  'A $p_T^D$-matched control without a split also changes IRC-safe shapes (EFN +0.50), so the function of the hard-particle energy sharing is not identified.', None),
+ ('Checks', 'Unedited AUC: ParT kinpid 0.914 (full test 0.9121 = published), LorentzNet 0.919 (released 0.9161), PFN 0.888, EFN 0.872, LR($N$) 0.846. Every ParT / ParticleNet checkpoint gives the same pattern. On Herwig 7.1 jets the AUC drops to 0.80–0.81 and the split response is unchanged within 0.005. Split jets are separable from real jets (C2ST ≈ 1).', None),
+ ('Physical significance', 'The QG taggers do not count particles: soft particles barely matter to them. Their collinear unsafety enters through how the hardest particles share energy, which also depends on hadronisation. Casimir-meets-Poisson overstates the information in one extra particle by about 5× in this sample.', None),
+]
+
 X9_EXPLAINER = [
  ('Question', 'Are the elements found in JEDI-linear (pT-weighted radial objects over pT-rank windows; a mass variable that is not recentred on the jet axis) a property of JEDI-linear, or do the standard set architectures of the field, trained on the same inputs, show them too?', None),
  ('Background',
@@ -951,5 +1017,8 @@ PAPER_EXPLAINERS = {
           ('Result explained: taggers respond to collinear splits and soft particles, which IRC-safe observables do not (claim D5; H1, H1v)', H1_EXPLAINER, False),
           ('Result explained: the earlier physics edits at 10× statistics with matched controls (claims D1, D2, D3; H3, H3v)', H3_EXPLAINER, False),
           ('Result explained: classical references for top tagging and quark–gluon (claims D6, D7; H2)', H2_EXPLAINER, False),
+          ('Result explained: EFP/ADO-chosen IRC-safe surrogates vs the networks under axis, translation, boost and split edits (claims D8, D4, D4m, D5; H8, H8v)', H8_EXPLAINER, False),
+          ('Result explained: top taggers and the W-pair mass inside top, with positive and side-effect controls (claims D6, D1; H4, H4v)', H4_EXPLAINER, False),
+          ('Result explained: quark–gluon taggers do not count particles (claims D7, D5; H5, H5v)', H5_EXPLAINER, False),
           ('Earlier results in brief (claims D1, D2)', EARLIER_D, False)],
 }
