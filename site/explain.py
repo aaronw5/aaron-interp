@@ -739,6 +739,60 @@ E23_EXPLAINER = [
 ]
 
 # per-paper explainers, rendered inside the paper's tab (title, steps)
+H1_EXPLAINER = [
+ ('Question', 'Do jet taggers change their decision when one particle is split into two exactly collinear pieces, or when a very soft particle is added? Neither change alters any IRC-safe property of the jet.', None),
+ ('Physics background: IRC safety',
+  'An observable $O$ is collinear safe if $O(p_1,\\dots,p_i,\\dots,p_n)=O(p_1,\\dots,z\\,p_i,(1-z)\\,p_i,\\dots,p_n)$ and infrared safe if $\\lim_{\\epsilon\\to 0} O(p_1,\\dots,p_n,\\epsilon q)=O(p_1,\\dots,p_n)$ for every direction $q$. '
+  'Only such observables have finite perturbative QCD predictions and do not depend on how hadronisation or the detector splits energy. Mass, soft-drop mass, $\\tau_{21}=\\tau_2/\\tau_1$, $\\tau_{32}$ and $D_2=e_3/e_2^3$ are IRC safe. '
+  'The multiplicity $N=\\sum_i 1$ and $p_T^D=\\sqrt{\\sum_i p_{T,i}^2}/\\sum_i p_{T,i}$ are not. An energy flow network $L=\\sum_i z_i\\,\\Phi(\\Delta\\eta_i,\\Delta\\phi_i)$ with $z_i=p_{T,i}/\\sum_j p_{T,j}$ is IRC safe by construction and serves as the zero control.', None),
+ ('Method',
+  'Split: replace particle $p$ by $p_1=z\\,p+k\\hat u$ and $p_2=(1-z)\\,p-k\\hat u$, with $\\hat u\\perp p$ and $k=\\Delta R\\,z(1-z)\\,p_T$; the 3-momentum is conserved exactly, and at $\\Delta R=0$ the four-momentum too. '
+  'Soft emission: add a particle with $p_T=\\epsilon\\,p_{T,\\rm jet}$ in $\\Delta R<0.8$, its momentum taken from the hardest particle (control: that recoil alone). '
+  'Count-fixed control: move the same fraction $z$ of the particle\'s momentum to its nearest neighbour, so $N$ stays fixed. '
+  'Samples: 10,000 hls4ml jets (seed 401) and 10,000 JetClass jets (1,000 random rows per class, seed 402); nine models including an EFN trained here. '
+  'Test: $H_0$: calls changed by the split = calls changed by the control (paired McNemar), Holm over 521 tests.', None),
+ ('Result',
+  'Splitting the hardest particle into 5 % and 95 % pieces at $\\Delta R=0$ changes 1.1–5.7 % of the calls of the eight trained taggers (JEDI-linear 2.60 [2.31, 2.93] % vs 1.22 % for the control; ParT_full 2.11 vs 0.72 %), against 0 % for the EFN on jets without truncation. '
+  'Splitting more particles changes more calls (8 splits: JEDI 11.6 %, ParT_full 17.9 %, ParticleNet_full 21.6 %); hls4ml jets move into the gluon class, JetClass jets out of $W\\to qq$ into QCD.', 'results/physics/h1_panel.png'),
+ ('Is the soft response a count? (verification H1v)',
+  'A pure count $\\sum_i 1$ gives a response independent of $\\epsilon$ and of where the particle sits; a term $\\sum_i g(\\Delta\\eta_i,\\Delta\\phi_i)$ gives a position-dependent one. '
+  'Down to $\\epsilon=10^{-6}$ the EFN goes to 0.00 %, the hls4ml taggers stay at 2–7 % (2.4–19× larger at the jet edge than in the core), ParT_full levels off at about 0.55 %, and ParT_kin rises to 17 %. '
+  'Every added particle at $\\epsilon\\le 10^{-4}$ is softer than any particle in the data (0.10 vs 0.25 GeV in hls4ml, 0.059 vs 0.12 GeV in JetClass), so this is a mathematical IR probe on out-of-range inputs. '
+  'The in-distribution evidence for counting: removing the softest real particle moves calls opposite to the splits, and adding an $\\epsilon=10^{-6}$ particle afterwards returns 38–67 % of those changed calls in hls4ml taggers and 14–19 % in the full JetClass models, against 1.3 % for the EFN.', None),
+ ('Checks', 'IRC-safe observables change by at most $10^{-13}$ (relative) under the $\\Delta R=0$ split. Re-evaluation, re-sorting and rebatching change 0 calls. Slot 0 holds the hardest particle in all jets. Each model\'s unedited accuracy is within 1 point of its reference. Reproduced on fresh samples (seeds 411, 412).', None),
+ ('Physical significance', 'The taggers read particle multiplicity, which is IRC unsafe and depends on hadronisation and detector granularity; this bears on transfer to data and to other simulators. The form of the IR unsafety differs by model: position-weighted counting (hls4ml taggers), a small constant rate (ParT_full), a growing response to sub-threshold inputs (kinematic-only JetClass models).', None),
+]
+H2_EXPLAINER = [
+ ('Question', 'Before editing top and quark–gluon taggers, what do classical observables reach on the same test jets? Does the W mass inside a top jet carry information beyond total mass and three-prong structure? Does constituent multiplicity follow Casimir scaling?', None),
+ ('Physics background',
+  'A hadronic top decays as $t\\to bW\\to bq\\bar q\'$: three hard prongs, total mass $m\\approx m_t$, one prong pair with $m_W\\approx 80$ GeV. '
+  'N-subjettiness $\\tau_N=\\frac{1}{R_0\\sum_i p_{T,i}}\\sum_i p_{T,i}\\min_k \\Delta R_{i,k}$ measures how well $N$ axes describe the radiation, so three-prong jets have small $\\tau_{32}=\\tau_3/\\tau_2$. '
+  'Soft drop declusters until $\\min(p_{T1},p_{T2})/(p_{T1}+p_{T2})>z_{\\rm cut}$. '
+  'Gluons radiate with colour factor $C_A=3$, quarks with $C_F=4/3$; at leading (double-log) order $\\langle N_g\\rangle/\\langle N_q\\rangle\\to C_A/C_F=9/4$, lowered by energy conservation and the running coupling.', None),
+ ('Method', 'All test jets (403,999 Top Landscape, 199,998 quark–gluon). Observables from the constituents, cross-checked against fastjet on 300 jets. Rejection $R=1/\\varepsilon_B$ at $\\varepsilon_S=0.3$ and $0.5$ with bootstrap intervals; likelihood ratios of ($m_{SD}$, $\\tau_{32}$) with and without $m_W$ filled on separate validation jets; paired bootstrap of the two.', None),
+ ('Result',
+  'At $\\varepsilon_S=0.3$: $R=158$ for the $m_{SD}$ window + $\\tau_{32}$ cut, 243 for LR($m_{SD}$, $\\tau_{32}$), 305 for LR($m_{SD}$, $\\tau_{32}$, $m_W$), against 1602 for published ParT and 2193 for the released LorentzNet scores. Adding $m_W$ multiplies $R_{30}$ by 1.28 (log ratio +0.244 [+0.172, +0.335]). '
+  'Quark–gluon: $N$ alone gives AUC 0.840; $\\langle N_g\\rangle/\\langle N_q\\rangle=1.589\\,[1.584, 1.594]$, below 9/4 ($p<0.001$).', 'results/physics/h2_fig_top_rejection.png'),
+ ('Observables', 'Signal and background distributions of the classical observables used as references.', 'results/physics/h2_fig_observables.png'),
+ ('Status', 'Released weights exist only for LorentzNet (top and QG). ParT, ParticleNet, EFN and PFN are being trained with the authors\' code; the edits (W-pair mass inside top; collinear split and particle removal on quark–gluon jets) follow on the trained models.', None),
+ ('Physical significance', 'These are the reference points for the edits: a network that uses only $m$, $m_{SD}$ and $\\tau_{32}$ would sit near the classical LR2 rejection. The $m_W$ information exists, so the edit can tell whether a network uses it. Multiplicity carries most of the classical quark–gluon separation, and the measured Casimir ratio (1.59) sets the expected size of a multiplicity-driven response.', None),
+]
+H3_EXPLAINER = [
+ ('Question', 'Do the physics statements D1 (JEDI-linear: mass windows plus a $\\sum p_T$ shortcut, no W-mass constraint inside top) and D2 (ParT: displaced-track multiplicity rather than lifetime, lepton isolation used) hold with 10× more jets, random JetClass rows, the corrected $\\eta$ build and a matched control for every edit?', None),
+ ('Physics background',
+  'A longitudinal boost along the jet axis rescales momenta by $k$ and angles by $1/k$, leaving $m^2\\approx\\sum_{i<j}p_{T,i}p_{T,j}\\Delta R_{ij}^2$ and N-subjettiness ratios unchanged; only $\\sum p_T$ changes. '
+  'Top taggers can require a subjet pair with $m_{jj}\\approx m_W=80.4$ GeV. A b hadron travels $c\\tau\\approx 450\\,\\mu$m and yields about 5 charged tracks; a track\'s impact-parameter significance is $S=d_0/\\sigma_{d_0}$. '
+  'A prompt lepton from $W\\to\\ell\\nu$ is isolated.', None),
+ ('Method',
+  'For each edit $E$ and control $C$ (same size of change, tested quantity held fixed), on jets of class $c$: $\\Delta_E=\\Pr(\\text{call}=c\\mid E)-\\Pr(\\text{call}=c)$ with a 95 % bootstrap interval; $H_0:\\Delta_E=\\Delta_C$ by exact McNemar on paired calls, Holm-corrected. '
+  'Samples: JEDI-linear 20,000 hls4ml jets (seed 501); ParT 40,000 JetClass jets (4,000 random rows per class). Verification (H3v) on fresh samples with two new controls: a W-pair edit control that holds the W pair at its mass, and an H→bb edit that caps every track at $S=3.5$, which keeps the number of displaced tracks.', None),
+ ('Result',
+  'JEDI-linear W jets under $p_T\\times 0.9$: W call 87.5 → 27.0 % (rotation control 87.2 %); fresh sample 87.4 → 26.9 %. ParT_full H→bb: capping $S$ at 3.5 costs 3.1 [2.2, 3.9] points, keeping only the 2 most displaced tracks costs 61 points, so the call follows the number of tracks with $S\\gtrsim 2$–3, not how far they travel. '
+  'W-pair mass inside top (60–120 GeV at fixed jet mass) against the W-fixed control: no model differs after Holm (JEDI-linear, ParT_full, ParT_kin; all $p\\ge 0.13$). ParT\'s top call drops by a similar amount (up to 16 points at 120 GeV) whichever subjet pair is moved.', 'results/physics/h3_effects.png'),
+ ('Checks and corrections', 'Unedited accuracies: JEDI 81.07 %, ParT_full 86.38 %, ParT_kin 74.55 %. The corrected rebuild changes 0.025 % of ParT_full calls (mirrored build 1.14 %). H3\'s first W-pair control also moved the W-pair mass by 10–28 GeV the other way; its ParT_full ±2.7-point asymmetry did not replicate. "Lifetime × 0.35" lowers the $S>2$ count by 26 %, so it is not a fixed-count edit. Not re-verified: isolation, lepton charge flip, $\\pi^0$, dead cone.', None),
+ ('Physical significance', 'The earlier physics edits hold at 10× statistics. JEDI-linear\'s W/Z/top calls depend on $\\sum p_T$ through a boost that leaves every invariant shape unchanged; ParT\'s b tagging counts significantly displaced tracks; no tested network checks that one subjet pair has the W mass inside a top jet.', None),
+]
+
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
           ('Result 1 explained: the first layer is 13 cuts, and summing them gives objects (claim A1)', A1_EXPLAINER, False),
@@ -764,5 +818,8 @@ PAPER_EXPLAINERS = {
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
           ('Result explained: the axis-convention response in both directions, with invariant and rotation controls (claims D4, A12; X7)', X7_EXPLAINER, False),
+          ('Result explained: taggers respond to collinear splits and soft particles, which IRC-safe observables do not (claim D5; H1, H1v)', H1_EXPLAINER, False),
+          ('Result explained: the earlier physics edits at 10× statistics with matched controls (claims D1, D2, D3; H3, H3v)', H3_EXPLAINER, False),
+          ('Result explained: classical references for top tagging and quark–gluon (claims D6, D7; H2)', H2_EXPLAINER, False),
           ('Earlier results in brief (claims D1, D2)', EARLIER_D, False)],
 }

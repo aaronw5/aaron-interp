@@ -105,9 +105,13 @@ first. Checklist applied to every unit we name:
 | "Program fidelity is correlational (no causal abstraction)" (weakness 4) | E22/E22v: effective IIA per unit 0.19–0.88; above permuted alignment; above a swap-free predictor at z only |
 | "No baselines" (weakness 5) | B4/B4v: not more compact; shift lead over GBDT equals its lead on a random mass-raising displacement; direct MARS fails the shift |
 | "Quantisation specifics" | float + masks reproduces 95.5 % of calls; results reported on the float program with the fixed-point network as the reference |
+| Paper D: "Physics edits were on 400 jets per class, first-k rows and a mirrored η build" | H3/H3v (2026-10-19): 20,000 hls4ml and 40,000 JetClass jets, random rows, corrected η; boost, decay collapse, remove-b, displaced-track, isolation edits return with the same sign, mostly within the old intervals; fresh-sample rerun of the boost and H→bb rows within ~2 points |
+| Paper D: "Controls are not matched to the tested quantity" | H3v: H3's W-pair control moved the W-pair mass by 10–28 GeV; with a W-fixed control no model responds to the W-pair mass beyond rearranging the subjet-pair masses (Holm p ≥ 0.13). H→bb: S capped at 3.5 (count kept) −3.1 vs keep-2 −61.0 points. Open: H6 (subjet-pair mass set) |
+| Paper D: "Taggers being IRC unsafe is already known / soft-particle edits are off-manifold" | H1/H1v: quantified per architecture against an IRC-safe EFN (0 calls on exact collinear splits) and a count-fixed control; the soft-particle probe is below the data pT floor and position dependent, so the multiplicity statement rests on in-distribution edits (k-splits, removing the softest particle, count restore 0.14–0.67 vs EFN 0.013) |
+| Paper D: "Only multi-class W/Z/top benchmarks; no rejection at fixed efficiency" | H2: Top Landscape and QG classical references at eps_S 0.3 / 0.5 with CIs (LR(mSD, tau32, mW) R30 305 vs published ParT 1602; QG N AUC 0.840); H3 rejection at the classical working point (JEDI W vs QCD 174 vs 12.4); trained one-signal models running (H4, H5 next) |
 
 ## Claim confidence (0–1; from all evidence and the verifiers; updated by the ledger step each round)
-Last update: 2026-10-17, round 4 (E23/E23v, X7/X7v, B5/B5v). Change from the previous value in parentheses.
+Last update: 2026-10-17, round 4 (E23/E23v, X7/X7v, B5/B5v); D rows 2026-10-19, loop D round D1 (H1–H3). Change from the previous value in parentheses.
 Round 3 values: A12 0.6, B3 0.6 (others below unchanged unless marked). Round 2 values: A1 0.9, A3 0.8, A4 0.85, A5 0.5, B2 0.85, B3 0.6, B4 0.0.
 | claim | confidence | basis |
 |---|---|---|
@@ -133,7 +137,10 @@ Round 3 values: A12 0.6, B3 0.6 (others below unchanged unless marked). Round 2 
 | B5c a program of ≤ 50 terms on axis-relative observables reproduces the shift and re-axis responses (thesis v3 compact form) | 0.15 (new) | B5/B5v (0.5): marginal rates bracketed at T 20–50 (51–68 % vs 56 %; 27–33 % vs 30 %), strict criterion not met, W → Z 23–64 % vs 75 %, per-jet agreement at or below the never-flip reference at T 20, no direction dependence |
 | B4 the nested program beats compact baselines at equal DL | 0.25 (=; was 0.0, not started, before round 3) | B4/B4v (0.55): not more compact (baselines 4.6–19× lower DL for K ≤ 16); same call within 1 point at K 16, 30; shift lead over GBDT +2.8–3.3 points equals its lead on a random mass-raising displacement (difference +0.13 [−1.29, 1.52], −1.95 [−3.41, −0.41]) |
 | C1 / C2 / C3 / C4 | 0.8 / 0.7 / 0.85 / 0.0 (=) | G107/G108; G21–G22; P1, P1v, P2, P2v, R1 |
-| D1 / D2 / D3 / D4 | 0.8 / 0.7 / 0.0 / 0.8 (=) | J26–J30; G194, G202–G204; —; P1v, E17, E19, R1; X7/X7v: JEDI-linear about the hardest particle 30.98 % / 31.66 % of calls on two fresh samples (E17 30.3 %) |
+| D1 / D2 / D3 / D4 | 0.85 (+0.05) / 0.75 (+0.05) / 0.55 (new; was 0.0, not started) / 0.8 (=) (2026-10-19, round D1) | D1: J26–J30; H3/H3v: JEDI W call 87.4–87.5 → 26.9–27.0 % under pT × 0.9 on two samples, rotation 87.2–87.7; no W-pair-mass response beyond a W-fixed control (JEDI, ParT_full, ParT_kin, Holm p ≥ 0.13). D2: G194, G202–G204; H3/H3v: H→bb follows the count of tracks with S ≳ 2–3 (capped −3.1 vs keep-2 −61.0); isolation, charge flip, π⁰, dead cone not re-verified. D3: H3 (verifier 0.45; the proposed ParT_full W-pair refinement refuted). D4: P1v, E17, E19, R1; X7/X7v: JEDI-linear about the hardest particle 30.98 % / 31.66 % of calls on two fresh samples (E17 30.3 %) |
+| D5 trained taggers are not IRC safe and use constituent multiplicity (new, 2026-10-19) | 0.55 (new) | H1/H1v (0.55): exact collinear split of the hardest particle (z 0.05, dR 0) changes 1–5 % of calls of 8 trained taggers on hls4ml and JetClass, 0 % for an IRC-safe EFN without truncation; above the count-fixed control in 7 of 8 (not ParT_kin); k splits, removing the softest particle and count restore move calls along the particle count; soft-particle probe below the data pT floor and position dependent |
+| D6 top taggers do / do not use the W-pair mass inside top (new, setup) | 0.0 (not started) | H2: classical LR(mSD, tau32) + mW raises R30 ×1.28 [CI excludes 1], so the edit can separate the hypotheses; trainings running (H4 next) |
+| D7 quark–gluon taggers count constituents (new, setup) | 0.0 (not started) | H2: N alone AUC 0.840; <N_g>/<N_q> = 1.589 [1.584, 1.594]; trainings running (H5 next) |
 | D4m the axis-convention response follows each model's own mass formula, not generic sensitivity to shifted inputs | 0.45 (new) | X7/X7v (0.4): W/Z flow follows the sign of Δ in both directions; stored-trained models: a Δ = 0 translation of equal size changes 0.30–0.42 as many calls with no W → Z flow, a random-direction translation with the same Δ the same calls (JEDI 35.4 vs 31.7 %); hardest-trained models: Δ = 0 translation 1.1–3.0× the edit; E23v: at natural offsets (6–15 mrad) recentring and a perpendicular translation change calls at the same rate (−0.11 [−0.49, +0.24] points) |
 
 ## Proposed thesis revision after the round-2 review (2026-10-17; pending the user's decision)
@@ -450,6 +457,12 @@ Round 3 (2026-10-17), E22/E22v, B4/B4v (verifier confidence 0.55 each):
   running (scout agent) before any training.
 - Quark–Gluon (Komiske, Metodiev & Thaler; 2M Pythia jets, with PID; user 2026-10-16): also one signal class; the
   multiplicity / Casimir-scaling story (Frye et al. 1704.06266) has a direct test here. Same weights check first.
+- Status 2026-10-19 (H2): both added. Loaders interp/data_top.py and interp/data_qg.py (sample(per_class, seed, split),
+  random rows); converted arrays in /j-jepa-vol/aaron-interp/data/{top,qg} (128 hardest constituents; QG validation =
+  last 11.11 % of each train file). Released weights found: LorentzNet top and QG only (models/{top,qg}/lorentznet); no
+  ParT/ParticleNet fine-tunes, PELICAN, L-GATr or EFN/PFN weights; no Herwig QG sample. Own trainings with the authors'
+  code (ext/particle_transformer 2925bdb, weaver-core 98ca934; energyflow): ParT and ParticleNet on Top (kin) and QG
+  (kin, kinpid), EFN and PFN on both, running. Test sets: top 403,999 jets, QG 199,998.
 
 Cross-model mass row (2026-10-16, P1; verification P1v running): ParT_full and ParT_kin are not translation invariant either.
 A rigid φ shift by 0.06 rad (invariant mass unchanged; only the per-particle dphi and deltaR inputs change) moves true-W → Z
@@ -486,3 +499,22 @@ Higher-point correlators may need more depth. Existing evidence: G21b/c, G22, G1
 **Thesis (v1, 2026-10-16):** physics-motivated input edits on JEDI-linear and ParT, compared with classical taggers at
 their published working points, show which physical quantities each model uses and which it does not. Existing
 evidence: J25–J33, G192–G206.
+
+**Thesis log (round D1, 2026-10-19, nodes H1–H3).** v1 wording kept. Scope extended: the edits now cover nine models on two
+datasets (H1), with one-signal datasets (Top Landscape, QG) set up and models in training (H2).
+- D1 (v1 wording kept: "JEDI: mass windows plus a ΣpT shortcut; no W-mass constraint inside top"). H3/H3v: reproduced at 10×
+  statistics; extended: against a control that holds the W pair at its mass, neither JEDI-linear nor ParT_full nor ParT_kin
+  responds to the W-pair mass inside top (Holm p ≥ 0.13); ParT's top call drops under any rearrangement of the subjet-pair
+  masses at fixed jet mass (up to −16 points at 120 GeV). H3's proposed refinement "ParT_full depends a little on the W-pair
+  mass (±2.7 points)" was refuted by H3v and is not adopted.
+- D2 (v1 wording kept: "ParT: displaced-track multiplicity, not lifetime; isolation used; π⁰, dead cone, lepton–b charge link
+  not used"). H3v sharpens the first clause: ParT_full's H→bb call follows the number of tracks with impact-parameter
+  significance S ≳ 2–3 (capping every S at 3.5 keeps the count and costs 3.1 points; keeping 2 displaced tracks costs 61). The
+  old "lifetime × 0.35" evidence did not hold the count fixed (S > 2 count −26 %). Small H3 effects not re-verified: lepton
+  charge in H→ℓνqq′ (−2.6 points), H→cc dead cone (−2.1).
+- D3 (was "not started"): done by H3 (verifier confidence 0.45).
+- D5 (new, H1/H1v, 0.55): trained taggers (JEDI-linear, Deep Sets, Linformer, transformer, ParT, ParticleNet) are not IRC safe:
+  an exact collinear split changes 1–5 % of their calls and none of an IRC-safe EFN's; in-distribution edits (more splits,
+  removing the softest particle, count restore) move calls along the particle count. The soft-particle (IR) probe is below
+  the data pT floor and position dependent; for ParT_kin / PN_kin it grows as the particle gets softer.
+- D6, D7 (new, setup in H2, 0.0): top W-pair mass use; QG constituent counting (Casimir ratio measured 1.59).

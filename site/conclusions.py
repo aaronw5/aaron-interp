@@ -192,15 +192,19 @@ CLAIM = {
         "In earlier physics edits on JEDI-linear, changing only the mass of W jets (by scaling angles) to the Z mass turns "
         "almost all of them into Z calls, lowering the jet momentum by 10 % turns most W jets into top calls, and removing "
         "the W inside a top jet barely changes the top call. So JEDI-linear tags W, Z and top mainly by mass windows plus "
-        "the total pT, and does not check that a top jet contains a W. These are earlier results without intervals or an "
-        "independent rerun."
+        "the total pT, and does not check that a top jet contains a W. The momentum-scaling result was reproduced at 10 "
+        "times the statistics on two fresh samples (W call 87 % → 27 %, rotation control unchanged). With a control that "
+        "holds the W pair fixed, neither JEDI-linear nor ParT responds to the W-pair mass inside top, though ParT's top "
+        "call drops when the subjet-pair masses are rearranged in general."
     ),
     'D2': (
         "In earlier physics edits on ParT_full (400 jets per class), making all tracks prompt removes most H → bb̄ calls "
         "and shrinking all displacements keeps most of them, but keeping only two displaced tracks removes many, so ParT "
         "responds to the number of displaced tracks more than to how far they travel. Removing lepton isolation lowers the "
-        "leptonic-top calls, and edits of π⁰ → γγ pairing and of the heavy-quark dead cone have no measurable effect. These "
-        "results use small samples and have not been rerun at full statistics."
+        "leptonic-top calls, and edits of π⁰ → γγ pairing and of the heavy-quark dead cone have no measurable effect. At 10 "
+        "times the statistics the same signs return; a sharper test caps every track's displacement significance just "
+        "above threshold, which keeps the number of displaced tracks and costs 3 points, while keeping only two displaced "
+        "tracks costs 61. Small new effects (lepton charge in H → ℓνqq′, charm dead cone) were not rerun."
     ),
     'D4': (
         "Measuring particle positions from another standard jet axis (the winner-take-all axis, which follows the harder "
@@ -223,12 +227,56 @@ CLAIM = {
         "be a valid control for these near-radial models."
     ),
     'D3': (
-        "This is open: the physics edits have not yet been rerun at full statistics with bootstrap intervals and the "
-        "corrected rebuild."
+        "With 10 times more jets, random JetClass rows, the corrected η build and a matched control for each edit, the "
+        "earlier physics-edit results return with the same sign and mostly within the old intervals: for example, "
+        "JEDI-linear's W call falls from 87 % to 27 % when the jet momentum is scaled by 0.9, while a rotation of equal "
+        "size does nothing. A new control showed that one of the earlier controls (for the W mass inside top) also moved "
+        "the quantity it was meant to hold fixed. Several smaller effects (lepton charge, charm dead cone, π⁰) were not "
+        "rerun by the verifier."
+    ),
+    'D5': (
+        "Every trained tagger tested (JEDI-linear, Deep Sets, Linformer, a transformer, ParT, ParticleNet) changes 1–5 % "
+        "of its decisions when its hardest particle is replaced by two exactly collinear pieces, while an energy-flow "
+        "network, which is infrared and collinear (IRC) safe by construction, changes none on jets that keep all their "
+        "particles. Splitting more particles, or removing the softest particle, moves the decisions along the particle "
+        "count, so the taggers use multiplicity, which depends on hadronisation and detector granularity. A very soft added "
+        "particle also changes decisions, but that particle is softer than any in the data and its effect depends on where "
+        "it is placed, so that test alone does not show counting."
+    ),
+    'D6': (
+        "This is set up but not yet tested on a network: for a classical top tagger, adding the mass of the best W-candidate "
+        "subjet pair to the jet mass and the three-prong ratio τ32 raises the QCD rejection by about 28 %, so the W mass "
+        "carries usable information. Whether ParT, ParticleNet and the energy-flow networks use it will be tested once "
+        "their training on the Top Tagging Landscape finishes."
+    ),
+    'D7': (
+        "This is set up but not yet tested on a network: in the quark–gluon sample, gluon jets carry 1.59 times as many "
+        "particles as quark jets (the leading-order colour-factor expectation is 9/4), and the particle count alone "
+        "separates them with AUC 0.84. Whether trained quark–gluon taggers count particles will be tested once their "
+        "training finishes."
     ),
 }
 
 EXPLAINER = {
+    'H1_EXPLAINER': (
+        "Replacing one particle by two exactly collinear pieces leaves every IRC-safe jet shape unchanged and leaves an "
+        "IRC-safe energy-flow network's decisions unchanged, but changes 1–5 % of the decisions of every trained tagger "
+        "tested, more than a matched edit that keeps the particle count. Removing a real soft particle and adding back an "
+        "extremely soft one restores many of the changed decisions, so the taggers count particles. The extremely soft "
+        "particles used in the infrared test are below anything in the data, and their effect depends on position."
+    ),
+    'H2_EXPLAINER': (
+        "On the full Top Tagging Landscape test set, the best classical tagger built here (soft-drop mass, τ32 and the "
+        "W-candidate pair mass) rejects QCD about 5 times less well than published ParT, and the W-pair mass adds about 28 % "
+        "to the rejection of mass and τ32. In quark–gluon jets the particle count is the strongest single observable, and "
+        "gluons carry 1.59 times as many particles as quarks. The trained networks needed for the edits are still training."
+    ),
+    'H3_EXPLAINER': (
+        "The earlier physics edits return with the same sign at 10 times the statistics: JEDI-linear's W call collapses "
+        "under a 10 % momentum scaling that leaves every jet shape unchanged, and ParT's H → bb call follows the number of "
+        "significantly displaced tracks, not how far they travel. With a control that keeps the W pair fixed, no network "
+        "responds to the W-pair mass inside top; whether ParT reads the three subjet-pair masses as a set is open."
+    ),
     'A1_EXPLAINER': (
         "JEDI-linear's first layer reduces to cuts on single particles: a few select soft particles by pT, the rest select "
         "particles on one side of a line through the jet axis, and none mixes the two. Summed over particles, each cut "
