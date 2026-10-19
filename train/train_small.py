@@ -210,6 +210,14 @@ def main():
     ap.add_argument("--dead_jets", type=int, default=10000, help="held-out jets used for the dead-unit count")
     ap.add_argument("--max_train", type=int, default=0, help="random subset of the training jets (smoke tests)")
     ap.add_argument("--max_test", type=int, default=0, help="random subset of the test jets (smoke tests)")
+    ap.add_argument("--l1_phi1", type=float, default=0.0,
+                    help="X5 (opt-in, dsets only): add lambda * sum |W| of the first per-particle Linear (phi1 weights, normalised "
+                         "inputs) to the loss; after training, phi1 weights with |w| < --zero_thr are set to 0 and the test is rerun "
+                         "(best_zeroed.pt, test_zeroed.json)")
+    ap.add_argument("--zero_thr", type=float, default=1e-3)
+    ap.add_argument("--shuffle_labels", action="store_true",
+                    help="X8 (opt-in null): the labels of the training jets are permuted once with np.random.default_rng(seed) "
+                         "before training; held-out (dev) and test labels are not permuted")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
 
@@ -238,6 +246,9 @@ def main():
         rng = np.random.RandomState(args.seed)
         tr_idx = np.sort(rng.choice(tr_idx, size=min(args.max_train, len(tr_idx)), replace=False))
     x_tr, y_tr = load_archive(args.data_dir, "train", args.n, rows=tr_idx)
+    if args.shuffle_labels:  # X8 null: training labels permuted once (dev / test labels untouched)
+        y_tr = y_tr[np.random.default_rng(args.seed).permutation(len(y_tr))]
+        log(f"shuffle_labels: {len(y_tr)} training labels permuted with np.random.default_rng({args.seed})")
     train = GPUData(x_tr, y_tr, shift, scale, device, axis=args.axis)
     del x_tr
     x_va, y_va = load_archive(args.data_dir, "train", args.n, rows=dev_idx)
@@ -299,8 +310,8 @@ def main():
                     norm_file=norm_file, norm_procedure=norm_all.get("_procedure", "JEDI-linear norm_stats.json"),
                     shift=shift, scale=scale, mask="raw pt > 0", input_check=input_check),
         split=dict(val=split_src, n_train=len(train), n_val=len(val), test="val archive",
-                   max_train=args.max_train, dead_unit_jets=f"{len(dead_rows)} fixed random rows of val (seed 12345)"),
-        training=dict(optimizer="AdamW", lr=args.lr, weight_decay=args.wd, schedule="linear warmup then cosine to 0",
+                   max_train=args.max_train, shuffle_labels=bool(args.shuffle_labels), dead_unit_jets=f"{len(dead_rows)} fixed random rows of val (seed 12345)"),
+        training=dict(l1_phi1=args.l1_phi1, zero_thr=args.zero_thr, optimizer="AdamW", lr=args.lr, weight_decay=args.wd, schedule="linear warmup then cosine to 0",
                       warmup_steps=args.warmup_steps, batch=args.batch, epochs=args.epochs, patience=args.patience,
                       label_smoothing=args.label_smoothing, selection="lowest val loss", steps_per_epoch=steps_per_epoch,
                       checkpoints="ckpt/epoch_<k>.pt after epoch k; epoch_0.pt = initialisation"),
@@ -340,6 +351,8 @@ def main():
             x, m, y = train.batch(idx)
             logits = model(x, m)
             loss = F.cross_entropy(logits, y, label_smoothing=args.label_smoothing)
+            if args.l1_phi1 > 0:
+                loss = loss + args.l1_phi1 * model.phi[0].weight.abs().sum()
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
@@ -390,6 +403,22 @@ def main():
     log(f"test ({rep['n']} jets): acc {rep['accuracy']:.4f} loss {te_loss:.4f} "
         f"per-class acc {[round(v, 3) for v in rep['per_class_accuracy'].values()]} "
         f"auc {[round(v, 3) for v in rep['auc'].values()]} rej50 {[round(v, 1) for v in rep['rej50'].values()]}")
+    if args.l1_phi1 > 0:  # X5: hard-zero the small phi1 weights and re-evaluate
+        with torch.no_grad():
+            w = model.phi[0].weight
+            small = w.abs() < args.zero_thr
+            w[small] = 0.0
+        zf = float(small.float().mean())
+        torch.save(model.state_dict(), os.path.join(args.out, "best_zeroed.pt"))
+        probs_z, y, te_loss_z, te_acc_z = predict(model, test)
+        rep_z = test_report(probs_z, y)
+        rep_z.update(loss=te_loss_z, run_name=run_name, seed=args.seed, l1_phi1=args.l1_phi1, zero_thr=args.zero_thr,
+                     phi1_zero_frac=zf, phi1_zero_per_feature=small.float().mean(0).cpu().tolist(),
+                     acc_before_zeroing=rep["accuracy"], max_test=args.max_test)
+        with open(os.path.join(args.out, "test_zeroed.json"), "w") as f:
+            json.dump(rep_z, f, indent=1)
+        np.save(os.path.join(args.out, "test_probs_zeroed.npy"), probs_z.astype(np.float32))
+        log(f"zeroed phi1 |w| < {args.zero_thr}: zero fraction {zf:.4f}; test acc {rep['accuracy']:.4f} -> {rep_z['accuracy']:.4f}")
     log("done")
 
 

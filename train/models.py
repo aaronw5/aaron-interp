@@ -13,6 +13,9 @@ Three families (names as used on the command line and in the output directories)
                           padded tokens are zeroed before the projection
     dsets-d{D}            Deep Sets: per-particle MLP 3 -> D -> D (ReLU), masked sum, MLP D -> D -> 32 -> 16 (ReLU),
                           linear 5. Float JEDI-like, no context round.
+    jedis-d{D}            (X8, opt-in) float JEDI-style tagger with a context round: per-particle MLP 3 -> D -> D (ReLU) = p_i,
+                          g = masked mean of p_i over the real particles, second per-particle MLP [p_i, g] (2D) -> D -> D (ReLU)
+                          = u_i, masked sum S = sum_i u_i, MLP D -> 32 -> 16 (ReLU), linear 5.
 
 Attention is written out (separate q, k, v Linear layers, explicit softmax) so that per-head weights and attention
 maps can be read off directly. Compatible with torch >= 1.13.
@@ -131,9 +134,33 @@ class DeepSetsTagger(nn.Module):
         return self.head(self.rho(p.sum(1)))
 
 
+class JediStyleTagger(nn.Module):
+    """X8: float JEDI-style tagger. phi1 per particle (3 -> d -> d), context g = masked mean of phi1 over real particles,
+    phi2 per particle on [phi1_i, g] (2d -> d -> d), masked sum, rho d -> 32 -> 16, head 16 -> 5 (all ReLU except the head)."""
+
+    def __init__(self, d=64, rho=(32, 16), n_in=3, n_classes=5):
+        super().__init__()
+        self.phi = nn.Sequential(nn.Linear(n_in, d), nn.ReLU(), nn.Linear(d, d), nn.ReLU())
+        self.phi2 = nn.Sequential(nn.Linear(2 * d, d), nn.ReLU(), nn.Linear(d, d), nn.ReLU())
+        widths = [d] + list(rho)
+        layers = []
+        for a, b in zip(widths[:-1], widths[1:]):
+            layers += [nn.Linear(a, b), nn.ReLU()]
+        self.rho = nn.Sequential(*layers)
+        self.head = nn.Linear(widths[-1], n_classes)
+
+    def forward(self, x, mask):
+        mm = mask.unsqueeze(-1).to(x.dtype)
+        p = self.phi(x) * mm
+        g = p.sum(1) / mm.sum(1).clamp(min=1.0)
+        u = self.phi2(torch.cat([p, g.unsqueeze(1).expand_as(p)], -1)) * mm
+        return self.head(self.rho(u.sum(1)))
+
+
 _TF = re.compile(r"^tf-(\d+)b-d(\d+)$")
 _LINF = re.compile(r"^linf-(\d+)b-d(\d+)-k(\d+)$")
 _DSETS = re.compile(r"^dsets-d(\d+)$")
+_JEDIS = re.compile(r"^jedis-d(\d+)$")
 
 
 def parse_model(name):
@@ -147,7 +174,10 @@ def parse_model(name):
     m = _DSETS.match(name)
     if m:
         return dict(arch="dsets", d=int(m.group(1)), rho=[32, 16])
-    raise ValueError(f"unknown model name {name!r}; expected tf-{{B}}b-d{{D}}, linf-{{B}}b-d{{D}}-k{{K}} or dsets-d{{D}}")
+    m = _JEDIS.match(name)
+    if m:
+        return dict(arch="jedis", d=int(m.group(1)), rho=[32, 16])
+    raise ValueError(f"unknown model name {name!r}; expected tf-{{B}}b-d{{D}}, linf-{{B}}b-d{{D}}-k{{K}}, dsets-d{{D}} or jedis-d{{D}}")
 
 
 def build_model(spec, n_particles, cls_token=False, final_ln=True):
@@ -162,6 +192,8 @@ def build_model(spec, n_particles, cls_token=False, final_ln=True):
                                  final_ln=final_ln)
     if arch == "dsets":
         return DeepSetsTagger(d=spec["d"], rho=tuple(spec["rho"]))
+    if arch == "jedis":
+        return JediStyleTagger(d=spec["d"], rho=tuple(spec["rho"]))
     raise ValueError(arch)
 
 

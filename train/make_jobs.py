@@ -96,12 +96,27 @@ def job_sets():
         "n64-axhard": dict(runs=[f"{m}:64:{s}:-axhard:--axis=hardest" for m in ("dsets-d64", "linf-2b-d32-k8")
                                  for s in SEEDS], conc=4, cpu=4, mem=10),
     }
-    return {"main": main, "extra1": extra1, "e18": e18}
+    # X5: dsets-d64 N = 64: float seed 2; L1 on the phi1 weights (--l1_phi1, directory tag -l1_<lambda>) at 7 lambdas x
+    # seeds 0-2 (lambda is chosen on seed 0 only; seeds 1, 2 are trained at every lambda so that no second wave is needed)
+    lams = ["1e-5", "3e-5", "1e-4", "3e-4", "1e-3", "3e-3", "1e-2"]
+    x5runs = ["dsets-d64:64:2"] + [f"dsets-d64:64:{s}:-l1_{l}:--l1_phi1={l}" for s in (0, 1, 2) for l in lams]
+    x5 = {"x5-a": dict(runs=x5runs[:8], conc=8, cpu=6, mem=16),
+          "x5-b": dict(runs=x5runs[8:15], conc=7, cpu=6, mem=15),
+          "x5-c": dict(runs=x5runs[15:], conc=7, cpu=6, mem=15),
+          # added after seed 0 reached at most 0.79 zero fraction at lambda 1e-2 (target 0.896, JEDI-linear l1)
+          "x5-d": dict(runs=[f"dsets-d64:64:{s}:-l1_{l}:--l1_phi1={l}" for s in (0, 1, 2) for l in ("3e-2", "1e-1")],
+                       conc=6, cpu=5, mem=13)}
+    # X8 functional nulls: dsets-d64 and jedis-d64 trained on permuted training labels (--shuffle_labels, tag -shuf, 30 epochs
+    # without early stopping), and jedis-d64 on true labels (matched trained comparator), seeds 0 and 1
+    x8 = {"n64-x8": dict(runs=[f"dsets-d64:64:{s}:-shuf:--shuffle_labels,--patience=100" for s in SEEDS]
+                             + [f"jedis-d64:64:{s}:-shuf:--shuffle_labels,--patience=100" for s in SEEDS]
+                             + [f"jedis-d64:64:{s}" for s in SEEDS], conc=4, cpu=4, mem=10)}
+    return {"main": main, "extra1": extra1, "e18": e18, "x5": x5, "x8": x8}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--set", default="main", help="main | extra1 | e18")
+    ap.add_argument("--set", default="main", help="main | extra1 | e18 | x5 | x8")
     ap.add_argument("--only", default="", help="comma-separated job names")
     ap.add_argument("--suffix", default="", help="job-name suffix for resubmits, written --suffix=-b")
     ap.add_argument("--conc", type=int, default=None, help="trainings running at once per GPU (default: the set's)")
