@@ -242,9 +242,8 @@ EXPLAINER = {
         "sums. Each second-round sum adds up a cut in a particle's pT and distance from the axis over a fixed pT-rank "
         "range, and moving particles outward changes the largest one (S29, which tracks the pT-weighted squared distance "
         "from the axis) by the amount its fitted cut predicts. Rotating the jet about its axis changes a few percent of "
-        "decisions and moves some sums, so these quantities are close to, not exactly, functions of distance alone. A later "
-        "statistical check (R2) found that fewer of the sums than this page lists as rotation-insensitive stay below the "
-        "threshold under every rotation and reflection; the page's list holds for the 180° rotation only."
+        "decisions and moves some sums, so these quantities are close to, not exactly, functions of distance alone: five "
+        "sums stay below a tenth of their spread under every rotation and reflection, ten under the 180° rotation only."
     ),
     'A9_EXPLAINER': (
         "Sums over particles can be read linearly from the network's pooling layers, mass and girth from the same or "
@@ -298,9 +297,8 @@ EXPLAINER = {
         "distance to the axis at its unshifted value removes almost all of this response, and under real mass changes the "
         "per-particle inputs carry most of the change in the internal mass while the pair features carry a small, nonzero "
         "part of the decision change. So ParT's mass sense comes mainly from positions measured from the axis, as in "
-        "JEDI-linear. The page's notes that statistics are pending and that an unusual ParT_kin row may be an input-range "
-        "effect are superseded: the statistics (P2v) show both route shares differ from zero and from one, the routes do "
-        "not add for mass decreases, and that row responds through the pair-mass feature, not through the input range."
+        "JEDI-linear. The statistics (P2v) show both route shares differ from zero and from one, the routes do not add for "
+        "mass decreases, and an unusual ParT_kin row (pT × 0.8) responds through the pair-mass feature."
     ),
     'D4_EXPLAINER': (
         "Because the networks measure spread about the given axis, recomputing particle positions about another standard "
@@ -310,7 +308,7 @@ EXPLAINER = {
         "cross from the W window into the Z window, while top jets mostly keep their call because the top-score neurons "
         "cover a wide mass range. Retraining with the axis on the hardest particle does not remove the effect: later tests "
         "(X7) show those models follow the same formula about their own axis together with a second, shift-invariant "
-        "spread, so the page's 'much closer to recentred' applies to the axis-jump edit only. Part of any axis change is "
+        "spread. Part of any axis change is "
         "also a shift of the input distribution."
     ),
     'E14_EXPLAINER': (
@@ -396,8 +394,7 @@ EXPLAINER = {
         "JEDI-linear's W jets become Z calls; ParT shows the same behaviour. The total pT and the spread are carried by "
         "separate second-round sums; whether and where the dense layers multiply them is open, part of the response "
         "depends on the shift direction, and the decision uses more than this one mass variable (a real mass change that "
-        "moves the read-out as much sends far fewer W jets to Z). The page's note that JEDI-linear's axis test is running "
-        "is superseded: with the winner-take-all axis it changes about 30 % of decisions."
+        "moves the read-out as much sends far fewer W jets to Z)."
     ),
     'SMALL_EXPLAINER': (
         "A Linformer and a Deep Sets model trained on JEDI-linear's inputs reach its accuracy, while plain transformers "
@@ -405,9 +402,8 @@ EXPLAINER = {
         "accuracy. In all of them the mass is axis-relative, and variables appear over the layers roughly in order of "
         "complexity, partly because an untrained Deep Sets already reads many sums. JEDI-linear's sparse first layer of "
         "pure pT or pure direction cuts does not recur in Deep Sets, and the size of the mass response varies widely "
-        "between architectures and seeds, so those details are specific to a model. The note that longer transformer "
-        "training is running is out of date: a longer-trained transformer was tested, and one of its seeds changes "
-        "decisions under the shift although its mass read-out barely moves."
+        "between architectures and seeds, so those details are specific to a model. A transformer trained for 100 epochs "
+        "was also tested, and one of its seeds changes decisions under the shift although its mass read-out barely moves."
     ),
     'X6_EXPLAINER': (
         "In three other official JEDI-linear checkpoints the same elements recur: first-layer cuts on pT only or direction "
@@ -453,14 +449,13 @@ KEY_RESULT = {
         "with the winner-take-all axis about 30 % for JEDI-linear and 12 % for ParT with all input features, mostly W jets "
         "called Z. The direction of the changes follows each model's own formula, but some changes also occur under a "
         "shift of equal size that keeps the formula fixed, so part of the effect is general sensitivity to inputs unlike "
-        "the training data. The page's note that the JEDI-linear test is running is superseded by this result."
+        "the training data."
     ),
     'The whole trigger network as if-statements': (
         "JEDI-linear's active units, written as nested hinge if-statements ('if Q > t, add a(Q − t)') fitted layer by "
         "layer from physical quantities, form a program that makes the same decision as the network on 94 % of held-out "
         "jets, with no network value inside it, and that follows the network on the jet shift. On fresh jets its accuracy "
-        "is not distinguishable from the network's (the small lead stated here did not hold), and the verification has "
-        "been done. Its variables match the network's internal variables only partly when tested by swapping single values "
+        "is not distinguishable from the network's. Its variables match the network's internal variables only partly when tested by swapping single values "
         "between jets, and standard surrogates such as boosted trees reproduce the decisions with fewer fitted pieces. "
         "Mass-type terms first appear in the dense layers of the fit, which is consistent with, but does not locate, where "
         "the network combines total pT and spread."

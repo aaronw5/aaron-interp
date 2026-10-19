@@ -155,13 +155,13 @@ KEY_RESULTS = [
      'The invariant mass is the same for every choice. The networks\' mass variable is not: for the W jet in the figure the formula $\\sqrt{M_0 M_2}$ gives 81 GeV about the standard axis, 106 GeV about the WTA axis '
      'and 125 GeV about the hardest particle; JEDI-linear\'s own mass read-out (see the glossary) gives 90, 110 and 109 GeV, and its call changes from W to q. On 10,000 JetClass jets, measuring the inputs about the WTA axis changes 11.7 % of ParT_full\'s decisions (accuracy 85.9 → 80.9 %) and 34.1 % of '
      'ParT_kin\'s (74.5 → 56.0 %); the size of the change in ParT_full\'s internal mass (+0.133 in log) matches the $M_0 M_2$ prediction (+0.138). Part of any axis change is a shift away from the '
-     'training data; the formula predicts its direction and size. JEDI-linear under the same test: running (E17).',
+     'training data; the formula predicts its direction and size. JEDI-linear under the same test (E17, 20,000 jets): the WTA axis changes 30.3 % of its calls (accuracy 80.6 → 59.3 %); the hardest-particle axis changes 31.5 % (E17) and 31.0–31.7 % on two fresh samples (X7/X7v).',
      'results/site/X2_axis.png'),
     ('The whole trigger network as if-statements',
      'Every one of JEDI-linear\'s 144 active units was fitted with hinge terms ("if $Q > t$, add $a\\,(Q - t)$"), layer by layer, each layer from the previous layer\'s fitted values and '
      'starting from physical quantities computed from the particles. The resulting program of 6,064 if-statements makes the same decision as the network on 94.0 % of held-out jets '
-     '(94.6 % with half-plane sums as inputs) with 80.72 % accuracy against the network\'s 80.42 %. Read from these fits, mass-type terms carry 0 % of the formula weight in the first '
-     'layers and 13 %, 21 %, 28 % in h4, h5 and the class neurons: the mass is formed in the dense layers. Verification is running.',
+     '(94.6 % with half-plane sums as inputs). Its accuracy was 80.72 % against the network\'s 80.42 % on the first test set; on 17,011 fresh jets it is 0.31 ± 0.17 points below the network (E11v), and R2 measures −0.04 [−0.35, 0.26] points. Read from these fits, mass-type terms carry 0 % of the formula weight in the first '
+     'layers and 13 %, 21 %, 28 % in h4, h5 and the class neurons: the mass is formed in the dense layers. Verified (E11v, R2): no fit/test overlap, the standalone program gives the same calls (94.02 %), and fresh jets give 94.10 % [93.76, 94.42] same call.',
      'results/site/T5_e11_program.png'),
 ]
 
@@ -226,7 +226,7 @@ MASS_EXPLAINER = [
  ('10. Why it matters',
   'For interpretability: the network computes a different formula from the physics one, and the two can only be told apart away from the training data; the formula predicts how the network fails there. '
   'For physics: the jet axis is a convention (summed momentum, winner-take-all, or a seed particle in a trigger). The invariant mass does not depend on it; the networks\' mass variable does. '
-  'With the winner-take-all axis, ParT_full changes 11.7 % of its decisions and ParT_kin 34.1 %; JEDI-linear under the same test is running (E17).', 'results/site/X2_axis.png'),
+  'With the winner-take-all axis, ParT_full changes 11.7 % of its decisions, ParT_kin 34.1 % and JEDI-linear 30.3 % (E17); about the hardest particle JEDI-linear changes 31–32 % (E17, X7/X7v).', 'results/site/X2_axis.png'),
 ]
 
 
@@ -290,7 +290,7 @@ A23_EXPLAINER = [
   'results/site/X5_second_round_objects.png'),
  ('Test: rotate the whole jet',
   'If an object depends only on $r$, rotating the jet around its axis (which keeps every $r$) should not change it. On 10,000 fresh jets, rotations by 45°, 90°, 180° and the two mirror reflections '
-  'move 10 of 17 objects by at most 0.1 of their normal spread (S0, S19, S20, S29, S30, S40, S43, S50, S51, S60); four move 0.1–0.2; three (S52, S56, S62) and the two context-only objects (S31, S58) change '
+  'move 5 of 17 objects by significantly less than 0.1 of their normal spread under every one of these edits (S0, S19, S20, S29, S51; R2, 20,000 jets, 95 % intervals); 10 objects (adding S30, S40, S43, S50, S60) stay below 0.1 only under the 180° rotation; four move 0.1–0.2; three (S52, S56, S62) and the two context-only objects (S31, S58) change '
   'with direction. The rotations change 3.7–4.1 % of the network\'s decisions.', 'results/site/T3_rotation_test.png'),
  ('Test: move particles outward',
   'Moving every particle with $r > 0.15$ outward by 10 % changes S29 by +1.75; the fitted cut predicts +1.80 (slope 0.99). The three-term name "$\\sum p_T r^2 + \\sum r^2$ + soft count" predicts +1.98, '
@@ -329,7 +329,7 @@ B2_EXPLAINER = [
   'Every layer that sits between two sums or after the second sum is fitted at the jet level: $P$, $g$, $S$, $h_4$, $h_5$, $z$. The per-particle layers ($a$, $s$, $u$) are not fitted one by one; their effect enters through the '
   'jet-level sums $P$ and $S$, which are fitted directly. Within a layer, only "live" units are fitted: units that change at least 0.1 % of the network\'s decisions when replaced by their average. '
   'Fitted / total: $P$ 12 / 64, $g$ 11 / 64, $S$ 19 / 64, $h_4$ 54 / 64, $h_5$ 32 / 32, $z$ 16 / 16 (144 units). Most of the others never switch on (for example 50 of 64 in $P$). '
-  'Open point under verification: in the substitution test the units that were not fitted keep the network\'s own values; a skeptic is evaluating the program with those units set to constants, so that no network value enters.', None),
+  'The units that were not fitted keep constant values in the program, so no network value enters; the standalone program makes the same decisions as the substitution test (94.02 %, E11v).', None),
  ('Method (the MARS fit)',
   'Each unit is written as a sum of hinge terms $\\max(0, Q - t)$, $\\max(0, t - Q)$ and products of two, where $Q$ is an input quantity and $t$ a threshold. A hinge is an if-statement: "if $Q > t$, add $a\\,(Q - t)$". '
   'Terms are added one at a time, each time the one that reduces the error most, until held-out accuracy stops improving (at most 30 per unit).', None),
@@ -337,14 +337,14 @@ B2_EXPLAINER = [
   'All 144 live units of JEDI-linear are fitted. The first layer uses physical quantities computed from the particles (sums in rank ranges, $\\sum p_T$, $\\sum p_T r^2$, counts, half-plane sums, and 383 standard jet observables). '
   'Each later layer is fitted on the previous layer\'s fitted values, not on the network\'s activations. The result is one program from particles to class scores; the network\'s own last layer turns the 16 fitted class neurons into scores.', None),
  ('Result',
-  'On 8,848 jets not used for fitting, the program makes the same decision as the network on 94.0 % of jets (94.6 % with half-plane sums as inputs), with 80.72 % accuracy against the network\'s 80.42 %. '
-  'Per class the accuracies agree within 1.6 points. Size: 3,824 terms, 6,064 if-statements, 211 physical inputs. Fits on an untrained network reach $R^2$ 0.08–0.18 from S onward, so the fit quality is a property of the trained weights.', 'results/site/T5_e11_program.png'),
+  'On 8,848 jets not used for fitting, the program makes the same decision as the network on 94.0 % of jets (94.6 % with half-plane sums as inputs), with 80.72 % accuracy against the network\'s 80.42 %; on fresh jets this accuracy lead does not hold (E11v: 0.31 ± 0.17 points below the network; R2: −0.04 [−0.35, 0.26] points). '
+  'Per class the accuracies agree within 1.6 points. Size: 3,824 terms, 6,064 if-statements, 268 physical inputs (E11v; E11 reported 211). Fits on an untrained network reach $R^2$ 0.08–0.18 from S onward, so the fit quality is a property of the trained weights.', 'results/site/T5_e11_program.png'),
  ('What the fits say about the layers',
   'Counting which kinds of quantity each layer\'s formulas use: radial moments dominate the second-round objects (70 % of formula weight); mass terms appear in h4 (13 %) and grow to 28 % at the class neurons; '
   'N-subjettiness, energy correlators and subjet variables stay at 4 % or less everywhere.', 'results/site/F4_e11_evolution.png'),
  ('Checks by a second agent (E11v)',
   'No network value enters the program: with every unfitted unit set to a constant it makes exactly the same decisions (94.02 %). On 17,011 fresh jets it agrees with the network on 94.2 % and its accuracy is 0.3 points lower (80.44 % vs 80.74 %); '
-  'the small accuracy lead seen first does not hold. Background rejection for W jets at 50 % efficiency is 0.70× the network\'s; for the other classes it is within the uncertainty. The 6 % of disagreements are jets where the network itself is close to a tie.', None),
+  'the small accuracy lead seen first does not hold. Background rejection for W jets at 50 % efficiency was 0.70× [0.50, 0.95] the network\'s in E11v and 1.13× [0.96, 1.42] in R2 on 20,000 other fresh jets; only 60 background jets pass the cut, so the W rejection ratio is not resolved. For the other classes it is within the uncertainty. The 6 % of disagreements are jets where the network itself is close to a tie.', None),
  ('The important test: edited jets',
   'Agreement on ordinary jets does not show that the program computes what the network computes. Under the rigid shift of all particles (invariant mass unchanged), the network calls 74.5 % of W jets Z. The nested program calls 77.6 % of them Z, because it builds the mass the same way '
   '(sums of $p_T r^2$ at S, then a product). A formula for the 16 class neurons fitted directly on physics observables, which agrees with the network on 92.5 % of ordinary jets, calls 0.1 % of shifted W jets Z: it uses the invariant mass. '
@@ -367,10 +367,10 @@ C3_EXPLAINER = [
   'We make a real mass change (all angles × $k$, or all pT × $c$) and feed it to ParT through one route at a time: (a) both routes; (b) pair features from the edited jet with every per-particle input from the unedited jet; '
   '(c) per-particle inputs from the edited jet with pair features from the unedited jet. For angles × 1.1 (true mass +9.4 %), ParT_full\'s mass read-out rises by +0.076 in (a), +0.001 in (b) and +0.075 in (c); '
   'W → Z goes from 0.12 to 0.37 in (a), 0.14 in (b) and 0.33 in (c). Over all edits the per-particle route carries 93–101 % of the read-out change and the pair route 1–6 % (ParT_kin 5–6 %); the pair route alone moves 10–21 % of the W → Z change for mass increases and 26–42 % for decreases, '
-  'with almost no change in the read-out. The two routes add up: (b) + (c) matches (a) to within 0.008 in the read-out. One row is unusual: ParT_kin with pT × 0.8 through the pair route alone sends 54 % of W jets to H → bb̄, which is being checked as a possible input-range effect.', 'results/site/T12_part_routes.png'),
+  'with almost no change in the read-out. For mass increases the two routes add up: (b) + (c) matches (a) to within 0.008 in the read-out. For mass decreases they do not (P2v: the pair route alone gives 0.24–0.58 of the logit change and (b) + (c) gives 1.20–1.71 of (a)). One row is unusual: ParT_kin with pT × 0.8 through the pair route alone sends 54 % of W jets to H → bb̄. P2v excluded an input-range effect (no edited pair feature leaves the unedited range; the effect is the same for jets that stay in the 500–1000 GeV pT range); the response goes through the ln m² pair feature: shifting ln m² alone by −0.446 sends 53 % of W jets to H → bb̄, shifting ln kT alone 0.4 %.', 'results/site/T12_part_routes.png'),
  ('What this does and does not show',
   'ParT can compute the invariant mass from its pair features: the pairwise masses $m_{ij}^2$ sum to the jet mass. The shift leaves every pair feature unchanged, so any response to the shift must come through the axis-relative per-particle inputs; the response shows that ParT uses that route. '
-  'Test 2 answers the remaining question: ParT does use the pair route, but for a small part of its response (about a tenth to a fifth of the W → Z change and a few percent of the mass read-out). Its mass sense comes mostly from the per-particle inputs measured from the axis, as in JEDI-linear, which has only that route. Bootstrap intervals and p-values are being computed (P2v).', None),
+  'Test 2 answers the remaining question: ParT does use the pair route, but for a small part of its response (about a tenth to a fifth of the W → Z change and a few percent of the mass read-out). Its mass sense comes mostly from the per-particle inputs measured from the axis, as in JEDI-linear, which has only that route. P2v (fresh rows, 2,000 stratified bootstraps): for mass increases the pair route alone carries 0.10–0.20 of the W − Z logit change and the per-particle route 0.82–0.97; both "share 0" and "share 1" are rejected (Holm p ≤ 0.03).', None),
  ('Why it matters', 'JEDI-linear has only the axis-relative route. ParT has both and its decisions still move when only the axis-relative route changes. The share of each route (P2) decides whether ParT\'s mass is mainly the invariant mass with an axis-dependent part, or mainly the moment mass. The full explanation of the mass variable is in the Paper A tab.', None),
 ]
 
@@ -401,7 +401,7 @@ D4_EXPLAINER = [
  ('Does training with an off-centre axis fix it? (E18, X4)',
   'Deep Sets and the Linformer were retrained with every particle measured from the hardest particle, so the axis is never at the centre during training (accuracy 80.15 % and 80.90 %, close to the originals). '
   'When the axis is moved to the other prong of a W or Z jet (the invariant mass changes by 0.3 %), these models\' mass reading moves only 0.13–0.41 of a real mass change of the predicted size, and their calls change in 6–9 % of jets, against 58–64 % for a real mass change of that size. '
-  'They are neither pure invariant-mass nor pure axis-moment computers (both rejected, p ≤ $10^{-27}$), but much closer to recentred than the networks trained with a centred axis. So the un-recentred mass of JEDI-linear and ParT follows from their training data, where the axis is always the centre. '
+  'They are neither pure invariant-mass nor pure axis-moment computers (both rejected, p ≤ $10^{-27}$). The 0.13–0.41 figure holds for this axis-jump edit only (X7v): evaluated on stored-axis inputs, the same models move Z → W as $\\tfrac12\\Delta\\log(M_0 M_2)$ about their own axis predicts, with a read-out change of 0.16–0.62 of a matched real change, and a translation with that quantity held fixed changes 23–31 % of their calls, so they also read a spread that does not depend on the axis position. '
   'A residual remains: on natural W jets whose hardest particle sits in a soft prong ($z < 0.3$), they call Z 7–22 % of the time, against 1–4 % for the original models.', 'results/site/F11_axis_jump.png'),
  ('Where these axes are used',
   'The standard (E-scheme) axis is the direction of the summed four-momentum and is how anti-$k_T$ jets are usually defined. The winner-take-all recombination scheme was proposed so that the axis is not moved by soft radiation '
@@ -418,7 +418,7 @@ D4_EXPLAINER = [
   'results/site/T10_axis_all.png'),
  ('Dependence on the size of the axis change', 'Left: fraction of changed decisions by how far the new axis is from the stored one, for W/Z jets and for g/q/t jets. Right: the network\'s internal mass change against the $\\sqrt{M_0 M_2}$ prediction.', 'results/site/F6_axis_bins_jedi.png'),
  ('Caveat', 'The networks were trained with one convention, so any other axis is also a change in the input distribution. The formula predicts the direction and size of the mass change.', None),
- ('Why it matters', 'A tagger deployed with a different axis definition than in training changes its decisions by an amount the mass formula predicts; for JEDI-linear a WTA or seed-particle axis changes about 30 % of decisions. Which axis the deployed trigger inputs use is an open question for the user. A follow-up trains a model on inputs about the hardest-particle axis, where the axis is never at the centre, to test whether a network then learns the recentred (invariant) mass (E18).', None),
+ ('Why it matters', 'A tagger deployed with a different axis definition than in training changes its decisions by an amount the mass formula predicts; for JEDI-linear a WTA or seed-particle axis changes about 30 % of decisions. Which axis the deployed trigger inputs use is an open question for the user. Models trained on inputs about the hardest-particle axis, where the axis is never at the centre, are described above (E18, X4, X7v).', None),
 ]
 
 EARLIER_C = [
@@ -446,7 +446,7 @@ SMALL_EXPLAINER = [
   'comparable to JEDI-linear\'s rank windows. Deep Sets (dsets): a per-particle network, a sum over particles, then a dense network; this is JEDI-linear without the context round, so the cut-and-count identity of claim A1 applies to it exactly.', None),
  ('Result',
   'At 64 particles the 2-block Linformer reaches 80.91 ± 0.15 % and Deep Sets 80.73 ± 0.09 %, against JEDI-linear\'s 80.92 %. The plain transformers reach 69–76 %; '
-  'their best epoch is the last one, so longer training is running (100 epochs, width 64). At 32 particles the ranking is the same (Linformer 78.37 %, Deep Sets 77.79 %, JEDI 78.00 %).',
+  'their best epoch is the last one, so a transformer was also trained for 100 epochs (tf-2b-d32: 80.08 %; it is among the X2 models). At 32 particles the ranking is the same (Linformer 78.37 %, Deep Sets 77.79 %, JEDI 78.00 %).',
   'results/site/T7_small_models.png'),
  ('Result of the same tests (X2)',
   'Deep Sets has the exact cut-and-count identity, but its first layer is not sparse: 63–64 of 64 units matter and most mix pT and angle, while JEDI-linear has 13 cuts that are either pT-only or angle-only. '
