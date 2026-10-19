@@ -31,3 +31,4 @@ Auto-resume cron prompt (session cron, 23,53 * * * *, 7-day expiry → re-create
 - 2026-10-17: A/B r5 wf_d4e53fbf-fcc; C r1 wf_c2606c6d-69e; D r1 wf_68571653-bc2 (all stopped on the weekly limit; paused by the user until Mon 2026-10-19 09:00).
 - 2026-10-19: D r1 done (commit b0dc3bd); D r2 wf_53cb1527-b8a (main physics script, first_round 2, seed = D1 review).
 - 2026-10-19: A/B r5 done (commit 949a504); A/B r6 wf_55b49d75-ada (main JEDI script, first_round 6, seed = round-5 review).
+- 2026-10-19: A/B r6 resumed (wf_55b49d75-ada), D r2 resumed (wf_53cb1527-b8a) at 14:04; C r1 done (commit d9b4eb0); C r2 wf_a060c9f5-9eb (main bigmodels script, first_round 2, seed = C1 review). L-GATr training anrunw-ai-c-p5-lgatr2 until ~2026-10-21 05:00 UTC.
