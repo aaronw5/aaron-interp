@@ -1,0 +1,42 @@
+diff --git a/experiments/base_experiment.py b/experiments/base_experiment.py
+index 7657ceb..6e2e1e0 100644
+--- a/experiments/base_experiment.py
++++ b/experiments/base_experiment.py
+@@ -516,7 +516,8 @@ class BaseExperiment:
+         def cycle(iterable):
+             epoch = 0
+             while True:
+-                self.train_loader.sampler.set_epoch(epoch)
++                if hasattr(self.train_loader.sampler, "set_epoch"):
++                    self.train_loader.sampler.set_epoch(epoch)
+                 for x in iterable:
+                     yield x
+                 epoch += 1
+diff --git a/experiments/tagging/jetclassexperiment.py b/experiments/tagging/jetclassexperiment.py
+index 0bcca7d..ac03829 100644
+--- a/experiments/tagging/jetclassexperiment.py
++++ b/experiments/tagging/jetclassexperiment.py
+@@ -133,7 +133,6 @@ class JetClassTaggingExperiment(TaggingExperiment):
+             batch_size=self.cfg.training.batchsize // self.world_size,
+             drop_last=True,
+             num_workers=num_workers["train"],
+-            sampler=train_sampler,
+             **self.loader_kwargs,
+         )
+         val_sampler = torch.utils.data.DistributedSampler(
+@@ -146,7 +145,6 @@ class JetClassTaggingExperiment(TaggingExperiment):
+             batch_size=self.cfg.evaluation.batchsize // self.world_size,
+             drop_last=True,
+             num_workers=num_workers["val"],
+-            sampler=val_sampler,
+             **self.loader_kwargs,
+         )
+         test_sampler = torch.utils.data.DistributedSampler(
+@@ -159,7 +157,6 @@ class JetClassTaggingExperiment(TaggingExperiment):
+             batch_size=self.cfg.evaluation.batchsize // self.world_size,
+             drop_last=False,
+             num_workers=num_workers["test"],
+-            sampler=test_sampler,
+             **self.loader_kwargs,
+         )
+ 

@@ -174,10 +174,42 @@ CLAIM = {
         "Under a 10 % scaling of all angles (a 10 % mass increase), nearly all of the change of ParT's W/Z class-token "
         "neuron comes through changes in where the attention heads look, and almost none through the per-particle feature "
         "path. One attention head attends to the class token for lighter jets and rarely for heavier ones, switching "
-        "between the W and Z mass ranges. This is an earlier result without a rerun. The split here is inside the network "
-        "(attention versus per-particle feature updates), which is not the same as the input-route split of C3, where the "
-        "per-particle inputs measured from the axis carry most of the mass response; how the two fit together has not been "
-        "tested."
+        "between the W and Z mass ranges. This was an earlier result on 400 jets per class. Re-measured at ten times the "
+        "statistics with the corrected input build (P3, P3v), the switching head is confirmed (claim C2a), but the "
+        "attention-dominated split is not: changes in where the heads look account for about a third of the neuron's "
+        "change, and the switching head itself for about 5 % (claim C2b). This claim is kept only as the record of the "
+        "earlier wording."
+    ),
+    'C2a': (
+        "In ParT_full, one attention head of the last class-token layer gives most of its attention to the class token for "
+        "jets lighter than about 87 GeV and almost none for heavier jets, with a switch about 4 GeV wide between the W and "
+        "Z masses; no other head of the class-token stage does this, and the result reproduces on new jets. The switch "
+        "also moves when all particles are shifted off the jet axis at fixed mass, so it follows the network's "
+        "axis-relative mass rather than the invariant mass. What the switch is used for is not known, because it carries "
+        "little of the mass information that reaches the decision (C2b)."
+    ),
+    'C2b': (
+        "When the jet mass is changed, the change of ParT_full's W/Z output unit (n98, a coordinate of the class token "
+        "that is high for W and low for Z) passes almost entirely through the first class-token attention layer, about "
+        "half through one head; the 87 GeV switch head carries about 5 %. Most of the change is in what the particles "
+        "carry, not in where the heads look. A three-unit circuit made of the two heads and n98, with everything else "
+        "replaced, separates W from Z barely above chance (about 52 % against 83 % for the model), but under the same strict "
+        "definition even all 16 heads reach only 63 %, so a small circuit that works on its own has not been found yet."
+    ),
+    'C5': (
+        "ParticleNet, a graph network without attention trained on the same JetClass inputs, also calls more true W jets "
+        "Z when every particle is moved 0.06 rad off the jet axis at fixed invariant mass: from 12 % to 26–28 %, about "
+        "two-thirds of ParT's increase. The response enters through each particle's distance to the axis and passes "
+        "through terms that read each particle on its own; the neighbour graphs do not carry it, and rotations about the "
+        "axis that keep every distance do not reproduce it. Whether the axis-relative input format causes this, or both "
+        "networks learned a similar solution, has not been tested."
+    ),
+    'C6': (
+        "No trained L-GATr, a tagger built to respect the symmetries of special relativity, is published for JetClass, so "
+        "one is being trained with the authors' code and settings. An early checkpoint ignores a rotation of all "
+        "particles about the beam, as it must by construction, while a real mass change still moves its W/Z calls. The "
+        "test that decides the claim, edits that keep the invariant mass but change the spread of particles about the "
+        "axis, will run on the final checkpoint; until then the claim is untested."
     ),
     'C3': (
         "ParT, which also receives shift-invariant pair features from which the invariant mass could be computed, still "
@@ -343,6 +375,28 @@ EXPLAINER = {
         "which no fitted program reproduces. A compact formula for the network's axis behaviour was not found with this "
         "fitter."
     ),
+    'P3_EXPLAINER': (
+        "One attention head in ParT_full's last class-token layer moves its attention off the class token as the jet mass "
+        "passes 87 GeV, and no other head does this; the result reproduces on new jets. Under a real change of jet mass, "
+        "however, this head carries only about 5 % of the change in the W/Z output unit, while the heads of the first "
+        "class-token layer carry nearly all of it, about half through one head. The circuit of these two heads and the "
+        "output unit, kept alone, separates W from Z barely above chance; how the first layer's output is turned into the "
+        "W/Z unit is still open."
+    ),
+    'P4_EXPLAINER': (
+        "Moving every particle 0.06 rad away from the jet axis leaves the jet mass unchanged, yet ParticleNet then calls "
+        "26–28 % of true W jets Z instead of 12 %, about two-thirds of ParT's increase. In both networks the change "
+        "enters through each particle's distance to the axis and passes through terms that read each particle on its "
+        "own, not through the neighbour graphs; rotations that keep every distance do not reproduce it. So the response is "
+        "not specific to attention; whether the input format causes it is tested next with L-GATr."
+    ),
+    'P5_EXPLAINER': (
+        "No trained L-GATr is published for JetClass, so one is being trained with the authors' code and settings; the run "
+        "is healthy and should finish around 21 October. An early checkpoint ignores a rotation of all particles about "
+        "the beam, which strongly moves ParT's W/Z calls, but this holds by construction and says nothing yet about how "
+        "L-GATr estimates mass. The deciding test, edits that keep the invariant mass but change the spread about the "
+        "axis, is pre-registered for the final checkpoint."
+    ),
     'C3_EXPLAINER': (
         "ParT responds to a shift of all particles that keeps the invariant mass fixed, although its pair features would "
         "allow it to compute the invariant mass: ParT_full (ParT with all input features) turns more W jets into Z calls "
@@ -428,10 +482,11 @@ EXPLAINER = {
     'EARLIER_C': (
         "Earlier ParT results: the fixed pair-geometry bias explains most of the attention scores and can be replaced by "
         "a fitted formula with little accuracy loss, and under a mass increase most of the change of the W/Z class-token "
-        "neuron comes through changes in attention, with one head switching between the W and Z mass ranges. These have "
-        "no independent rerun or intervals. Later tests (C3) show that ParT's mass response enters mainly through "
-        "per-particle positions measured from the axis; how that input route relates to the attention result has not been "
-        "tested."
+        "neuron comes through changes in attention, with one head switching between the W and Z mass ranges. The "
+        "attention result was re-measured at ten times the statistics (P3, P3v): the switching head is confirmed, but "
+        "changes in attention account for only about a third of the neuron's change and the switching head for about 5 %; "
+        "most of the change is carried by what the particles pass through the first class-token layer. The pair-bias "
+        "result (C1) has no independent rerun."
     ),
     'EARLIER_D': (
         "Earlier edits: JEDI-linear tags W, Z and top mainly by mass windows plus total pT and does not check for a W "

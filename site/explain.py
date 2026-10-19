@@ -104,6 +104,10 @@ CLAIMS = {
     background='ParT\'s pair features depend only on differences between particles, so they do not change under the shift. Its per-particle inputs include Δη, Δφ and ΔR measured from the stored axis; those do change.',
     motivation='Tests whether the un-recentred mass is specific to JEDI or appears in a large transformer that also has shift-invariant pair inputs.'),
 'C4': dict(plain='Run the "variables over layers" test on ParT\'s blocks.', background='See A9.', motivation='Cross-architecture version of A9.'),
+'C2a': dict(plain='One attention head near the end of ParT stops attending to the class token once the jet mass passes 87 GeV, between the W (80 GeV) and Z (91 GeV) masses; no other head of that stage does this.', background='ParT ends with two "class-attention" blocks in which a learned class token collects information from the particles through 16 heads; each head also gives part of its attention to the class token itself.', motivation='Step 2 of the Paper C thesis, re-measured at 10× the earlier statistics with the corrected input build.'),
+'C2b': dict(plain='The mass information that reaches ParT\'s W/Z output unit goes through the first class-attention block, about half through one head; the 87 GeV switch head carries only about 5 % of it.', background='Measured by holding one head\'s output at its unedited value while the jet mass is changed, and counting how much of the output unit\'s change disappears.', motivation='Step 3 of the Paper C thesis: which units carry the mass into the decision.'),
+'C5': dict(plain='ParticleNet, a graph network with no attention, also changes its W/Z calls when all particles are shifted relative to the jet axis at fixed mass, through the same input as ParT (each particle\'s distance to the axis).', background='ParticleNet groups each particle with its nearest neighbours in (Δη, Δφ) and reads the differences between them, which a rigid shift does not change; it also reads each particle\'s own features.', motivation='Tests whether the axis-relative mass response of C3 is specific to ParT\'s attention.'),
+'C6': dict(plain='A network built to respect relativity (L-GATr) reads four-momenta, not offsets from a stored axis; the plan is to test whether it responds to mass-preserving changes of the axis spread.', background='No trained L-GATr is published for JetClass, so one is being trained with the authors\' code and settings.', motivation='The contrast model that decides whether the input format causes the axis response (C3, C5).'),
 'D1': dict(plain='JEDI tags W/Z/top mainly with mass windows plus total pT; it does not check that a top jet contains a W.', background='Physics edits from the earlier study.', motivation='Physics audit.'),
 'D2': dict(plain='ParT identifies b-jets by counting displaced tracks rather than by their displacement; it uses lepton isolation; it does not use π⁰ → γγ pairs or the dead cone.', background='Physics edits from the earlier study (400 jets per class).', motivation='Physics audit.'),
 'D4': dict(
@@ -374,6 +378,54 @@ C3_EXPLAINER = [
  ('Why it matters', 'JEDI-linear has only the axis-relative route. ParT has both and its decisions still move when only the axis-relative route changes. The share of each route (P2) decides whether ParT\'s mass is mainly the invariant mass with an axis-dependent part, or mainly the moment mass. The full explanation of the mass variable is in the Paper A tab.', None),
 ]
 
+P3_EXPLAINER = [
+ ('Question', 'Does ParT_full\'s class-attention head b2h8 act as a W/Z mass switch, and does it carry the jet mass into the W/Z coordinate $z_{97}$ ("n98") of the class token? What does the circuit {b2h8, b1h3, n98} score when it is kept alone?', None),
+ ('Background',
+  'ParT ends with two class-attention blocks (b1, b2), each with 8 heads. A learned class token reads the particle embeddings only through the 16 head context vectors $c_h=\\sum_p a_{hp} v_{hp}$, where $a_{hp}$ is head $h$\'s attention to particle $p$ (the class token itself is $p=0$) and $v_{hp}$ the value vector. Its final value $z$ gives the class scores through $\\ell = zW + b$. '
+  'Earlier fits (G21–G22, 400 jets per class, an η build that mirrored jets with $\\eta<0$) suggested that b2h8 turns its attention away from the class token as the mass passes 85 GeV and that this lowers $z_{97}$.', None),
+ ('Method',
+  'Samples: 2,000 jets per class plus 10,000 W and 10,000 Z jets, random rows (seed 31), corrected build. '
+  'Switch: b2h8\'s class-token share $a_{h0}$ in 5 GeV mass bins, fitted with $s(m)=s_{lo}+\\frac{s_{hi}-s_{lo}}{1+e^{(m-m_{50})/w}}$; span compared over all 16 heads (Holm). '
+  'Edits: all angles $\\times k$ (mass $\\times k$) and a rigid $\\phi$ shift of 0.06 rad (mass unchanged). '
+  'Route: for a head set $G$, the removal share $R_G = 1-\\overline{\\Delta z_{97}[c_G \\leftarrow c_G^{\\rm unedited}]}/\\overline{\\Delta z_{97}}$ ($R_{\\rm all\\,16}=1$ by construction); exact split $\\Delta z_{97}=\\Delta_{\\rm attn}+\\Delta_{\\rm value}+\\Delta_{\\rm int}$. '
+  'Literal circuit: keep only the named heads and neurons; every other class-stage unit and the other 127 class-token coordinates come from one random donor jet; particle blocks intact; compared with 100 random circuits of the same size.', None),
+ ('Result',
+  'Switch: $m_{50}=87.1$ GeV [86.8, 87.4], width 4.3 GeV, share 0.86 → 0.08; span 82 points against at most 16 for every other head (fresh rerun: 86.6 GeV). The share also drops by 0.17 under the $\\phi$ shift that keeps the mass fixed. '
+  'Route (verifier, angles $\\times 1.1$): $R_{\\rm b2h8}=0.046$, $R_{\\rm b1h3}=0.47$, all eight block-1 heads 0.99, block 2 0.06. Attention re-weighting is 0.34 of $\\Delta z_{97}$ and the value change 0.68 (G21b had found attention 0.96). '
+  'Circuit: {b2h8, b1h3, n98} gives 50–54 % W/Z accuracy (random circuits 49.7 %, full model 83 %, ParT_full 85.9 % 10-class on the P1 sample). Under the same strict definition all 16 heads + n98 give 63 %; n98 read from an intact class stage gives 72 %.', 'results/part/p3_wz_circuit.png'),
+ ('Checks',
+  'The re-implemented class stage reproduces the logits to $|\\Delta\\ell|<10^{-5}$. Fresh files and seeds (verifier) reproduce the switch and the shares. P3\'s first route metric (a resample slope between different jets) gave all 16 heads only 0.12–0.15 although they carry the whole input, so it is diluted and was replaced by $R_G$. Particle-block heads 4 and 8 remove 0.26 on W jets against 0.13 for random block-stratified sets ($p=0.016$), but are not separated on Z jets or under the $\\phi$ shift.', None),
+ ('Why it matters', 'The switch exists but the decision does not go through it: the mass reaches the W/Z coordinate through the first class-attention block. Thesis step 3 is rewritten (claims C2a, C2b), and literal-circuit scores are reported together with the ceiling the strict definition imposes (63 %).', None),
+]
+
+P4_EXPLAINER = [
+ ('Question', 'ParT\'s sense of jet mass moves when every particle is shifted relative to the jet axis at fixed invariant mass (C3). Does ParticleNet, a graph network with no attention trained on the same inputs, do the same, and through which input?', None),
+ ('Background',
+  'JetClass gives each particle its offsets from the jet axis, $\\Delta\\eta_i$, $\\Delta\\phi_i$, and $\\Delta R_i=\\sqrt{\\Delta\\eta_i^2+\\Delta\\phi_i^2}$. A rigid shift $\\Delta\\phi_i\\to\\Delta\\phi_i+\\delta$ leaves $m^2=(\\sum_i p_i)^2$ unchanged but changes the axis moment $M_2=\\sum_i p_{T,i}\\Delta R_i^2$; a network that estimates mass as $\\sqrt{M_0M_2}$ ($M_0=\\sum_i p_{T,i}$) predicts $\\Delta\\log\\hat m=\\tfrac12\\Delta\\log(M_0M_2)\\approx0.073$ at $\\delta=0.06$. '
+  'ParticleNet mixes particles by EdgeConv on a $k$-nearest-neighbour graph: $x_i\'=\\mathrm{ReLU}\\big(W_{sc}x_i+\\tfrac1k\\sum_{j\\in\\mathcal N(i)}h(h_\\Phi(x_i)+h_\\Theta(x_j-x_i))\\big)$. The first graph is built on $(\\Delta\\eta,\\Delta\\phi)$, so it and $x_j-x_i$ of the shifted coordinates do not change under a rigid shift.', None),
+ ('Method',
+  'Official ParticleNet_full and _kin weights; ParT on the same 10,000 jets (1,000 per class; three samples). Edits: $\\delta=0.06$ in $\\phi$, a random direction of the same size, angles $\\times1.1$ (real mass +9.9 %). Metrics: true-W → Z rate, $\\Delta(\\ell_W-\\ell_Z)$, and a ridge read-out of $\\log m$ calibrated against a matched real mass change. '
+  'Routes: feed the edit through one input group or one layer-1 term at a time (or keep it unedited), and fix the kNN graphs. Controls: ΔR-keeping rotations $(\\Delta\\eta,\\Delta\\phi)\\to R_\\alpha(\\Delta\\eta,\\Delta\\phi)$ and the mirror $\\Delta\\phi\\to-\\Delta\\phi$; re-runs for float noise.', None),
+ ('Result',
+  'True W jets called Z: ParticleNet_full 12 → 28 % (fresh rows 12 → 26 %), ParT_full 12 → 31 % (33 %); ParticleNet_kin 18 → 27–29 %, ParT_kin 16 → 36–37 %. The calibrated read-out moves by 0.62–0.71 of the $\\sqrt{M_0M_2}$ prediction (0 and 1 both excluded). Fed alone, the edited $\\Delta R$ gives 0.94–1.41 of the response; fed unedited it leaves at most 0.06. Fixing all graphs keeps 0.96–1.01. In layer 1 the per-particle shortcut $W_{sc}x_i$ alone gives 0.85–1.05, the centre term 0.15–0.30, the edge term $x_j-x_i$ at most 0.10.', 'results/particlenet/p4_wz_shift.png'),
+ ('Where it enters', 'Share of the response carried by each input group and layer-1 term.', 'results/particlenet/p4_routes.png'),
+ ('Checks',
+  'The split forward pass equals weaver\'s own forward exactly; re-running unchanged inputs changes no call; accuracy 84.6 % matches the released 84.4 %. A rotation by 0.3 rad that keeps every $\\Delta R_i$ changes W → Z by −0.5 to +0.8 points in all four models (Holm $p=1$). The mirror needs charge and $d_0$ flipped with $\\Delta\\phi$ in the full models (then +1.7 / +1.9 points). The layer-1 graph is unchanged by construction; the measured graph result is for layers 2–3.', None),
+ ('Why it matters', 'The non-invariant, axis-relative mass response is not specific to attention: a graph network on the same inputs shows about two-thirds (full) to one-half (kin) of ParT\'s W → Z increase through the same input (claim C5). Whether the input format causes it, or both networks learned a similar solution, needs a model without axis-relative inputs (L-GATr, C6).', None),
+]
+
+P5_EXPLAINER = [
+ ('Question', 'Can a network built to respect the symmetries of special relativity (L-GATr) serve as the contrast model for the axis-relative mass response (C3, C5)?', None),
+ ('Background',
+  'L-GATr represents each particle\'s four-momentum $p_i=(E,p_x,p_y,p_z)$ as a multivector and uses only Lorentz-equivariant layers; reference tokens (the beam directions and the time direction $(1,0,0,0)$) reduce the symmetry to rotations about the beam. A rigid rotation $\\phi_i\\to\\phi_i+\\delta$ is then an exact symmetry, $f(R_\\delta p)=f(p)$, and leaves $m^2$ unchanged; with the stored axis held fixed it is the same edit that raises $M_2$ for ParT.', None),
+ ('Method',
+  'No published JetClass weights (checked 2026-10-19), so L-GATr is trained with the authors\' code and settings (12 blocks, 1.08 M parameters, 200k iterations) on 2M jets from randomly drawn files. On an early checkpoint, 10,000 test jets: a $\\phi$ rotation of 0.06, an $\\eta$ shift and a longitudinal boost of 0.06, and a real mass change (angles $\\times1.1$, $\\Delta\\log m=+0.094$); noise floor from reordering jets within batches.', None),
+ ('Result',
+  'Checkpoint at 2.5 % of training (accuracy 79.2 %): the rotation changes 0.01 % of calls (ParT: true-W → Z 12 → 31 %); $\\eta$ shift and boost 0.5 %; the real mass change moves W → Z from 17.9 to 42.6 %.', None),
+ ('Checks', 'Random-init network: rotation 0.00 %; accuracy on this sample equals the run\'s own validation accuracy (79.2 %).', None),
+ ('Why it matters', 'The rotation result holds by construction, so it does not show how L-GATr estimates mass. The pre-registered test on the final checkpoint uses edits that keep the invariant mass but change $M_2$ and are not symmetries: an invariant-mass reader predicts a read-out ratio near 0, an axis-moment reader 0.7–1.4 as in ParT.', None),
+]
+
 D4_EXPLAINER = [
  ('Question', 'Does the networks\' way of computing the mass make them depend on how the jet axis is defined?', None),
  ('Background',
@@ -425,9 +477,10 @@ EARLIER_C = [
  ('C1: ParT\'s attention is mostly a fixed formula of pair geometry',
   'Each attention score in ParT is a learned content term plus a "pair bias" computed from the pair features. The pair bias alone explains a median 79 % of the variance of the scores. A fitted formula of four pair features '
   'replaces the pair bias with 85.0 % accuracy against 85.4 %. Attention from the pair bias alone keeps 69.4 %, from the content term alone 40.2 %.', None),
- ('C2: the mass enters ParT through the attention',
+ ('C2 (v1, 2026-10-16): the mass enters ParT through the attention',
   'Under a 10 % angle scaling (a 10 % mass increase) the W/Z neuron changes by −0.478 of its spread; −0.458 of that comes from changes in where the heads attend, −0.019 from the per-particle features. '
-  'One head (b2h8) attends to the class token 87 % of the time at 60–65 GeV and 7 % above 105 GeV, switching between the W and Z masses.', None),
+  'One head (b2h8) attends to the class token 87 % of the time at 60–65 GeV and 7 % above 105 GeV, switching between the W and Z masses. '
+  'Re-measured in P3/P3v (2026-10-19, 10× statistics, corrected build): the switch reproduces (87 GeV; claim C2a), but the attention re-weighting is 0.34 of the neuron change and the value change 0.68, and b2h8 carries 3–5 % of it (claim C2b).', None),
 ]
 EARLIER_D = [
  ('D1: JEDI-linear and known physics (earlier edits)',
@@ -889,6 +942,9 @@ PAPER_EXPLAINERS = {
           ('Result explained: the if-statement program vs standard surrogates of the same size (claims B3, B4; B4)', B4_EXPLAINER, False),
           ('Result explained: a 50-term formula on axis-relative vs invariant observables under shift and re-axis edits (claims B3, B5c; B5)', B5_EXPLAINER, False)],
     'c': [('Result explained: ParT\'s mass comes mostly through the axis-relative inputs, not the pair features (claim C3)', C3_EXPLAINER, True),
+          ('Result explained: the 87 GeV switch head and the route of the mass into the W/Z neuron; the literal circuit kept alone (claims C2a, C2b; P3, P3v)', P3_EXPLAINER, False),
+          ('Result explained: ParticleNet shares the axis-relative mass response through ΔR (claim C5; P4, P4v)', P4_EXPLAINER, False),
+          ('Result explained: L-GATr as the contrast model, training and symmetry checks (claim C6; P5)', P5_EXPLAINER, False),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
           ('Result explained: the axis-convention response in both directions, with invariant and rotation controls (claims D4, A12; X7)', X7_EXPLAINER, False),
