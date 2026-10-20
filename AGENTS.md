@@ -62,6 +62,9 @@ then big models (ParT, ParticleNet, L-GATr). Target venue: ICML or another top v
   description of whatvit is and what you did and the result"; "Also for claims that are in progress."
 - 2026-10-17: "Should explain and motivate everything", including the physics and its significance, with images. "Should write
   math in latex form or markdown on documents."
+- 2026-10-20: "Make sure everything is described very well also." Every entry says concretely what was edited, what was held
+  fixed and why, what the control is, what each number means in words; every symbol, acronym and metric is defined at first use and
+  added to the site glossary; units are named by what they compute; one or two sentences on the physics meaning.
 - 2026-10-17: "For each result you should at least write a conclusion description of what the result is in plain terms." Label it
   just "Conclusion" (user: not "conclusion in plain terms"). 2–4 sentences: what was found, what it means, what is uncertain;
   at most two numbers; unit IDs only with what they compute. Stored in `site/conclusions.py`.
