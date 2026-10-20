@@ -10,6 +10,11 @@ padded rows are then set to 0 and a mask is passed to the model.
 --axis hardest (E18): before normalisation every real particle's (deta, dphi) is re-measured about the hardest particle
 (slot 0 -> (0, 0); dphi wrapped to [-pi, pi); padded rows stay 0; pT unchanged), for train, dev and test jets alike; the
 default normalisation file is then norm_stats_axhard.json (made by train/axis_stats.py with JEDI's procedure).
+--recentre (X9w, opt-in): before normalisation every real particle's (deta, dphi) is re-measured about the jet's pT-weighted
+centroid c = sum_i pT_i (deta_i, dphi_i) / sum_i pT_i over the real particles of the first N slots (train, dev and test jets);
+normalisation file unchanged (norm_stats.json).
+--aug A (X9w, opt-in, A > 0): training jets only: every real particle of a jet translated by the same c = |c| (cos t, sin t),
+|c| ~ U(0, A) rad, t ~ U(0, 2 pi), drawn per jet each time the jet is batched (after recentring when both are set).
 Held-out split for early stopping: splits.npz['dev'] (indices into the train archive) when present, else the last 5 %
 of the train archive. Training uses the rest of the train archive.
 
@@ -79,11 +84,25 @@ def recentre_hardest(raw, mask):
     return torch.cat([raw[..., :1], d], dim=-1)
 
 
+def recentre_centroid(raw, mask):
+    """(B, N, 3) raw -> (deta, dphi) about the pT-weighted centroid of the real particles; padded rows stay 0 (X9w)."""
+    m = mask.unsqueeze(-1).to(raw.dtype); pt = raw[..., :1] * m
+    c = (pt * raw[..., 1:3]).sum(1, keepdim=True) / pt.sum(1, keepdim=True).clamp(min=1e-12)
+    return torch.cat([raw[..., :1], (raw[..., 1:3] - c) * m], dim=-1)
+
+
+def augment_translate(raw, mask, amax):
+    """rigid translation of the real particles of each jet by |c| ~ U(0, amax), direction ~ U(0, 2 pi) (X9w)."""
+    B = raw.shape[0]; r = torch.rand(B, device=raw.device) * amax; t = torch.rand(B, device=raw.device) * (2 * math.pi)
+    c = torch.stack([r * torch.cos(t), r * torch.sin(t)], -1)[:, None, :] * mask.unsqueeze(-1).to(raw.dtype)
+    return torch.cat([raw[..., :1], raw[..., 1:3] + c], dim=-1)
+
+
 class GPUData:
     """Whole (truncated) archive on the device as float16; batches are (re-centred and) normalised on the fly."""
 
-    def __init__(self, x_raw, y, shift, scale, device, axis="stored"):
-        self.axis = axis
+    def __init__(self, x_raw, y, shift, scale, device, axis="stored", recentre=False, aug=0.0):
+        self.axis = axis; self.recentre = recentre; self.aug = aug
         self.x = torch.from_numpy(x_raw).to(device)  # (M, n, 3) float16
         self.y = torch.from_numpy(y).to(device)
         self.shift = torch.tensor(shift, dtype=torch.float32, device=device)
@@ -104,6 +123,10 @@ class GPUData:
         raw = self.x[idx].float()
         if self.axis == "hardest":
             raw = recentre_hardest(raw, raw[..., 0] > 0)
+        if self.recentre:
+            raw = recentre_centroid(raw, raw[..., 0] > 0)
+        if self.aug > 0:
+            raw = augment_translate(raw, raw[..., 0] > 0, self.aug)
         return raw
 
 
@@ -197,6 +220,8 @@ def main():
     ap.add_argument("--no_final_ln", action="store_true", help="drop the LayerNorm after the last block")
     ap.add_argument("--axis", choices=["stored", "hardest"], default="stored",
                     help="stored: (deta, dphi) as in the archive (jet axis); hardest: re-measured about the hardest particle")
+    ap.add_argument("--recentre", action="store_true", help="X9w: (deta, dphi) about the pT-weighted centroid (all jets)")
+    ap.add_argument("--aug", type=float, default=0.0, help="X9w: max rigid translation (rad) of the training jets; 0 = off")
     ap.add_argument("--norm_file", default="", help="default: norm_stats.json (stored) / norm_stats_axhard.json (hardest)")
     ap.add_argument("--data_dir", required=True)
     ap.add_argument("--out", required=True)
@@ -249,10 +274,11 @@ def main():
     if args.shuffle_labels:  # X8 null: training labels permuted once (dev / test labels untouched)
         y_tr = y_tr[np.random.default_rng(args.seed).permutation(len(y_tr))]
         log(f"shuffle_labels: {len(y_tr)} training labels permuted with np.random.default_rng({args.seed})")
-    train = GPUData(x_tr, y_tr, shift, scale, device, axis=args.axis)
+    assert not (args.recentre and args.axis == "hardest"), "--recentre and --axis hardest are exclusive"
+    train = GPUData(x_tr, y_tr, shift, scale, device, axis=args.axis, recentre=args.recentre, aug=args.aug)
     del x_tr
     x_va, y_va = load_archive(args.data_dir, "train", args.n, rows=dev_idx)
-    val = GPUData(x_va, y_va, shift, scale, device, axis=args.axis)
+    val = GPUData(x_va, y_va, shift, scale, device, axis=args.axis, recentre=args.recentre)
     del x_va
     # fixed random subset of the held-out jets for the dead-unit count (the dev rows are not in random class order)
     dead_rows = np.sort(np.random.RandomState(12345).choice(len(val), size=min(args.dead_jets, len(val)), replace=False))
@@ -308,7 +334,8 @@ def main():
                                      "wrapped to [-pi, pi), padded rows stay 0, pt unchanged (train, dev and test)"),
                     normalisation="(x - shift) / scale per feature, then padded rows (raw pt == 0) set to 0",
                     norm_file=norm_file, norm_procedure=norm_all.get("_procedure", "JEDI-linear norm_stats.json"),
-                    shift=shift, scale=scale, mask="raw pt > 0", input_check=input_check),
+                    shift=shift, scale=scale, mask="raw pt > 0", input_check=input_check,
+                    recentre=bool(args.recentre), aug=args.aug),
         split=dict(val=split_src, n_train=len(train), n_val=len(val), test="val archive",
                    max_train=args.max_train, shuffle_labels=bool(args.shuffle_labels), dead_unit_jets=f"{len(dead_rows)} fixed random rows of val (seed 12345)"),
         training=dict(l1_phi1=args.l1_phi1, zero_thr=args.zero_thr, optimizer="AdamW", lr=args.lr, weight_decay=args.wd, schedule="linear warmup then cosine to 0",
@@ -391,7 +418,7 @@ def main():
         n_te = len(np.load(os.path.join(args.data_dir, "val_ptetaphi_f16.npy"), mmap_mode="r"))
         rows = np.sort(np.random.RandomState(args.seed + 1).choice(n_te, size=min(args.max_test, n_te), replace=False))
     x_te, y_te = load_archive(args.data_dir, "val", args.n, rows=rows)
-    test = GPUData(x_te, y_te, shift, scale, device, axis=args.axis)
+    test = GPUData(x_te, y_te, shift, scale, device, axis=args.axis, recentre=args.recentre)
     del x_te
     probs, y, te_loss, te_acc = predict(model, test)
     rep = test_report(probs, y)

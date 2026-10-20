@@ -29,6 +29,13 @@ Beta (HGQ arm; the official schedule ramps 2e-8 -> 3e-7 over 2,000 epochs and it
   fused-l1-kernel zero fraction z: target z*(e) = 0.896 * clip((e - 5) / (ramp_end - 5), 0, 1); beta *= 1.3 if z < z* - 0.02,
   beta /= 1.3 if z > z* + 0.02; start 2e-8, clipped to [1e-9, --beta_max]. --beta_mode official: the official piecewise schedule
   compressed in time by --epochs / 3000. Float arm: beta 0, EBOPs off.
+X9w opt-in flags (defaults reproduce X12 exactly):
+  --recentre  raw (deta, dphi) of the real particles (pT > 0) re-measured about the pT-weighted centroid of the first 64 slots
+              before normalisation, for train, dev and test jets (padding stays 0 raw, i.e. -shift/scale normalised as before).
+  --aug A     (A > 0) training jets only: every real particle of a jet translated by the same c, |c| ~ U(0, A) rad, direction
+              ~ U(0, 2 pi), drawn per jet and redrawn every epoch (rng seed + 1000), after recentring when both are set; the
+              normalised training array is rebuilt each epoch and model.fit runs one epoch per call (initial_epoch = e, so the
+              lr / beta callbacks see the same epoch index).
 Writes to --out: ckpt/epoch_<e>.keras (every --save_every epochs, plus --keep_epochs and the last), model.keras (last epoch),
   log.json (per epoch: losses, accuracies, lr, beta, EBOPs, l1 zero fraction, qs1 zero-bit slot fraction, seconds),
   test.json / test_probs.npy (last epoch, 260,000 test jets), test_e<k>.json / test_probs_e<k>.npy for each --keep_epochs k,
@@ -61,6 +68,28 @@ def load(data_dir, prefix, rows=None, n=64, chunk=50000):
         sel = (rows >= s) & (rows < s + chunk)
         if sel.any(): out[sel] = np.asarray(xm[s:s + chunk, :n, :])[rows[sel] - s]
     return out, y[rows]
+
+
+def recentre16(raw, chunk=50000):
+    """float16 raw (M, n, 3) -> float16 with the real particles' angles about the pT-weighted centroid (X9w)"""
+    out = np.empty(raw.shape, np.float16)
+    for s in range(0, len(raw), chunk):
+        x = np.asarray(raw[s:s + chunk], np.float32); real = x[..., 0] > 0; pt = np.where(real, x[..., 0], 0).astype(np.float64)
+        c = (pt[..., None] * x[..., 1:3]).sum(1) / np.maximum(pt.sum(1), 1e-12)[:, None]
+        x[..., 1:3] = np.where(real[..., None], x[..., 1:3] - c[:, None, :].astype(np.float32), x[..., 1:3]); out[s:s + chunk] = x.astype(np.float16)
+    return out
+
+
+def augment_normalise(raw, shift, scale, rng, amax, chunk=50000):
+    """per-jet rigid translation of the real particles (|c| ~ U(0, amax), uniform direction), then (x - shift) / scale (X9w)"""
+    out = np.empty(raw.shape, np.float16); sh, sc = np.float32(shift), np.float32(scale)
+    r = rng.uniform(0, amax, len(raw)); th = rng.uniform(0, 2 * np.pi, len(raw))
+    for s in range(0, len(raw), chunk):
+        x = np.asarray(raw[s:s + chunk], np.float32); real = x[..., 0] > 0; e = slice(s, s + chunk)
+        x[..., 1] += np.where(real, (r[e] * np.cos(th[e]))[:, None], 0).astype(np.float32)
+        x[..., 2] += np.where(real, (r[e] * np.sin(th[e]))[:, None], 0).astype(np.float32)
+        out[s:s + chunk] = ((x - sh) / sc).astype(np.float16)
+    return out
 
 
 def normalise(raw, shift, scale, chunk=50000):
@@ -146,6 +175,9 @@ def main():
     ap.add_argument('--save_every', type=int, default=20); ap.add_argument('--keep_epochs', default='60')
     ap.add_argument('--max_train', type=int, default=0); ap.add_argument('--max_test', type=int, default=0)
     ap.add_argument('--device', default='gpu:0')
+    ap.add_argument('--recentre', action='store_true', help='X9w: angles about the pT-weighted centroid (all jets)')
+    ap.add_argument('--aug', type=float, default=0.0, help='X9w: max rigid translation (rad) of the training jets; 0 = off')
+    ap.add_argument('--aug_device', default='gpu:0', help='X9w: device of the per-epoch augmented training array')
     a = ap.parse_args()
     import jax, keras, hgq
     jax.config.update('jax_default_matmul_precision', 'tensorfloat32')
@@ -159,9 +191,14 @@ def main():
     dev = np.sort(np.asarray(np.load(os.path.join(a.data_dir, 'splits.npz'))['dev'], np.int64))
     isdev = np.zeros(ntot, bool); isdev[dev] = True; tr = np.flatnonzero(~isdev)
     if a.max_train: tr = np.sort(np.random.RandomState(a.seed).choice(tr, a.max_train, replace=False))
-    xr, ytr = load(a.data_dir, 'train', tr); Xtr = normalise(xr, shift, scale); del xr
-    xr, yva = load(a.data_dir, 'train', dev); Xva = normalise(xr, shift, scale); del xr
-    perm = np.random.RandomState(a.seed).permutation(len(ytr)); Xtr, ytr = Xtr[perm], ytr[perm]
+    prep = recentre16 if a.recentre else (lambda v: v)
+    xr, ytr = load(a.data_dir, 'train', tr); xr = prep(xr)
+    if a.aug > 0: xtr_raw = xr; Xtr = None
+    else: Xtr = normalise(xr, shift, scale); del xr
+    xr, yva = load(a.data_dir, 'train', dev); Xva = normalise(prep(xr), shift, scale); del xr
+    perm = np.random.RandomState(a.seed).permutation(len(ytr)); ytr = ytr[perm]
+    if a.aug > 0: xtr_raw = xtr_raw[perm]
+    else: Xtr = Xtr[perm]
     log(f'data: train {len(ytr)} val {len(yva)}; shift {shift} scale {scale}')
     model = build(a.arm)
     model.compile(optimizer=keras.optimizers.Adam(), loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -175,7 +212,7 @@ def main():
         te = np.sort(np.random.RandomState(a.seed + 1).choice(nte, a.max_test, replace=False))
     else:
         te = None
-    xr, yte = load(a.data_dir, 'val', te); Xte = normalise(xr, shift, scale).astype(np.float32); del xr
+    xr, yte = load(a.data_dir, 'val', te); Xte = normalise(prep(xr), shift, scale).astype(np.float32); del xr
 
     def set_beta(m, beta):
         for layer in m._flatten_layers():
@@ -210,13 +247,25 @@ def main():
                 np.save(os.path.join(a.out, f'test_probs_e{e}.npy'), p.astype(np.float32))
                 log(f'test at epoch {e}: accuracy {rep["accuracy"]:.4f}')
 
-    dtr = Dataset(Xtr, ytr, batch_size=a.batch, drop_last=True, device=a.device)
     dva = Dataset(Xva, yva, batch_size=a.batch, drop_last=False, device=a.device)
     cb = [Ctrl()] + ([FreeEBOPs()] if a.arm == 'hgq' else []) + [keras.callbacks.TerminateOnNaN()]
-    model.fit(dtr, epochs=a.epochs, validation_data=dva, callbacks=cb, verbose=0)
+    if a.aug > 0:   # X9w: fresh augmentation each epoch, one epoch per fit call
+        # the augmented array is rebuilt every epoch on --aug_device (default gpu:0); with three runs sharing one GPU the fresh
+        # 464 MB device copy per epoch ran out of GPU memory at epoch 52 (job train-x9w, 2026-10-20), so the old copy is freed
+        # explicitly (del + gc) and aug runs share a GPU with at most one other run; cpu:0 made jax run the step on the CPU
+        # (46 s/epoch, GPU idle; job train-x9w-b)
+        import gc
+        rng = np.random.default_rng(a.seed + 1000)
+        for e in range(a.epochs):
+            dtr = Dataset(augment_normalise(xtr_raw, shift, scale, rng, a.aug), ytr, batch_size=a.batch, drop_last=True, device=a.aug_device)
+            model.fit(dtr, epochs=e + 1, initial_epoch=e, validation_data=dva, callbacks=cb, verbose=0); del dtr; gc.collect()
+            if model.stop_training: log('stop_training set (NaN?)'); break
+    else:
+        dtr = Dataset(Xtr, ytr, batch_size=a.batch, drop_last=True, device=a.device)
+        model.fit(dtr, epochs=a.epochs, validation_data=dva, callbacks=cb, verbose=0)
     model.save(os.path.join(a.out, 'model.keras'))
     p, rep = evaluate(model, Xte, yte)
-    rep.update(seed=a.seed, arm=a.arm, epochs_run=len(rows), max_test=a.max_test, wall_s=time.time() - T0, last=rows[-1] if rows else None,
+    rep.update(recentre=bool(a.recentre), aug=a.aug, seed=a.seed, arm=a.arm, epochs_run=len(rows), max_test=a.max_test, wall_s=time.time() - T0, last=rows[-1] if rows else None,
                run_name=f'jedi-n64-x12-{a.arm}', **structure_stats(model))
     json.dump(rep, open(os.path.join(a.out, 'test.json'), 'w'), indent=1)
     np.save(os.path.join(a.out, 'test_probs.npy'), p.astype(np.float32))

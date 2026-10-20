@@ -119,12 +119,18 @@ def job_sets():
                              conc=2, cpu=2, mem=8, script="gpu_job_x12.sh"),
            "x12": dict(runs=[f"hgq:{s}" for s in (0, 1, 2)] + [f"float:{s}" for s in (0, 1)], conc=5, cpu=5, mem=16,
                        script="gpu_job_x12.sh")}
-    return {"main": main, "extra1": extra1, "e18": e18, "x5": x5, "x8": x8, "x12": x12}
+    # X9w: input representation x training (2x2): --recentre (angles about the pT-weighted centroid) and --aug 0.08 (random rigid
+    # translation of the training jets); Deep Sets d64 N = 64 seeds 0, 1 (tags -rc, -aug, -rcaug) and JEDI-linear HGQ-50 seed 0
+    # (jedi-n64-x12-hgq<tag>); the stored / no-aug cell reuses the existing runs. Both sets share one GPU (gpu_job_x9w.sh).
+    cells = [("-rc", "--recentre"), ("-aug", "--aug=0.08"), ("-rcaug", "--recentre,--aug=0.08")]
+    x9w = {"x9w": dict(runs=[f"dsets-d64:64:{s}:{t}:{f}" for s in SEEDS for t, f in cells] + [f"hgq:0:{t}:{f}" for t, f in cells],
+                       conc=6, cpu=6, mem=24, script="gpu_job_x9w.sh")}
+    return {"main": main, "extra1": extra1, "e18": e18, "x5": x5, "x8": x8, "x12": x12, "x9w": x9w}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--set", default="main", help="main | extra1 | e18 | x5 | x8 | x12")
+    ap.add_argument("--set", default="main", help="main | extra1 | e18 | x5 | x8 | x12 | x9w")
     ap.add_argument("--only", default="", help="comma-separated job names")
     ap.add_argument("--suffix", default="", help="job-name suffix for resubmits, written --suffix=-b")
     ap.add_argument("--conc", type=int, default=None, help="trainings running at once per GPU (default: the set's)")

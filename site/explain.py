@@ -872,6 +872,78 @@ B5_EXPLAINER = [
   'A compact program that reproduces the shift response was not found at 50 terms with this fitter, and the network carries a direction-dependent term (sign of the shift, rotation) that none of the fitted radial programs has.', None),
 ]
 
+E24_EXPLAINER = [
+ ('Question',
+  'If every particle is moved to a random direction around the jet axis, keeping its $p_T$, its distance $r$ from the axis and its $p_T$ rank, do JEDI-linear\'s second-round objects and calls change? '
+  'The radial-object description (objects are functions of $(p_T, r)$ over rank windows) predicts little change; a network that reads prong structure (two hard subjets, low $\\tau_{21}$) predicts many W/Z/t calls turning into q/g. '
+  'The same edit on a Deep Sets, a PFN and a transformer tests whether the answer is specific to JEDI-linear.', None),
+ ('Background',
+  'N-subjettiness $\\tau_N = \\sum_i z_i \\min_k \\Delta R_{ik} / R_0$ measures how well the particles cluster around $N$ axes ($z_i = p_{T,i}/\\sum_j p_{T,j}$, $R_0 = 0.8$). Two-prong jets (W, Z) have small $\\tau_{21} = \\tau_2/\\tau_1$; one-prong QCD jets have $\\tau_{21}$ near 1. '
+  'With $M_0 = \\sum_i p_{T,i}$, $\\vec M_1 = \\sum_i p_{T,i}(\\Delta\\eta_i, \\Delta\\phi_i)$ and $M_2 = \\sum_i p_{T,i} r_i^2$, a random azimuth per particle keeps $M_0$ and $M_2$ exactly but moves $\\vec M_1$; the main edit (A\') then translates and rescales the particles about the centroid so that $M_0$, $\\vec M_1$ and $M_2$ (and so the small-angle mass) are all unchanged.', None),
+ ('Method',
+  '10,000 test jets (sample(2000, 2401)). Edits on every real particle: rigid rotation by a random angle per jet (control); A, $\\theta_i \\sim U(0, 2\\pi)$; A\', A with $M_0$, $\\vec M_1$, $M_2$ held; B, $\\theta_i$ redrawn inside its sector of the 18 directions bounded by the nine first-layer half-plane cuts; Br, the same sectors rotated per jet (control for B); 20 redraws of the angles. '
+  'Real-jet calibration: for each jet, a pool jet of the same class with $m$, $M_0$, $M_2$, $p_T$ within 2 % and $\\tau_{21}$ raised by the scramble\'s amount, minus a matched pool jet with equal $\\tau_{21}$. '
+  'Read-outs: % calls changed (95 % jet bootstrap), exact McNemar against rotation (Holm over 45 tests), call flow, $|\\Delta S|/{\\rm sd}$ per live second-round unit (Holm over 19). Models: official JEDI-linear, 8 retrained JEDI-linear copies, Deep Sets s0/s1, PFN s0/s1, transformer tf-2b-d32 s0/s1.', None),
+ ('Result',
+  'For W jets the scramble raises the median $\\tau_{21}$ from 0.26 to 0.72 and $D_2$ from 1.33 to 2.09. JEDI-linear changes 7.2 % [6.7, 7.7] of calls (rotation 4.0 % [3.6, 4.4], $p = 1.5\\times10^{-35}$); W/Z/t → q/g flow 3.4 % (rotation 1.5 %). '
+  'Deep Sets and PFN change 7.3–8.7 %, the retrained JEDI copies 6.2–9.1 %, the transformer 13.7–14.3 %. Inside JEDI-linear the radial objects S0 and S19 do not change, S29, S30 and S1 change 0.08–0.18 sd, and the excess over rotation sits in the two units fed only by the jet context g (S58 +0.69 sd, S31 +0.55 sd).', 'results/jedi/e24_azimuth.png'),
+ ('Checks',
+  '$\\tau_{21}$, $D_2$ reproduce the stored observables (max difference 6e-8, 1.4e-6); A\' holds $M_0$, $\\vec M_1$, $M_2$ to $\\le 7\\times10^{-8}$ and $m$ to 0.1 % (median); padding unchanged; redraw spread of A\' 6.8–7.3 % (JEDI). '
+  'B and Br give 2.5 vs 2.6 % on this sample; with exact cells (E24v) B changes 0.46 points more calls than Br (Holm $p$ 0.017). Real pairs with higher $\\tau_{21}$ at fixed $m$, $M_0$, $M_2$, $p_T$ change 5.2 % more calls; with $\\sum p_T r$ and multiplicity also matched the difference is $-0.3$ % [$-1.4$, 0.6] (351 pairs, mostly top).', None),
+ ('Verification (E24v, two passes, samples 2501 and 2601; confidence 0.3)',
+  'Pass 1: compared like for like (both rotation-subtracted), the scramble excess is about one third of the real $\\tau_{21}$ effect; with exact cells B $-$ Br $= +0.46$ points (Holm $p$ 0.017); freezing S58 and S31 at their unedited values lowers the A\' excess from 2.99 to 0.54 points. '
+  'Pass 2 adds positive controls: boosted trees trained on the same jets on (F0) mass and radial features, (F1) F0 + $\\tau_{21}$, (F2) F1 + $D_2$. Calls changed rot / A\': JEDI 4.28 / 7.07 % (excess $+2.79$ [2.28, 3.31]); F0 0.62 / 1.74 ($+1.12$); F1 0.51 / 6.89 ($+6.38$); F2 0.53 / 7.44. JEDI vs F1 under A\': McNemar $p = 0.60$. '
+  'Accuracy drop A\' vs rot: JEDI 1.45 [0.97, 1.90], F1 1.14, F0 0.00 points. $\\tau_{21}$ and $D_2$ add only 0.22 and 0.42 points of accuracy over mass and radial features (78.71 → 78.93 → 79.13 %). '
+  'H0 (JEDI ignores azimuthal structure at fixed moments: excess = F0\'s) and H1 (JEDI uses it as a $\\tau_{21}$ tagger: excess = F1\'s) are both excluded by the excess CI; the call share does not separate them.', None),
+ ('Why it matters',
+  'The named radial objects are nearly unchanged by the scramble, which supports the radial description of S (claim A3, A3z). The 7 % call change is the size a classifier that does use $\\tau_{21}$ shows on this dataset, so the test has little power to say whether JEDI-linear uses prong shape (claim A13). '
+  'Deep Sets and PFN change as many calls, so the call-level result does not separate the radial-object description from a generic pooled latent (review weakness 2); the measured JEDI-specific difference is at the latent level.', None),
+]
+
+X9W_EXPLAINER = [
+ ('Question',
+  'Set networks trained on jets whose particle angles are measured from the stored jet axis respond to a rigid shift of the whole jet, which leaves the invariant mass unchanged (claim A10m). Is this a property of the input format and training data, or of the architecture? '
+  'Test: retrain PFN, EFN, Deep Sets and JEDI-linear with (i) inputs measured from the jet\'s own $p_T$-weighted centre, or (ii) training jets randomly shifted, and measure the same shift response.', None),
+ ('Background',
+  'With $M_0 = \\sum_i p_{T,i}$, $\\vec M_1 = \\sum_i p_{T,i}\\vec r_i$ and $M_2 = \\sum_i p_{T,i} r_i^2$ about the axis, the small-angle mass is $m^2 = M_0 M_2 - |\\vec M_1|^2$. A rigid shift $\\vec r_i \\to \\vec r_i + \\vec c$ keeps $m$ and raises $M_2$ by $2\\vec c\\cdot\\vec M_1 + M_0|\\vec c|^2$. '
+  'Recentring replaces $\\vec r_i$ by $\\vec r_i - \\vec M_1/M_0$, so any rigid shift drops out exactly. Augmentation instead adds a random $\\vec c$ with $|\\vec c| \\sim U(0, 0.08)$ rad and uniform direction to each training jet, so in training the stored offset carries no class information up to 0.08 rad.', None),
+ ('Method',
+  'Cells {stored, recentred} × {no aug, aug}; PFN ($\\Phi$ 64-64-32), EFN ($\\Phi$ 100-100-128), Deep Sets (d64) with seeds 0, 1; JEDI-linear n64 HGQ-50 seed 0 (seeds 1, 2 also in stored and aug). Evaluation on 10,000 jets (sample(2000, 909); 2,000 true W). '
+  'Edit T: $+0.06$ rad in $\\Delta\\eta$ on every real particle. Null: rotation with the same mean displacement and a random-direction shift. Control: shift followed by an angle rescale that holds $M_0$, $M_2$ (M2-held). Matched real change: angles scaled to give the same $(M_0, M_2)$ as T (dilM2). '
+  'Metric: W→Z flow = (fraction of true W called Z after the edit) $-$ (before). Statistics: 2,000-draw jet bootstrap CIs; exact McNemar; seed-level stratified permutation test of stored vs aug (minimum attainable $p$ 0.0093 with two seeds per architecture).', None),
+ ('Result',
+  'Stored: W→Z 0.36–0.70 (PFN, EFN, Deep Sets), 0.54–0.72 (JEDI HGQ-50), official 0.72. Aug: PFN, EFN, Deep Sets $\\le 0.012$ (rotation null $\\le 0.01$), accuracy cost $\\le 0.9$ points per architecture mean; JEDI 0.325 / $-0.019$ / 0.467 with 4–14 points accuracy loss. Recentred: 0 in 13/13. '
+  'Every network responds to dilM2 (0.19–0.73). Stored $-$ aug, seed level: 0.590, $p = 0.0093$; JEDI 3 vs 3: 0.353, $p = 0.10$.', 'results/jedi/x9w_repr_2x2.png'),
+ ('Checks',
+  'Edits move only particles with $p_T > 0$; T keeps $\\log m$ (mean change $9\\times10^{-9}$). Recentring and augmentation formulas are identical in the three trainers and the evaluation; augmentation acts on training jets only; the no-aug code path is unchanged, so the reused stored checkpoints share the training code. Official JEDI-linear on this sample 80.56 % [79.8, 81.3].', None),
+ ('Verification (X9wv, sample(2000, 2610); confidence 0.5)',
+  'Stored and aug numbers reproduce (stored $-$ aug 0.608, $p$ 0.0093). Added control T12, a $0.12$ rad shift outside the augmentation range. H0: augmented networks are shift-invariant (T12 flow = rotation). H1: invariance holds only inside the trained offsets. '
+  'T12 W→Z: aug PFN 0.51 / 0.84, EFN 0.83 / 0.63, Deep Sets 0.81 / 0.67, JEDI 0.22 / 0.64 / 0.76 (McNemar vs rotation $p_{\\rm Holm} < 10^{-290}$); H0 rejected in all 9. At 0.06 rad the augmented outputs are not exactly invariant (total-variation excess over rotation 0.006–0.028). Per network the aug accuracy loss reaches 1.13 points (Deep Sets s1).', 'results/jedi/x9w_verify.png'),
+ ('Why it matters',
+  'For three standard set architectures the shift response follows the training data, not the architecture: a model trained with shifted jets ignores shifts within the trained range (claim A10r), so the axis-moment mass is what a set network learns when the stored offset is always zero. It does not become a centre-relative mass, since larger shifts act again. For JEDI-linear the augmented retrainings were under-trained, so the architecture question is open (X9x).', None),
+]
+
+B6_EXPLAINER = [
+ ('Question',
+  'Does the blind if-statement program (hinge terms on sums over $p_T$-ranked particle windows, fitted from inputs to class scores) follow how a network changes its calls under edits better than standard surrogates of the same size, and does the method work on networks other than JEDI-linear?', None),
+ ('Background',
+  'A surrogate $f$ is fitted to the network\'s logits on unedited jets. Its edit agreement on an edit $E$ is the fraction of jets $j$ for which $f$ changes its call exactly when the network does, to the same new call: $\\frac1N\\sum_j \\mathbf 1[\\hat y_f(Ej) = \\hat y_f(j) \\Leftrightarrow \\hat y(Ej)=\\hat y(j)\\ \\wedge\\ \\hat y_f(Ej) = \\hat y(Ej)]$ (simplified). '
+  'Description length DL counts 32 bits per stored number plus $\\log_2$(number of inputs) per structural choice (a split variable, a hinge input).', None),
+ ('Method',
+  'Networks: JEDI-linear, Deep Sets d64, PFN, transformer tf-2b-d32. Fit on 13,333 jets (sample(4000, 2601)), dev 6,667, test 8,152 disjoint jets. Inputs: 97 rank-window $(p_T, r)$ sums and $M_0$. Surrogates: program with $K$ = 2–30 hinge terms per logit; CART depth 2–10; HistGBDT; Lasso / ridge; MLP; EFP-linear. '
+  'Edits: 0.06 rad translation, M2-held translation, rank 13|14 swap, $p_T \\times 0.9$, azimuth scramble; controls: random-direction translation, per-particle random displacement, a never-flip predictor, surrogates fitted on shuffled logits. Statistics: jet bootstrap, paired bootstrap of the difference at matched DL, Holm.', None),
+ ('Result',
+  'Same call: program at 13 kbit 87.3–92.5 %, best GBDT (up to 1.6 Mbit) 90.1–94.1 %. Translation agreement, program $-$ GBDT (lr 0.2) of equal bits: $+2.8$ to $+5.0$ points in all four networks. Larger surrogates are 5–12 points higher; the program\'s frontier area is below GBDT\'s in three of four networks. Rank swap: $\\le 1.5$ % flips, no separation; scramble: invisible to radial observables.', 'results/jedi/b6_trans.png'),
+ ('Checks',
+  'Network accuracies on the test jets: JEDI 80.95 %, Deep Sets 80.75 %, PFN 81.87 %, transformer 76.09 %. Padded slots never moved; M2-held holds $M_0$, $M_2$; all five per-class trees counted in GBDT bits; test jets disjoint from every fit set; shuffled-logit surrogates at or below never-flip. Symbolic regression not run (PySR, gplearn not installed).', None),
+ ('Verification (B6v, three passes; confidence 0.7)',
+  'With the GBDT learning rate and size chosen on dev jets at $\\le$ the program\'s bits, the translation difference is $-1.3$ to $+1.7$ points over three samples (JEDI, PFN), $+0.2$ (Deep Sets), $+1.6$ [0.78, 2.47] (transformer); with test-edit (oracle) selection the baseline is 0–2.4 points higher in all four. '
+  'B6\'s lead came from one under-fitted GBDT, and that GBDT has a higher flipped-set Jaccard (0.72 vs 0.63). Under the M2-held translation the program leads in JEDI-linear ($+1.7$ to $+2.0$, Holm $\\le 6\\times10^{-5}$) and the transformer, where all small surrogates are within about 3 points of never-flip.', 'results/jedi/b6_m2h.png'),
+ ('Why it matters',
+  'The pipeline runs unchanged on four architectures and gives tree-level fidelity per bit on each (claim B6t); the claim that it beats compact baselines at equal DL (B4) is not supported. Paper B\'s case rests on the exact identity, the call reproduction and the readable structure, with this figure as the baseline comparison (review weaknesses 3, 6).', None),
+]
+
+
 E23_EXPLAINER = [
  ('Question',
   'On unedited jets whose stored axis is off the pT centroid, does JEDI-linear\'s mass read-out follow $\\sqrt{M_0 M_2}$ about the stored axis or the invariant mass $m$? '
@@ -1205,6 +1277,7 @@ H14_EXPLAINER = [
   'The networks\' insensitivity to an extra soft particle does not depend on the test generator, so a generator-dependent multiplicity is not what they use. Their response to a collinear split comes from how momentum is shared among the hardest particles; the leading fraction alone is not it, and $p_T^D$ is not separated from the angular energy flow. Whether a model trained on Herwig counts particles is not yet measured.', None),
 ]
 
+
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
           ('Result 1 explained: the first layer is 13 cuts, and summing them gives objects (claim A1)', A1_EXPLAINER, False),
@@ -1226,13 +1299,16 @@ PAPER_EXPLAINERS = {
           ('Result 17 explained: EFN and PFN on the same inputs (claims A4, A10, B2m; X9)', X9_EXPLAINER, False),
           ('Result 18 explained: learned directions for the mass moments inside the network (claims A4c, A4, B2m; X10, X10v)', X10_EXPLAINER, False),
           ('Result 19 explained: are the units a preferred basis? Rotations and sparse autoencoders (claims A11b, A11, A3; X11, X11v)', X11_EXPLAINER, False),
-          ('Result 20 explained: JEDI-linear retrained with and without quantization (claims A1r, A1, A10; X12, X12v)', X12_EXPLAINER, False)],
+          ('Result 20 explained: JEDI-linear retrained with and without quantization (claims A1r, A1, A10; X12, X12v)', X12_EXPLAINER, False),
+          ('Result 21 explained: recentred inputs and shift-augmented training in PFN, EFN, Deep Sets and JEDI-linear (claims A10r, A10m; X9w, X9wv)', X9W_EXPLAINER, False),
+          ('Result 22 explained: scrambling each particle\'s direction around the axis at fixed mass moments (claims A3z, A13, A3; E24, E24v)', E24_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True),
           ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False),
           ('Result explained: interchange interventions, per variable (claim B2; E22)', E22_EXPLAINER, False),
           ('Result explained: learned subspaces instead of named formulas (claim B2m; X10, explained in Paper A result 18)', X10_EXPLAINER, False),
           ('Result explained: the if-statement program vs standard surrogates of the same size (claims B3, B4; B4)', B4_EXPLAINER, False),
-          ('Result explained: a 50-term formula on axis-relative vs invariant observables under shift and re-axis edits (claims B3, B5c; B5)', B5_EXPLAINER, False)],
+          ('Result explained: a 50-term formula on axis-relative vs invariant observables under shift and re-axis edits (claims B3, B5c; B5)', B5_EXPLAINER, False),
+          ('Result explained: edit fidelity vs description length on four architectures (claims B4, B6t; B6, B6v)', B6_EXPLAINER, False)],
     'c': [('Result explained: ParT\'s mass comes mostly through the axis-relative inputs, not the pair features (claim C3)', C3_EXPLAINER, True),
           ('Result explained: the 87 GeV switch head and the route of the mass into the W/Z neuron; the literal circuit kept alone (claims C2a, C2b; P3, P3v)', P3_EXPLAINER, False),
           ('Result explained: ParticleNet shares the axis-relative mass response through ΔR (claim C5; P4, P4v)', P4_EXPLAINER, False),

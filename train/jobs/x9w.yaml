@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: anrunw-ai-train-x9w
+  namespace: cms-ml
+  labels: {owner: anrunw, study: aaron-interp, set: small-taggers}
+spec:
+  # 1 retry: anrunw-ai-train-n32-s1 (2026-10-16) failed 32 min after start with its pod gone before the container ran
+  # (no log, no snapshot) and backoffLimit 0 ended the Job. A retry is safe: gpu_job.sh skips runs that have test.json.
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels: {owner: anrunw, study: aaron-interp, set: small-taggers}
+    spec:
+      restartPolicy: Never
+      activeDeadlineSeconds: 86400
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values: [k8s-haosu-24.sdsc.optiputer.net, ry-gpu-01.sdsc.optiputer.net, nautilus-it-gpu05.fullerton.edu, fiona-prg1.cesnet.cz, k8s-chase-ci-07.calit2.optiputer.net, dtn-gpu2.kreonet.net, gpn-fiona-mizzou-2.rnet.missouri.edu, rci-nrp-gpu-05.sdsu.edu, node-2-2.sdsc.optiputer.net, hcc-nrp-shor-c6017.unl.edu, hcc-nrp-shor-c5925.unl.edu, epic001.clemson.edu, k8s-chase-ci-10.calit2.optiputer.net, nautilus-ext-gpu01.fullerton.edu, chi-dgx-node04.csuchico.edu, gpu-12.nrp.mghpcc.org, gpu-14.nrp.mghpcc.org, hcc-chase-shor-c4715.unl.edu, k8s-3090-01.usd.edu, k8s-haosu-22.sdsc.optiputer.net, k8s-haosu-18.sdsc.optiputer.net]
+              - key: nvidia.com/gpu.product
+                operator: In
+                values: [NVIDIA-GeForce-RTX-3090, NVIDIA-GeForce-RTX-4090, NVIDIA-A10, NVIDIA-A40, NVIDIA-L40, NVIDIA-L40S, NVIDIA-L4, NVIDIA-RTX-A6000, NVIDIA-TITAN-RTX, NVIDIA-RTX-A5000, NVIDIA-RTX-A4000, Quadro-RTX-6000, NVIDIA-GeForce-RTX-2080-Ti]
+      containers:
+      - name: train
+        image: gitlab-registry.nrp-nautilus.io/jmduarte/weaver:latest
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          mkdir -p /j-jepa-vol/aaron-interp/logs
+          bash /j-jepa-vol/aaron-interp/code/train/gpu_job_x9w.sh x9w 6 dsets-d64:64:0:-rc:--recentre dsets-d64:64:0:-aug:--aug=0.08 dsets-d64:64:0:-rcaug:--recentre,--aug=0.08 dsets-d64:64:1:-rc:--recentre dsets-d64:64:1:-aug:--aug=0.08 dsets-d64:64:1:-rcaug:--recentre,--aug=0.08 hgq:0:-rc:--recentre hgq:0:-aug:--aug=0.08 hgq:0:-rcaug:--recentre,--aug=0.08 > /j-jepa-vol/aaron-interp/logs/train-x9w.log 2>&1
+        resources:
+          limits: {nvidia.com/gpu: "1", memory: "24Gi", cpu: "6"}
+          requests: {nvidia.com/gpu: "1", memory: "24Gi", cpu: "6"}
+        volumeMounts:
+        - {name: vol, mountPath: /j-jepa-vol}
+      volumes:
+      - name: vol
+        persistentVolumeClaim: {claimName: j-jepa-vol}

@@ -14,6 +14,16 @@ batch 500, early stopping on dev loss (patience 5, best weights restored), at mo
 Writes $AI_RESULTS/jedi/x9_models/<arch>_<phi>_s<seed>/: weights.npz (dense kernels / biases in forward order, keys
 phi{k}_W, phi{k}_b, F{k}_W, F{k}_b, out_W, out_b), info.json (accuracies, epochs, timing), check.npz (softmax on
 sample(2000, 313) test jets, to verify the numpy forward of interp.x9_efn_pfn), history.json.
+X9w opt-in flags (defaults reproduce X9 exactly):
+  --recentre   every jet's real particles get (Δη, Δφ) − c, c = Σ_i pT_i (Δη_i, Δφ_i) / Σ_i pT_i over the real particles of the first
+               64 slots (pT-weighted centroid), for train, dev, test and check jets alike, before the EFN / PFN features
+               (PFN: then normalised with the unchanged norm_stats.json); recentre_np below is the definition the analysis uses.
+  --aug A      (A > 0) translation augmentation of the training jets: every real particle of a jet moved by the same
+               c = |c| (cos θ, sin θ), |c| ~ U(0, A) rad, θ ~ U(0, 2π), drawn per jet and redrawn every epoch (rng seed + 1000);
+               applied after recentring when both flags are set (otherwise the two would cancel exactly). Dev / test unaugmented.
+               With --aug the fit runs one epoch per call (fresh augmented features each epoch) with the same early stopping
+               (patience 5 on dev loss, best weights restored), written out by hand.
+  --max_train  random subset of the training jets (smoke tests only).
 """
 import argparse, json, os, sys, time
 from pathlib import Path
@@ -31,6 +41,21 @@ def load(prefix, rows=None):
     with h5py.File(DATA / f'{prefix}_meta.h5', 'r') as f: y = f['label'][:].astype(np.int64)
     if rows is None: return np.asarray(X[:, :N]).astype(np.float32), y
     return np.asarray(X[rows, :N]).astype(np.float32), y[rows]
+
+
+def recentre_np(x):
+    """(J, n, 3) raw (pT, Δη, Δφ) -> copy with the real particles' angles about the pT-weighted centroid (padding stays 0)"""
+    x = np.array(x, np.float32, copy=True); real = x[..., 0] > 0; pt = np.where(real, x[..., 0], 0).astype(np.float64)
+    c = (pt[..., None] * x[..., 1:3]).sum(1) / np.maximum(pt.sum(1), 1e-12)[:, None]
+    x[..., 1:3] = np.where(real[..., None], x[..., 1:3] - c[:, None, :].astype(np.float32), x[..., 1:3]); return x
+
+
+def augment_np(x, rng, amax):
+    """rigid translation of every real particle of a jet by |c| ~ U(0, amax), direction ~ U(0, 2π), per jet"""
+    x = np.array(x, np.float32, copy=True); real = x[..., 0] > 0; J = len(x)
+    r = rng.uniform(0, amax, J); th = rng.uniform(0, 2 * np.pi, J)
+    x[..., 1] += np.where(real, (r * np.cos(th))[:, None], 0).astype(np.float32)
+    x[..., 2] += np.where(real, (r * np.sin(th))[:, None], 0).astype(np.float32); return x
 
 
 def features(x, arch, st, ang_scale=1.0):
@@ -74,6 +99,9 @@ def main():
     ap.add_argument('--seed', type=int, default=0); ap.add_argument('--epochs', type=int, default=40)
     ap.add_argument('--max_minutes', type=float, default=55.0); ap.add_argument('--batch', type=int, default=500)
     ap.add_argument('--tag', default='')
+    ap.add_argument('--recentre', action='store_true', help='X9w: angles about the pT-weighted centroid (all jets)')
+    ap.add_argument('--aug', type=float, default=0.0, help='X9w: max translation (rad) of the training augmentation; 0 = off')
+    ap.add_argument('--max_train', type=int, default=0, help='random subset of the training jets (smoke tests)')
     ap.add_argument('--ang_scale', type=float, default=1.0, help='EFN only, exploratory: angles divided by this (rad); 1 = as stored')
     a = ap.parse_args()
     import tensorflow as tf
@@ -93,9 +121,18 @@ def main():
     st = json.loads((DATA / 'norm_stats.json').read_text())[str(N)]
     dev = np.sort(np.load(DATA / 'splits.npz')['dev']); x, y = load('train')
     tr = np.setdiff1d(np.arange(len(y)), dev)
+    if a.max_train: tr = np.sort(np.random.default_rng(a.seed).choice(tr, a.max_train, replace=False))
+    prep = recentre_np if a.recentre else (lambda v: v)
+    if a.recentre:
+        x = prep(x); log('recentred: max |pT-weighted centroid| after', float(np.abs((x[..., 0:1] * x[..., 1:3]).sum(1) / x[..., 0:1].sum(1)).max()))
     log(f'train archive {len(y)} jets; training {len(tr)}, dev {len(dev)}')
     Y = np.eye(5, dtype=np.float32)
-    Xtr, Xdv = features(x[tr], a.arch, st, a.ang_scale), features(x[dev], a.arch, st, a.ang_scale); ytr, ydv = y[tr], y[dev]; del x
+    Xdv = features(x[dev], a.arch, st, a.ang_scale); ytr, ydv = y[tr], y[dev]
+    if a.aug > 0:
+        xtr_raw = np.ascontiguousarray(x[tr]); Xtr = None
+    else:
+        Xtr = features(x[tr], a.arch, st, a.ang_scale)
+    del x
     if a.arch == 'efn':
         m = EFN(input_dim=2, Phi_sizes=phi, F_sizes=Fs, output_dim=5, summary=False)
     else:
@@ -108,18 +145,31 @@ def main():
                 log('wall-time limit reached: stopping'); self.model.stop_training = True
     es = K2.callbacks.EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
     t1 = time.time()
-    h = m.fit(Xtr, Y[ytr], epochs=a.epochs, batch_size=a.batch, validation_data=(Xdv, Y[ydv]), verbose=0, callbacks=[es, Clock()])
+    if a.aug > 0:          # one epoch per fit call on freshly augmented features; early stopping by hand (as EarlyStopping)
+        rng = np.random.default_rng(a.seed + 1000); hist = {}; best_v, best_w, bad = np.inf, None, 0
+        for ep in range(a.epochs):
+            te0 = time.time(); Xa = features(augment_np(xtr_raw, rng, a.aug), a.arch, st, a.ang_scale)
+            h = m.fit(Xa, Y[ytr], epochs=1, batch_size=a.batch, validation_data=(Xdv, Y[ydv]), verbose=0); del Xa
+            for k, v in h.history.items(): hist.setdefault(k, []).append(float(v[-1]))
+            log(f'epoch {ep + 1} (aug): ' + ', '.join(f'{k} {v[-1]:.4f}' for k, v in hist.items()) + f' ({time.time() - te0:.0f} s)')
+            if hist['val_loss'][-1] < best_v: best_v, best_w, bad = hist['val_loss'][-1], m.model.get_weights(), 0
+            else: bad += 1
+            if bad >= 5: log('early stop (patience 5)'); break
+            if time.time() - T0 > 60 * a.max_minutes: log('wall-time limit reached: stopping'); break
+        m.model.set_weights(best_w); del xtr_raw
+    else:
+        h = m.fit(Xtr, Y[ytr], epochs=a.epochs, batch_size=a.batch, validation_data=(Xdv, Y[ydv]), verbose=0, callbacks=[es, Clock()])
+        hist = {k: [float(v) for v in vs] for k, vs in h.history.items()}
     train_s = time.time() - t1; del Xtr
-    hist = {k: [float(v) for v in vs] for k, vs in h.history.items()}
     best = int(np.argmin(hist['val_loss'])) + 1
     pdv = m.predict(Xdv, batch_size=5000, verbose=0); acc_dev = float((pdv.argmax(1) == ydv).mean())
-    xt, yt = load('val'); pt_ = m.predict(features(xt, a.arch, st, a.ang_scale), batch_size=5000, verbose=0); acc_test = float((pt_.argmax(1) == yt).mean())
-    ic = check_indices(); xc = np.asarray(np.load(DATA / 'n64' / 'full_test.npz', mmap_mode='r')['x'][ic]).astype(np.float32)
+    xt, yt = load('val'); xt = prep(xt); pt_ = m.predict(features(xt, a.arch, st, a.ang_scale), batch_size=5000, verbose=0); acc_test = float((pt_.argmax(1) == yt).mean())
+    ic = check_indices(); xc = prep(np.asarray(np.load(DATA / 'n64' / 'full_test.npz', mmap_mode='r')['x'][ic]).astype(np.float32))
     assert np.array_equal(xc, xt[ic]), 'full_test.npz rows differ from the val archive'
     pc = m.predict(features(xc, a.arch, st, a.ang_scale), batch_size=5000, verbose=0)
     W, names = export(m.model)
     np.savez(out / 'weights.npz', **W); np.savez(out / 'check.npz', idx=ic, prob=pc.astype(np.float64))
-    info = dict(arch=a.arch, ang_scale=a.ang_scale, phi=phi, F=Fs, seed=a.seed, epochs_run=len(hist['loss']), best_epoch=best, train_seconds=train_s,
+    info = dict(arch=a.arch, ang_scale=a.ang_scale, recentre=bool(a.recentre), aug=a.aug, max_train=a.max_train, phi=phi, F=Fs, seed=a.seed, epochs_run=len(hist['loss']), best_epoch=best, train_seconds=train_s,
                 seconds_per_epoch=train_s / max(len(hist['loss']), 1), acc_dev=acc_dev, acc_test=acc_test, n_train=int(len(tr)), n_dev=int(len(dev)),
                 n_test=int(len(yt)), layers=names, tensorflow=tf.__version__, energyflow=ef.__version__, batch=a.batch, threads=nthr,
                 per_class_test=[float((pt_.argmax(1)[yt == c] == c).mean()) for c in range(5)])

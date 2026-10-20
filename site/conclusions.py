@@ -123,6 +123,31 @@ CLAIM = {
         "angle-only automatically. Uncertain: the retrained copies are 1–4 points less accurate and trained about ten times "
         "fewer epochs than the official one."
     ),
+    'A10r': (
+        "Three standard set networks (Particle Flow Network, Energy Flow Network, Deep Sets) respond to a small sideways "
+        "shift of the whole jet only because their training jets were never shifted: trained on jets randomly shifted by "
+        "up to 0.08 rad, they ignore such shifts (W jets called Z about 1 % or less, against about two thirds before) and "
+        "lose at most about one accuracy point. They do not learn a mass that is independent of the axis, since a shift of "
+        "0.12 rad, outside the trained range, again moves most W jets to Z. Uncertain: two seeds per network and one "
+        "augmentation range; JEDI-linear's augmented retrainings were under-trained and two of three kept the response."
+    ),
+    'A3z': (
+        "Moving every particle to a random direction around the jet axis, while keeping its momentum, its distance from the "
+        "axis and the jet's mass moments, leaves JEDI-linear's named radial sums (total pT of the hardest particles, "
+        "soft multiplicity, radial spreads) nearly unchanged. The extra calls that change, beyond a plain rotation of the "
+        "jet, pass through two units that see only a jet-level summary built from the first-layer direction cuts. Deep "
+        "Sets and Particle Flow Networks change as many calls under the same edit, so at the level of decisions this test "
+        "does not distinguish JEDI-linear's description from a generic pooled network. Which jet-level quantity the two "
+        "summary units compute is not known."
+    ),
+    'A13': (
+        "When each particle's direction around the jet axis is randomised at fixed mass moments, which destroys the "
+        "two-prong pattern of W jets, JEDI-linear changes about as many calls (7 %) as a boosted-tree classifier that uses "
+        "the two-prong variable tau21 (N-subjettiness ratio). Its extra change over a rotation and its accuracy loss lie "
+        "between a classifier that ignores prong shape and one that uses it, so JEDI-linear's calls depend on how particles "
+        "are arranged around the axis. Whether that dependence is prong shape is not determined: on these jets prong shape "
+        "adds little accuracy beyond mass and radial shape, so the edit has little power to tell."
+    ),
     'A12': (
         "Deep Sets and Linformer models retrained with every particle measured from the hardest particle (so the axis is "
         "never at the centre in training) do not follow the axis-relative mass as the original networks do: when the axis "
@@ -200,7 +225,18 @@ CLAIM = {
         "the best boosted trees, but they lead by a similar margin under a random displacement that raises the axis spread "
         "by the same amount, so the lead is not specific to the shift mechanism. The surrogate the shift separates is the "
         "direct physics-to-score MARS fit, which uses the invariant mass and misses most of the network's changed decisions; "
-        "symbolic regression was not run."
+        "symbolic regression was not run. A later comparison on four networks (2026-10-20) found that, once the boosted "
+        "trees' settings are tuned on held-out jets, the if-statement program and trees of the same size follow the "
+        "networks' changed decisions under the shift equally well, within about 2 points either way; the program keeps a "
+        "small lead only for a shift that holds the axis spread fixed, in JEDI-linear and the transformer."
+    ),
+    'B6t': (
+        "The same extraction procedure, if-statements on sums over pT-ranked particle windows fitted from the inputs to the "
+        "class scores without looking inside the network, works on Deep Sets, a Particle Flow Network and a small "
+        "transformer as well as on JEDI-linear. On each, it follows how the network changes its decisions when the jet is "
+        "shifted about as well as boosted trees, decision trees or small neural networks of the same size whose settings "
+        "were tuned on held-out jets, but not better; much larger surrogates follow the network more closely. Symbolic "
+        "regression was not tested, and the size measure (32 bits per stored number) favours the program."
     ),
     'C1': (
         "In ParT, the fixed pair bias (a learned function of each particle pair's geometry: ln kT, ln z, ln ΔR, ln m²) "
@@ -418,6 +454,29 @@ CLAIM = {
 }
 
 EXPLAINER = {
+    'X9W_EXPLAINER': (
+        "Particle Flow Networks, Energy Flow Networks and Deep Sets trained on jets randomly shifted by up to 0.08 rad stop "
+        "calling W jets Z when the jet is shifted by 0.06 rad, while the same networks trained on unshifted jets send about "
+        "two thirds of W jets to Z; the accuracy cost is about one point at most. A larger shift of 0.12 rad still moves "
+        "most W jets to Z in the augmented networks, so they ignore offsets inside the trained range rather than measuring "
+        "mass about the jet's own centre. For JEDI-linear the augmented retrainings lost several accuracy points and two of "
+        "three kept the response, so whether its architecture matters is open."
+    ),
+    'E24_EXPLAINER': (
+        "Randomising each particle's direction around the jet axis, at fixed momenta, distances and mass moments, destroys "
+        "the two-prong pattern of W jets and changes about 7 % of JEDI-linear's calls, against 4 % for rotating the whole "
+        "jet. A classifier built on the two-prong variable tau21 changes the same share, because prong shape adds little "
+        "beyond mass and radial shape on these jets, so the test cannot tell whether JEDI-linear uses prong structure. "
+        "JEDI-linear's named radial sums barely move; the extra change runs through two units that read only a jet-level "
+        "summary, and Deep Sets and Particle Flow Networks change as many calls."
+    ),
+    'B6_EXPLAINER': (
+        "A short list of if-statements on sums over pT-ranked particle windows follows how JEDI-linear, Deep Sets, a "
+        "Particle Flow Network and a transformer change their calls under a small jet shift about as well as boosted trees, "
+        "decision trees or small neural networks of the same size tuned on held-out jets, with differences up to about 2 "
+        "points either way. An earlier lead came from comparing with one under-fitted boosted-tree setting. The method "
+        "therefore transfers across architectures at baseline-level fidelity per bit; symbolic regression is untested."
+    ),
     'H12_EXPLAINER': (
         "A boost along the jet axis that keeps the invariant mass fixed changes about a third of the calls of every "
         "hls4ml-trained tagger (JEDI-linear 33 % vs 2.4 % for a rotation) and several times fewer than pT-only or "
@@ -806,7 +865,9 @@ KEY_RESULT = {
         "into Z calls, and fewer of ParT's. The same sign holds on unedited off-centre jets, but the response is not one "
         "exact formula: part of it depends on the shift direction, and the two sums are found as separate internal "
         "directions while their product is not found as one internal quantity. JEDI-linear copies retrained from scratch, "
-        "with and without fixed-point training, read the mass the same way."
+        "with and without fixed-point training, read the mass the same way. Three standard set networks trained on "
+        "randomly shifted jets stop responding to shifts inside the trained range, so the behaviour comes from training "
+        "jets whose axis is always at the centre."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "
@@ -823,6 +884,7 @@ KEY_RESULT = {
         "is not distinguishable from the network's. Its variables match the network's internal variables only partly when tested by swapping single values "
         "between jets, and standard surrogates such as boosted trees reproduce the decisions with fewer fitted pieces. "
         "Mass-type terms first appear in the dense layers of the fit, which is consistent with, but does not locate, where "
-        "the network combines total pT and spread."
+        "the network combines total pT and spread. A blind version of the procedure, applied to three other architectures, "
+        "follows their decision changes as well as tuned trees of the same size, not better."
     ),
 }
