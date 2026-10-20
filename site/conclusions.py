@@ -482,7 +482,9 @@ CLAIM = {
         "change matches the axis-relative formula. So the taggers depend on the axis convention, which the invariant mass "
         "does not. Because they were trained with one axis, any other axis is also a change of input distribution: the "
         "formula predicts the direction of the change, and some changes also occur under a shift of equal size that keeps "
-        "the formula fixed."
+        "the formula fixed. The same holds for taggers trained on top-quark and quark–gluon jets: the other axes change "
+        "3–25 % of their decisions, while LorentzNet, whose inputs are four-vectors that do not refer to any axis, "
+        "changes none."
     ),
     'D4m': (
         "When the axis convention changes, the W and Z decisions move in the direction each model's own axis-relative mass "
@@ -497,7 +499,11 @@ CLAIM = {
         "Small top taggers also change many decisions under a shift that keeps that axis-relative mass fixed, and JetClass "
         "ParT and ParticleNet react strongly to an axis shift alone, so the general-sensitivity part is larger than first "
         "measured. A first, unverified measurement shows the same strong response to a shift alone in the Top Landscape "
-        "ParT and ParticleNet when they are fed jets on a fixed axis."
+        "ParT and ParticleNet when they are fed jets on a fixed axis. On Top Landscape and quark–gluon taggers the axis "
+        "change is exactly a shift of all particle angles, the share of changed decisions follows each model's response "
+        "to a random shift of the same size, and the part that depends on the shift's direction is no larger than in "
+        "untrained networks with shuffled weights; on these datasets general sensitivity to moved inputs accounts for "
+        "the response."
     ),
     'D3': (
         "With 10 times more jets, random JetClass rows, the corrected η build and a matched control for each edit, the "
@@ -599,6 +605,22 @@ CLAIM = {
         "fixed, by reshaping the particle profile inside the subjets, the taggers respond with mixed signs. So they use "
         "the radiation pattern inside the prongs beyond the two masses, but not as the single number τ32; both edits make "
         "jets a classifier can tell from natural ones, and which inner-prong quantity each network reads is not known."
+    ),
+    'D14': (
+        "With the number of displaced tracks (tracks that miss the collision point, as b-hadron decay products do) held "
+        "fixed, the JetClass ParT and ParticleNet with track inputs lower their top score when the displacement is moved "
+        "off the subjet that holds most of it, by about 1.7–2.0 and 1.1 log-odds against a matched control. So they use "
+        "where the displaced tracks sit, not only how many there are. They do not follow the b position implied by the "
+        "three-prong mass structure: moving displacement onto the mass-assigned b subjet also lowers the score. Still "
+        "uncertain: the displacement-heavy subjet may be the true b or a charm quark from the W, which this dataset cannot tell."
+    ),
+    'D15': (
+        "Rotating the W decay inside top jets so that one W daughter is emitted more along the W direction (larger "
+        "|cos θ*| in the W rest frame), at fixed top and W mass, lowers the top score of the taggers beyond what the "
+        "rotation's side effects on the prong shapes explain. This is clearest for the Deep Sets taggers PFN and EFN "
+        "(about −1 to −2 log-odds per unit |cos θ*|); ParT, ParticleNet and LorentzNet show it only on a small set of "
+        "JetClass top jets where the control matched the prong shapes. The taggers therefore use the top decay angle, "
+        "as the W polarisation predicts, but no control yet reproduces the edit's full change of the three-prong variable τ32."
     ),
 }
 
@@ -781,6 +803,42 @@ EXPLAINER = {
         "the top score of nine taggers by about 1 log-odds on JetClass tops. A classifier given only the edit's side "
         "effects (τ32 and how energy is shared between prongs) moved as much and no result passed the multiple-test "
         "correction, so whether taggers use the W decay angle is open until the full run."
+    ),
+    'H32_EXPLAINER': (
+        "At full statistics, rotating the W decay to raise |cos θ*| at fixed top and W mass lowers every tagger's top score "
+        "more than a control that copies the prong energy sharing at a fixed angle. The control reproduces only about half "
+        "of the τ32 change, so an MLP that sees neither the angle nor the pair masses also drops; after a per-jet linear "
+        "correction PFN and EFN keep a clear angle dependence of −1.4 to −1.8 log-odds per unit |cos θ*|."
+    ),
+    'H32V_EXPLAINER': (
+        "On a fresh sample the raw response reproduces. Fitting each edit direction separately shows that the corrected "
+        "angle slope of ParT, ParticleNet and LorentzNet came from a difference between directions, not an angle slope; "
+        "but on JetClass jets where the control matches τ32 and the prong fractions to 0.01, these taggers drop by 0.3–0.7 "
+        "log-odds while the angle-blind MLP stays within 0.09. So they also use the angle, on that small subset."
+    ),
+    'H35_EXPLAINER': (
+        "Swapping the impact parameters of displaced tracks from the mass-assigned b subjet to a W subjet, at fixed jet-level "
+        "count, lowers ParT_full's top score by about 2.9 log-odds more than the same swap inside the b subjet "
+        "(ParticleNet 2.1), while a shuffled-weight ParT and a count-only classifier give 0. The control swap was smaller "
+        "and onto harder tracks, which the verification corrects."
+    ),
+    'H35V_EXPLAINER': (
+        "With a control matched in the number and momentum of swapped tracks, the location effect is about 1.7 (ParT) and "
+        "1.1 (ParticleNet) log-odds. Moving displacement from a W-assigned subjet that holds most of it onto the "
+        "mass-assigned b subjet also lowers the score, so the taggers follow the subjet that already carries the "
+        "displacement, not the b position from the masses."
+    ),
+    'H36_EXPLAINER': (
+        "Measuring particle angles about the winner-take-all or hardest-particle axis changes 3–25 % of the decisions of "
+        "top and quark–gluon taggers, in the order of each model's sensitivity to a plain shift of its inputs; LorentzNet "
+        "changes none. A prediction made beforehand from that shift sensitivity got the size within a factor 0.4–1.3, a "
+        "miss it shares with a random-direction shift."
+    ),
+    'H36V_EXPLAINER': (
+        "On two fresh samples the call changes reproduce. Comparing the axis shift with a random-direction shift of the same "
+        "size, trained networks differ by −1.7 to +4.0 points, inside the range of untrained shuffled-weight networks "
+        "(−3.0 to +3.2), so no learned use of the axis direction is shown. LorentzNet's zero holds because its inputs do "
+        "not depend on the axis."
     ),
     'H25V_EXPLAINER': (
         "On fresh jets the subjet-width result reproduces. When τ32 is changed with the subjet masses held fixed, by "
