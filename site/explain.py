@@ -1129,6 +1129,67 @@ E23W_EXPLAINER = [
  ('Why it matters',
   'The two-gain description of the mass read-out (A4n v1) does not survive an unbiased estimator: the gains are near equal from h4 on, and a single function of full-jet $M_0M_2$ is excluded only at the S sums (A4n v2). The direction-dependent part follows the plain particle centroid more than the pT-weighted one, which points at count-based context objects such as S31 (claim A3c; untested link). No product unit was found, but the null band excludes only large effects.', None),
 ]
+E23X_EXPLAINER = [
+ ('Question',
+  'When all particles of a jet are shifted, does the direction-dependent part of JEDI-linear\'s response pass through the two context-only units S31 (count dipole) and S58 (count quadrupole), and which particles drive it?', None),
+ ('Background',
+  'For a rigid shift $\\vec c$ of every particle, the odd response $O=\\tfrac12[f(\\vec c)-f(-\\vec c)]$ depends on the shift direction; the even response $E=\\tfrac12[f(\\vec c)+f(-\\vec c)]-f(0)$ does not. '
+  'To first order the odd change of $M_2=\\sum_i p_{T,i}r_i^2$ is $2\\vec c\\cdot\\vec M_1$ and that of the unweighted $\\sum_i r_i^2$ is $2\\vec c\\cdot\\sum_i\\vec x_i$. E23wv found the odd response follows the unweighted centroid; E24x found that S31 and S58 read only the context round $g$, with thresholds set by count dipole and quadrupole sums. '
+  'H0: freezing S31 + S58 removes no more odd response than freezing other S units; H1: it removes more than half at h4–z and the margin.', None),
+ ('Method',
+  'Test sample(1500, 2311), $N$ 7,500; fit sample(1500, 2310). Shifts of 30 and 60 mrad at 8 azimuths. Freeze S31 + S58 (or one, or all of $g$) at the unshifted values; odd power removed $1-\\sum O_{\\rm frz}^2/\\sum O^2$ at h4, h5, z and the W−Z margin, 2,000-resample jet bootstrap. '
+  'Null: all 136 pairs of the other live S units. Centre-moving edits at fixed $M_2$: (5a) move only particles with $p_T<11$ GeV; (5b) move only the 14 hardest; the rest dilated so $M_2$ is held to $10^{-7}$. Regression of $O$ on the odd parts of $\\tfrac12\\Delta\\log\\sum r^2$ and $\\tfrac12\\Delta\\log M_2$ (held-out $R^2$). 180° rotation with S58 frozen.', None),
+ ('Result',
+  'Freezing S31 + S58 removes 0.255 [0.249, 0.261] (h4), 0.249 (h5), 0.208 (z) and $-0.009$ [$-0.016$, $-0.003$] (margin) of the odd power; all of $g$ frozen removes the same at h4–z. H1 ($>0.5$) is excluded at every stage. '
+  'With $M_2$ held, moving only the hard 14 changes the margin\'s odd response about 2× more than moving only the soft particles (soft/hard 0.45 [0.42, 0.49]); S31 + S58 carry 0.50 of the soft-move response at h4 and none of the hard-move response. The odd response at S–z follows $\\sum r^2$ ($R^2$ 0.15–0.38) rather than $M_2$ ($\\le 0.02$); a rigid shift changes $\\sum r^2$ 8.8× more. S58 carries 0.15 of the 180° response at h4.', 'results/jedi/e23x_centre.png'),
+ ('Checks',
+  'The jitted head reproduces the full forward exactly (max logit difference 0); freezing $g$ leaves S31 and S58 unchanged; fit and test samples are disjoint. The untrained redraws have only 1–2 live S units and give no usable null.', None),
+ ('Verification (E23xv; confidence 0.7)',
+  'Samples 4313 and 5311 reproduce the shares within 0.01 (seed 5311: 0.251 [0.246, 0.257], 0.244, 0.210, $-0.002$). The 136-pair null is not matched in size: S31\'s own odd response is 3.10 against $\\le 0.89$ for other units. A size-matched control freezes random subsets of the other 17 live S units that remove the same S-level odd power ($\\approx0.50$): they remove 0.54 (h4), 0.63 (h5), 0.66 (z) and 0.27 (margin), against 0.25, 0.24, 0.21 and 0.00 for S31 + S58 (Holm $p$ 0.003, 0.028, 0.002, 0.42). '
+  'The soft/hard margin ratio holds with another $M_2$ hold (0.49) but is 1.03 without it, and the jointly feasible jets are 63 % top, 27 % gluon and $<3$ % W/Z.', None),
+ ('Why it matters',
+  'The context round (claim A3c) carries a defined quarter of the direction-dependent shift response at h4–z and none at the W−Z score, and per unit of its own response it passes on less than the particle-reading S units do. This excludes the proposed S31/S58 route as the main mechanism of the odd term (claim A4d); which particle-reading units carry it is open.', None),
+]
+E25W_EXPLAINER = [
+ ('Question',
+  'In the official 16-feature JEDI-linear, which reads angles through $\\Delta R$, at which layer can the mass variables be swapped between jets, where do W jets go under increasing off-axis shifts, and is the response specific to trained weights?', None),
+ ('Background',
+  '$M_0=\\sum_i p_{T,i}$ and $M_2=\\sum_i p_{T,i}\\Delta R_i^2$ about the stored axis; for small angles $m^2\\approx M_0M_2$, and $D=\\tfrac12\\log(M_0M_2)$. E25/E25v: a 0.06 rad shift turns about half of W jets into Z; 8 of 9 untrained redraws gave constant calls. '
+  'Distributed alignment search (DAS) learns a $k$-dimensional subspace $Q$ at a stage $h$ such that $h\'=h_b+(h_s-h_b)QQ^\\top$ gives the call that the network makes when variable $V$ of the base jet is set to the source jet\'s value; the effective interchange accuracy (IIA) is the fraction of call-changing pairs reproduced.', None),
+ ('Method',
+  'sample(1500, 2521) minus earlier rows, $N$ 6,694 (accuracy 82.07 %). DAS with $k=1,2$ at S, h4, h5, z, logits for $M_0$, $M_2$, $D$; 3,000 train / 2,000 test pairs from real-jet do($V$) edits; controls: 5,000 random subspaces, full-stage swap; Holm over 30 cells. '
+  'Dose: translation $T_d$, $d$ = 0.015–0.12 rad, vs a $\\Delta R$-only dilation with matched $M_2$ (dilR) and a rotation; 5×5 call matrices. Baselines: random bodies (init scale or trained moments) and masks-kept weight permutations, read-out refit by logistic regression; a baseline qualifies with accuracy $>0.40$ and non-constant calls.', None),
+ ('Result',
+  'k = 2 IIA for $M_2$: 0.71 (S), 0.66 (h4), 0.62 (h5), 0.59 (z), 0.38 (logits); full swap 0.58; random $\\le 0.09$ at S. $M_0$ 0.72 at S; $D$ below $M_2$ at every stage. '
+  'True W under $T$: W→Z 0.04, 0.52, 0.88, 0.50, 0.05, 0.002 at 0.015, 0.03, 0.045, 0.06, 0.09, 0.12 rad, then top (0.65 at 0.09 rad) and q/g; rotation 0.014 at all doses; $T$/dilR 1.00–1.08 up to 0.06 rad. '
+  'Trained flow 0.50 [0.46, 0.54] vs 10 qualifying baselines $-0.00$ to 0.23 ($p$ 0.091, the minimum for $n=10$).', 'results/jedi/e25w.png'),
+ ('Checks',
+  'Own forward pass equals Jedi.run (max logit difference 0). The 16f-perminv, n32 and n128 checkpoints give the same dose pattern (peak at 0.045 rad, Z 0.81–0.89).', None),
+ ('Verification (E25wv; confidence 0.72)',
+  'Fresh sample (seed 2541, $N$ 6,448): 16f k = 2 IIA at S $M_0$ 0.78, $M_2$ 0.67 [0.64, 0.69]; the same DAS on the 3-feature net gives $M_0$ 0.83, $M_2$ 0.72 at S and no rise at h4/h5, so "held at S" is common to both nets. They differ in $D$: 0.47 → 0.56 from S to h4 in 3f, 0.58 → 0.53 in 16f (no paired test). '
+  'A 2-dim subspace trained only to move the call reaches 0.56 on $M_2$ pairs; the $M_2$-specific excess is +0.10 [0.08, 0.13]. Dilations matched on $M_2$ reproduce the W→Z count ($T$/dil 0.97–1.04), those matched on $\\sum p_T r$ (1.30–2.19) or $\\sum r$ (0.87–1.71) do not (Holm $p\\le0.001$); per jet $T$ and dil$_{M_2}$ calls agree on 74–97 %. The "P full swap" swaps only the $g$ context route.', None),
+ ('Why it matters',
+  'The two mass moments are causal internal variables at the object layer in both official JEDI-linear families (claim A4c), and the off-axis response follows $M_2$ among the radial moments tested (claim A4). The 16f / 3f difference sits in how $D$ develops after S, not in $M_0$ / $M_2$ (claim A1f). Where the moments first appear (between P and S) is untested.', None),
+]
+X13_EXPLAINER = [
+ ('Question',
+  'Why does the size of the axis (translation) response differ so much between networks trained on the same stored-axis inputs (from below 0.3 to 2 of a matched mass change), and is the size an architecture property or a seed property?', None),
+ ('Background',
+  'A rigid shift of all constituents by $c$ leaves the invariant mass unchanged but changes $M_2=\\sum_i p_{T,i}r_i^2$ about the stored axis. Calibrated ratio $R=\\overline{\\Delta\\hat y(T)}/\\overline{\\Delta\\hat y(\\mathrm{dil})}$, with $\\hat y$ a ridge read-out of $\\log m$ and dil a dilation $\\Delta\\eta_i,\\Delta\\phi_i\\to s\\,\\Delta\\eta_i,s\\,\\Delta\\phi_i$ with the same $\\tfrac12\\Delta\\log(M_0M_2)$. '
+  'A network that reads only distances from the stored axis gives $R=1$; one that reads only shift-invariant quantities (pairwise distances, or positions about the jet centroid) gives $R=0$.', None),
+ ('Method',
+  'sample(1000, 1313), 2,500 fit / 2,500 test jets, identical for 56 trained and 87 untrained networks (JEDI-linear official and retrained, PFN, EFN, Deep Sets, Linformers, transformers; 2–3 seeds per architecture). Edits: translation $T$ (0.06 rad, 8 azimuths); radial-only edit $r_i\\to|\\vec p_i+\\vec c|$ at fixed azimuth (same $r_i$ as $T$, different pairwise distances), giving $R_{\\rm rad}$; azimuth scramble at fixed $M_0,\\vec M_1,M_2$; rigid rotation (null). '
+  'Spearman across networks with bootstrap; share of var$(\\log R)$ between architecture families vs 10,000 label permutations; paired seed differences.', None),
+ ('Result',
+  '$R_{\\rm rad}$ median 1.05 (IQR 0.99–1.18); $R$ median 0.94 (IQR 0.62–1.13); Spearman($R$, $R_{\\rm rad}$) 0.77 [0.61, 0.87]. X12 HGQ, PFN, EFN: $R$ 0.93–1.22; transformers $-1.11$ to 2.07. Two seeds of one small transformer give 2.07 and 0.35. Family share of var$(\\log R)$ 0.48 vs permutation 95th percentile 0.64 ($p$ 0.38).', 'results/jedi/x13_axis_size.png'),
+ ('Checks',
+  'The shift keeps $m$ and all pairwise distances exactly; the radial edit reproduces the shift\'s $r_i$ to $10^{-7}$; edits touch real particles only; read-outs are fitted on the fit half and evaluated on the test half.', None),
+ ('Verification (X13v; mechanism reading refuted, confidence 0.35)',
+  'Fresh sample (seed 2727): per-network $R$ and $R_{\\rm rad}$ reproduce (Spearman 0.99 / 0.97). Input-only oracle read-outs: true $\\log m$ gives $(R,R_{\\rm rad})=(0,\\,0.804)$, the axis moment $(1,\\,1.000)$, linear mixes lie on $R_{\\rm rad}=0.804+0.196R$. Across networks $R_{\\rm rad}=0.804\\,[0.66,0.90]+0.328\\,[0.22,0.48]\\,R$. So $R_{\\rm rad}\\approx1$ does not show axis use, and $R$ is close to the share of the read-out tied to the stored axis; whether the rest is pairwise distance or recentring is not separated. '
+  'The response differs from rotation in all 56 networks, with negative sign in 2 N = 32 transformers. Family share 0.50 ($p$ 0.33) with all networks, 0.77 ($p$ 0.006) without Linformers and transformers. Seed differences below about 0.15 are not reproducible.', None),
+ ('Why it matters',
+  'The axis-relative mass response (claim A10m) is present in every trained network tested, and its size is a measured share rather than an unexplained constant (claim A10s): fixed by the family for set networks, set by the training run for attention models. Any quoted per-architecture ratio needs its seed spread.', None),
+]
 X9X_EXPLAINER = [
  ('Question',
   'X9w showed that set networks trained on jets shifted at random by up to 0.08 rad ignore a 0.06 rad shift but respond to a 0.12 rad shift. Does the shift they tolerate follow the training range $A$ (a learned range) or stay fixed (a property of the architecture)? Inside the range, do they cancel the shift by reading off the jet centre?', None),
@@ -1717,7 +1778,10 @@ PAPER_EXPLAINERS = {
           ('Result 24 explained: breaking up vs moving the softer prong at fixed mass (claims A13, A3z; E24w, E24wv)', E24W_EXPLAINER, False),
           ('Result 25 explained: the official 16-feature JEDI-linear reads angles through ΔR, and its mass is still not recentred (claims A1f, A4, A10m; E25, E25v)', E25_EXPLAINER, False),
           ('Result 26 explained: what the context-only objects S58 and S31 compute (claims A3c, A3z, A13; E24x, E24xv)', E24X_EXPLAINER, False),
-          ('Result 27 explained: the two gains of the mass read-out under shifts, and a test for a product unit (claims A4n, A4d, A4; E23w, E23wv)', E23W_EXPLAINER, False)],
+          ('Result 27 explained: the two gains of the mass read-out under shifts, and a test for a product unit (claims A4n, A4d, A4; E23w, E23wv)', E23W_EXPLAINER, False),
+          ('Result 28 explained: does the direction-dependent shift response pass through the count units S31 and S58? (claims A4d, A3c; E23x, E23xv)', E23X_EXPLAINER, False),
+          ('Result 29 explained: where the 16-feature JEDI-linear holds its mass moments, and where W jets go under larger shifts (claims A4c, A4, A1f; E25w, E25wv)', E25W_EXPLAINER, False),
+          ('Result 30 explained: what sets the size of the axis response across 56 networks (claims A10s, A10m; X13, X13v)', X13_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True),
           ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False),
           ('Result explained: interchange interventions, per variable (claim B2; E22)', E22_EXPLAINER, False),

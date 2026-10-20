@@ -53,7 +53,9 @@ CLAIM = {
         "established: part of the response depends on the shift direction, and the total pT and the spread are each found "
         "as separate internal directions, but their combination (the logarithm of their product) is not found as one "
         "internal quantity in any layer, and a direct test for a unit that multiplies them found none but can exclude only "
-        "large effects."
+        "large effects. In the 16-feature network, shifting particles off the axis turns W jets into Z and then into top "
+        "calls, and stretching only the particle distances to give the same change of the pT-weighted spread produces the "
+        "same number of W-to-Z changes, while stretches matched on other radial sums do not (round 10, E25w)."
     ),
     'A4n': (
         "On real, unedited jets whose axis is slightly off the pT-weighted centre, moving the particles so that the jet is "
@@ -63,7 +65,9 @@ CLAIM = {
         "growing with the centre offset, one with the square of the shift) enter with clearly different weights did not "
         "hold up: measured without bias they are weighted nearly equally from the dense layers on, and unequally only at "
         "the first summed layer. Most of the direction-dependent part follows the plain average position of the particles, "
-        "not the momentum-weighted one, which the axis-relative mass formula does not predict."
+        "not the momentum-weighted one, which the axis-relative mass formula does not predict. That direction-dependent part "
+        "does not pass mainly through the two jet-level units that count particles on each side of the axis: holding them "
+        "fixed removes about a quarter of it in the later layers and none in the final W-versus-Z score (round 10, E23x)."
     ),
     'A5': (
         "This is partly supported. The class neurons (the units just before the final linear layer) can be approximated by "
@@ -115,7 +119,9 @@ CLAIM = {
         "that edit changes; random directions of the same size almost never do. So these two moments are separate internal "
         "quantities from the object layer on. Their combination, the log of their product, is not found as one quantity: the "
         "directions found for it only follow a rescaling of all pT, and the same change made through the angles runs through "
-        "the spread directions. For the spread, the gain over simply giving the edited jet the other jet's decision is small."
+        "the spread directions. For the spread, the gain over simply giving the edited jet the other jet's decision is small. "
+        "The same test on the official 16-feature JEDI-linear, and again on the 3-feature one with new jets, finds the two "
+        "moments as separate directions in the object layer of both; where they first appear, before that layer, is untested."
     ),
     'A1r': (
         "JEDI-linear retrained from scratch, with and without fixed-point (quantization-aware) training, reads the jet mass "
@@ -157,7 +163,18 @@ CLAIM = {
         "particle-count distribution is, both in a fixed (Δη, Δφ) frame rather than as rotation-invariant jet quantities. "
         "These descriptions explain about 93–95 % of the units' jet-level thresholds. Not explained: the elongation unit "
         "still changes when the jet is turned by 180°, which an elongation measure cannot see, and the network's per-slot "
-        "rounding shapes the other unit's response."
+        "rounding shapes the other unit's response. When the whole jet is shifted, holding these two units fixed removes "
+        "about a quarter of the direction-dependent part of the response in the later layers and none of it in the final "
+        "W-versus-Z score, so they are a minor route for that response (round 10, E23x)."
+    ),
+    'A10s': (
+        "Every one of 56 trained networks tested reacts to a shift of the whole jet that leaves its true mass unchanged, "
+        "but by very different amounts. The amount matches how much of each network's mass estimate is measured from the "
+        "stored jet axis rather than from quantities that do not move with a shift (such as distances between particles, "
+        "or positions measured from the jet's own centre; the tests used cannot tell these two apart). For the set-based "
+        "networks (JEDI-linear, Particle and Energy Flow Networks, Deep Sets) that share is set by the network type; for "
+        "transformer-type networks it differs between training runs of the same design. Uncertain: the networks follow the "
+        "simple two-part description only approximately, and which internal units hold the shift-independent part is open."
     ),
     'A1f': (
         "The more accurate official JEDI-linear with 16 input features does not build its angular information from "
@@ -196,7 +213,10 @@ CLAIM = {
         "Particle Flow Network and an Energy Flow Network: all respond to the shift, through the pT-weighted spread about "
         "the axis, while networks without trained function do not. Rank windows, pure cuts above chance and nearly exact "
         "radial objects were found only in JEDI-linear. Retrained JEDI-linear copies with and without fixed-point training "
-        "also respond to the shift about as much as to a real widening of the same spread."
+        "also respond to the shift about as much as to a real widening of the same spread. A comparison of 56 trained "
+        "networks on the same jets (round 10, X13) finds the response in all of them; its size follows how much of each "
+        "network's mass estimate is tied to the stored axis, which is fixed by the network type for set-based networks and "
+        "varies between training runs for transformer-type networks (claim A10s)."
     ),
     'B1': (
         "The identity that a ReLU unit summed over particles equals the number of passing particles times its bias plus its "
@@ -605,6 +625,29 @@ EXPLAINER = {
         "predict. The earlier reading of a strong imbalance came from the estimator. Most of the direction-dependent "
         "response follows the plain average position of the particles, and no unit was found that multiplies total pT and "
         "spread, though that test can exclude only large effects."
+    ),
+    'E23X_EXPLAINER': (
+        "When every particle of a jet is shifted, the part of JEDI-linear's response that depends on the shift direction "
+        "passes only partly through the two jet-level units that count particles on each side of the axis (S31 and S58): "
+        "holding them fixed removes about a quarter of it in the later layers and none of it in the final W-versus-Z score. "
+        "Other second-round units that respond as strongly pass on about twice as much, so most of this response goes "
+        "through the units that read individual particles. Which of those units carry it, and how it behaves on W and Z "
+        "jets in particular, is still open."
+    ),
+    'E25W_EXPLAINER': (
+        "In the 16-feature JEDI-linear, the total pT and the pT-weighted spread of particles about the jet axis are each "
+        "held as a separate internal direction already at the second summed layer, as in the 3-feature network tested the "
+        "same way; the two networks differ only in how the combined mass-like quantity develops one layer later. Shifting "
+        "all particles off the axis turns W jets first into Z and then into top or quark/gluon calls, and a stretch of the "
+        "particle distances that changes the spread by the same amount gives the same number of W-to-Z changes. Ten "
+        "non-trained comparison networks respond less, but with ten of them the test cannot reach p below 0.09."
+    ),
+    'X13_EXPLAINER': (
+        "All 56 trained networks tested react to a shift of the whole jet that keeps its true mass, so none of them "
+        "computes the invariant mass alone. How strongly they react matches how much of their mass estimate is measured "
+        "from the stored axis rather than from quantities a shift leaves unchanged. That share is set by the network type "
+        "for the set-based networks, but differs between training runs for transformer-type networks, by a factor of "
+        "about six in one case. Which internal parts compute the shift-independent share is still open."
     ),
     'X9X_EXPLAINER': (
         "Particle Flow Networks, Energy Flow Networks and Deep Sets trained on jets shifted at random by up to some "
@@ -1173,7 +1216,10 @@ KEY_RESULT = {
         "directions while their product is not found as one internal quantity. JEDI-linear copies retrained from scratch, "
         "with and without fixed-point training, read the mass the same way. Three standard set networks trained on "
         "randomly shifted jets stop responding to shifts inside the trained range, whatever its size, and respond beyond "
-        "it, so the behaviour comes from training jets whose axis is always at the centre."
+        "it, so the behaviour comes from training jets whose axis is always at the centre. Across 56 trained networks of "
+        "several types the shift response is present in all; its size follows how much of each network's mass estimate is "
+        "tied to the stored axis, which depends on the network type for set networks and on the training run for "
+        "transformer-type networks."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "
