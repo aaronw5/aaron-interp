@@ -12,6 +12,24 @@ CLAIM_CONC = getattr(CC, 'CLAIM', {}) if CC else {}
 EXPL_CONC = getattr(CC, 'EXPLAINER', {}) if CC else {}
 KEY_CONC = getattr(CC, 'KEY_RESULT', {}) if CC else {}
 EXPL_NAME = {id(v): k for k, v in vars(X).items() if isinstance(v, list) and (k.endswith('_EXPLAINER') or k.startswith('EARLIER'))}
+try:
+    import guide as G
+except ImportError:
+    G = None
+GUIDE = getattr(G, 'GUIDE', {}) if G else {}
+GUIDE_LABELS = getattr(G, 'LABELS', ()) if G else ()
+
+
+def guide(key):
+    """'Start here' section at the top of a tab: steps in learning order; lines split on newlines, leading labels bold."""
+    steps = GUIDE.get(key, [])
+    if not steps: return ''
+    def line(s):
+        for lab in GUIDE_LABELS:
+            if s.startswith(lab): return f'<p><b>{e(lab)}</b>{e(s[len(lab):])}</p>'
+        return f'<p>{e(s)}</p>'
+    body = ''.join(f'<h4 class="step">{e(h)}</h4>' + ''.join(line(s) for s in x.split('\n') if s.strip()) + (f'<figure>{img(f)}</figure>' if f else '') for h, x, f in steps)
+    return f'<section class="guide"><h3>Start here: what we did and what we found, in order</h3>{body}</section>'
 
 
 def concl(t, cls='concl'):
@@ -69,6 +87,7 @@ def paper(p):
     return f'''<section id="tab-{p['key']}" class="tab" hidden>
 <h2>{e(p['title'])}</h2>
 <p>{e(X.PAPER_MOTIVATION.get(p['key'], ''))}</p>
+{guide(p['key'])}
 <h3>Thesis (current)</h3><p class="thesis">{e(p['thesis'])}</p>
 <details><summary>Thesis history</summary><ul>{log}</ul></details>
 {explainers}
@@ -80,6 +99,7 @@ def paper(p):
 ov = C.OVERVIEW
 overview = f'''<section id="tab-overview" class="tab">
 <h2>{e(ov['title'])}</h2><p>{e(ov['intro'])}</p>
+{guide('overview')}
 <h3>Main results, explained</h3>{''.join(f'<h4>{e(t)}</h4>{concl(KEY_CONC.get(t, ""))}<p>{e(x)}</p><figure>{img(f)}</figure>' for t, x, f in X.KEY_RESULTS)}
 <h3>Background</h3>{''.join(f'<h4>{e(t)}</h4><p>{e(x)}</p>' for t, x in X.BACKGROUND)}
 <details><summary>Glossary</summary>{table(['term', 'meaning'], X.GLOSSARY)}</details>
@@ -113,6 +133,7 @@ details.claim{{background:var(--card);border:1px solid var(--line);border-radius
 details.claim summary::before{{content:'▸ ';color:var(--acc)}} details.claim[open] summary::before{{content:'▾ '}}
 .concl{{display:block;margin:8px 0;padding:8px 12px;border-left:3px solid var(--acc);background:var(--bg);color:var(--fg);font-size:.93rem;max-width:90ch}} details.claim summary .concl{{margin:6px 0 2px}}
 .cid{{font-weight:700;color:var(--acc);margin-right:4px}} .plain{{display:block;margin-top:4px;color:var(--fg);font-size:.92rem;max-width:90ch}} .meta{{display:block;font-size:.82rem;color:var(--mut);margin-top:2px}}
+section.guide{{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:6px;padding:4px 14px 10px;margin:14px 0}} section.guide h4.step{{margin-top:18px}} section.guide p{{margin:6px 0}}
 details.claim .body{{border-top:1px solid var(--line);margin-top:8px;padding-top:4px}} h4{{font-size:.82rem;margin:14px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}}
 </style>
 <main>

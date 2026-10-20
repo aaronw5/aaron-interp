@@ -1,0 +1,804 @@
+"""'Start here' guides, one per tab of the results page (read by site/gen.py).
+
+GUIDE = {tab_key: [(heading, text, figure_or_None), ...]}. Tab keys: 'overview' and the paper keys of content.PAPERS.
+Steps are in the order that makes the experiments easiest to learn, not the order they were run. In each text, lines
+are separated by '\\n'; a line that starts with one of the labels in LABELS is rendered with the label in bold.
+Writing rule: plain, literal statements; conclusion first, numbers after; at most two numbers per 'What happened'.
+"""
+
+LABELS = ('Question:', 'What we did:', 'What happened:', 'What it means:', 'Still uncertain:', 'Corrected:', 'More:')
+
+GUIDE = {}
+
+# ---------------------------------------------------------------------------------------------------------------- overview
+GUIDE['overview'] = [
+ ('1. What the project asks',
+  "Jet taggers are neural networks that decide which particle produced a jet. This project asks what such a network "
+  "computes, written as formulas in physical quantities (sums over particles, the jet mass, distances from the jet axis), "
+  "from the input particles to the class decision. Each proposed formula is tested by changing the input jets, or the "
+  "network's internal values, in a controlled way and checking that the network responds as the formula predicts.\n"
+  "The results are organised in four tabs, one per planned paper (A to D). Each tab starts with a guide like this one, in "
+  "the order that makes the experiments easiest to learn, followed by the paper's current thesis, step-by-step "
+  "explanations of each result ('Results explained') and the claims with their evidence. Every term used on the page is "
+  "defined in the glossary at the bottom of this tab.", None),
+ ('2. Jets, classes and the taggers studied',
+  "A jet is a narrow spray of particles produced by one quark or gluon, or by the decay of a fast heavy particle whose "
+  "decay products travel close together: the W boson (80.4 GeV), the Z boson (91.2 GeV), the Higgs boson (125 GeV) or "
+  "the top quark (173 GeV). A tagger receives the particles of one jet and outputs a score for each class.\n"
+  "Datasets: hls4ml has five classes (gluon g, light quark q, W, Z, top t) with jet transverse momentum around 1 TeV; "
+  "JetClass has ten (QCD and several Higgs, W, Z and top decay modes); Top Tagging Landscape has top versus QCD jets; "
+  "the Quark–Gluon dataset has quark versus gluon jets.\n"
+  "Models: JEDI-linear, a small network built to run in the CMS hardware trigger (Papers A and B); ParT (Particle "
+  "Transformer) and ParticleNet, large networks trained on JetClass (Paper C); small networks we trained on the hls4ml "
+  "inputs for comparison (Deep Sets, Particle and Energy Flow Networks, Linformers, transformers); and the published "
+  "taggers for Top Tagging and Quark–Gluon (Paper D).", None),
+ ('3. What the networks receive: particle positions measured from the jet axis',
+  "Each particle $i$ has a transverse momentum $p_{T,i}$ (its momentum perpendicular to the beam, in GeV) and a direction "
+  "$(\\eta_i, \\phi_i)$ (pseudorapidity and azimuth). The networks do not receive $\\eta$ and $\\phi$. They receive the "
+  "particle's offset from a reference direction called the jet axis, $\\vec r_i = (\\Delta\\eta_i, \\Delta\\phi_i)$, and "
+  "often its distance from the axis $r_i = \\Delta R_i = \\sqrt{\\Delta\\eta_i^2 + \\Delta\\phi_i^2}$ (radians).\n"
+  "Which axis: in both hls4ml and JetClass the stored axis is the E-scheme axis, the direction of the summed momentum of "
+  "all particles in the jet. For small angles this direction is the pT-weighted centre of the particles, so "
+  "$\\sum_i p_{T,i}\\,\\vec r_i \\approx 0$ about it. Other accepted axes exist: the winner-take-all (WTA) axis follows "
+  "the harder branch at each step when the jet is reclustered, and a trigger may use the hardest particle.\n"
+  "ParT also receives features of each pair of particles (their distance, how they share momentum, and their pair mass). "
+  "These depend only on the two particles, not on the axis.\n"
+  "JEDI-linear sees the 64 highest-pT particles, each as $(p_T, \\Delta\\eta, \\Delta\\phi)$. The figure shows its layers; "
+  "the Paper A tab explains them.", 'results/site/X0_architecture.png'),
+ ('4. Two quantities that are both called "mass"',
+  "The invariant mass $m$ of a jet is the mass of the particle that produced it. For a fast jet (small angles) it depends "
+  "only on the angles between pairs of particles:"
+  "$$m^2 \\approx \\sum_{i<j} p_{T,i}\\, p_{T,j}\\, \\Delta R_{ij}^2 .$$"
+  "Written with the positions measured from the axis, the same sum is exactly"
+  "$$m^2 = M_0 M_2 - |\\vec M_1|^2, \\qquad M_0 = \\sum_i p_{T,i},\\quad \\vec M_1 = \\sum_i p_{T,i}\\,\\vec r_i,\\quad "
+  "M_2 = \\sum_i p_{T,i}\\, r_i^2 .$$"
+  "$M_0$ is the total transverse momentum, $M_2$ the pT-weighted squared spread of the particles about the axis, and "
+  "$\\vec M_1$ the pT-weighted offset of the jet's centre from the axis. The term $-|\\vec M_1|^2$ corrects for the axis "
+  "not sitting at the centre (we call this recentring).\n"
+  "Dropping that term gives a second quantity, the mass about the axis, which we write $m_A$ (axis-moment mass):"
+  "$$m_A = \\sqrt{M_0 M_2}, \\qquad m_A^2 = m^2 + |\\vec M_1|^2 .$$"
+  "About the E-scheme axis $\\vec M_1 \\approx 0$, so $m_A = m$. On every training jet the two numbers agree (correlation "
+  "0.99999 on hls4ml jets); they differ only when the axis is not at the jet's centre. A network trained on these jets "
+  "can therefore learn either one, and ordinary jets cannot show which.", None),
+ ('5. Worked example: a W jet at 80 GeV reads 100 GeV',
+  "Take a W jet with $m$ = 80 GeV and $p_T \\approx$ 1 TeV, so $M_0 \\approx$ 1000 GeV. Move every particle by the same "
+  "angle $c$ = 0.06 rad (the shift edit) and keep the axis where it was. Distances between particles do not change, so "
+  "$m$ stays 80 GeV. The jet's centre is now 0.06 rad from the axis, $|\\vec M_1| \\approx M_0 c \\approx$ 60 GeV, and"
+  "$$m_A^2 = m^2 + M_0^2 c^2 \\approx 80^2 + 60^2 \\quad\\Rightarrow\\quad m_A \\approx 100\\ \\mathrm{GeV}.$$"
+  "A network that reads $m_A$ sees this jet move from the W mass (80 GeV) past the Z mass (91 GeV) and should call it "
+  "Z. A network that reads $m$ should not change its call. This is the central test of the project.\n"
+  "Measured: JEDI-linear calls 77 % of shifted true W jets Z (3 % before the shift); ParT with all input features "
+  "(ParT_full) calls 31 % of them Z (12 % before). The figure shows one W jet: the two formulas computed from its "
+  "particles as the shift grows, and JEDI-linear's own mass reading (dashed).", 'results/site/X1_mass_shift.png'),
+ ('6. Edits, controls and null networks',
+  "An edit is a controlled change to the particles of real jets whose effect on physical quantities is known in "
+  "advance. The edits used most often:\n"
+  "Shift (translation): every particle moved by the same small angle, axis kept. $m$ unchanged, $m_A$ raised.\n"
+  "Dilation (angle scaling): every $\\Delta\\eta$, $\\Delta\\phi$ multiplied by $k$. A real mass change: $m$ and $m_A$ "
+  "both scale by $k$. It is the reference for 'a real mass change of the same size'.\n"
+  "Rotation about the axis: every particle turned about the axis by the same angle. Keeps every distance $r_i$, $m$ and "
+  "$m_A$.\n"
+  "Re-axis: every $\\Delta\\eta$, $\\Delta\\phi$ recomputed about another accepted axis (WTA, hardest particle); no "
+  "particle moves.\n"
+  "Boost along the jet axis: changes the jet $p_T$ and its angles, keeps $m$.\n"
+  "Collinear split: one particle replaced by two pieces moving in the same direction. Keeps every infrared- and "
+  "collinear-safe (IRC-safe) observable and adds one particle.\n"
+  "A control is a second edit of the same size and with the same side effects that leaves the tested quantity unchanged; "
+  "the effect attributed to the quantity is the edit's effect minus the control's. Example: for the shift, a rotation of "
+  "equal displacement moves the particles as far but keeps $m_A$.\n"
+  "A null network has the same structure as the trained one but no trained function (labels shuffled before training, "
+  "or trained weights shuffled within each layer). An effect that also appears in null networks comes from the "
+  "architecture, not from training.\n"
+  "Every result is rerun by a second agent on fresh jets before a claim is marked verified; these reruns carry the "
+  "experiment id with a v (for example P3v).", None),
+ ('7. How to read the numbers',
+  "Calls changed: the fraction of jets whose predicted class changes under an edit.\n"
+  "W → Z flow: the fraction of true W jets whose call moves from W to Z. It is the expected direction when a network's "
+  "mass reading rises from 80 toward 91 GeV.\n"
+  "Mass read-out: the networks have no mass output. We fit a linear map (ridge regression) from one layer's values to "
+  "log(mass) on ordinary jets and apply it to edited jets; the change of this map is 'the network's mass reading'. A "
+  "fitted map responds less than fully, so its change is compared with its change under a real mass change of the same "
+  "predicted size (calibration).\n"
+  "Calibrated ratio R: the network's response to the shift divided by its response to a dilation that changes $m_A$ by "
+  "the same amount (measured on the read-out or on the W − Z score difference). R = 1 means the network responds as if it "
+  "reads $m_A$; R = 0 means it reads only quantities a shift does not change, such as $m$. 'R = 0.2' means the network "
+  "responds to the shift at 0.2 of its response to a real mass change of the same size.\n"
+  "Logit difference ℓW − ℓZ (log-odds): the W score minus the Z score before the softmax, the log of the ratio of the W "
+  "and Z probabilities; a change of 1 multiplies that ratio by about 2.7.\n"
+  "Numbers in square brackets [a, b] are 95 % bootstrap intervals over jets. When many tests are run together the "
+  "p-values are Holm-corrected, so that the chance of any false positive among them stays below 5 %.\n"
+  "Confidence (0 to 1, on each claim): the project's judgement of how well the claim is supported by all evidence, "
+  "controls and reruns, updated each round. It is not a probability computed from data. A claim at 0.00 has not been "
+  "tested yet.", None),
+ ('8. Why it matters: the jet axis is a convention',
+  "The invariant mass is the same for every choice of axis; $m_A$ is not. A network that reads $m_A$ therefore changes "
+  "its decisions when the particle positions are measured about another accepted axis, although no particle moves. "
+  "With the WTA axis, JEDI-linear changes 30.3 % of its decisions and ParT_full 11.7 %, mostly W jets called Z. Part of "
+  "any change of axis is also a change of the input distribution away from what the network was trained on; Paper D "
+  "separates the two. The figure shows one W jet about three axes.", 'results/site/X2_axis.png'),
+ ('9. Paper A: how JEDI-linear builds its decision',
+  "Paper A writes the whole trigger network as formulas, front to back: first-layer cuts on single particles, their sums "
+  "over particles ('objects'), the second round of cuts, the mass variable and the class neurons; then it tests which "
+  "parts recur in retrained copies and in other architectures trained on the same inputs. Main result: the network's "
+  "mass is the mass about the given axis, $m_A$. Open: where the network combines $M_0$ and $M_2$, and what carries the "
+  "part of the response that depends on the direction of the shift.", None),
+ ('10. Paper B: turning a network into if-statements',
+  "Paper B asks whether a network can be rewritten as readable if-statements ('if $Q > t$, add $a\\,(Q - t)$') and how to "
+  "tell when such a rewrite reproduces the network's reasons, not only its decisions. A program of this kind matches "
+  "JEDI-linear on 94 % of jets, and input edits, not agreement on ordinary jets, separate rewrites that compute different "
+  "things. The program was not more compact than standard surrogates such as boosted trees.", None),
+ ('11. Paper C: inside ParT and ParticleNet',
+  "Paper C asks whether a large transformer that also has axis-free pair features still reads $m_A$, where inside the "
+  "network that quantity sits, and whether a small circuit (a set of heads and neurons that works on its own) reproduces "
+  "its W-versus-Z decision. So far: ParT reads mostly $m_A$ through each particle's distance from the axis; the quantity "
+  "is present from the input embedding; no small circuit was found; and how strongly a ParT reads $m_A$ depends on how it "
+  "was trained.", None),
+ ('12. Paper D: which physics the taggers use',
+  "Paper D edits jets in physically meaningful ways (axis convention, boosts, collinear splits, soft particles, pileup, "
+  "the W mass inside top, the W decay angle, displaced tracks) and compares each tagger with classical taggers built on "
+  "known observables, to state which physical quantities each tagger uses and which it does not.", None),
+ ('13. Results that were corrected',
+  "Several early statements were changed by later tests; each tab says where. The main ones: $\\sqrt{M_0 M_2}$ was first "
+  "described as exact, but the calibrated ratio depends on the size of the shift. The rank-window effect in JEDI-linear "
+  "holds only at the hardest-particle edge and also appears with shuffled weights. ParT's route of the mass through one "
+  "head belongs to the released checkpoint only. The first version of claim C3, 'ParT computes the invariant mass', was "
+  "refuted. The if-statement program's accuracy lead and its W rejection did not reproduce on fresh jets. A null result "
+  "for the W mass inside top in JetClass ParT was withdrawn, because the edited jets had been fed about the unedited "
+  "jet's axis.", None),
+]
+
+# ---------------------------------------------------------------------------------------------------------------- paper A
+GUIDE['a'] = [
+ ('1. The network: JEDI-linear and its layers',
+  "Question: what does JEDI-linear compute, layer by layer?\n"
+  "What we did: read the network's weights and named each layer. It sees the 64 highest-pT particles, each as "
+  "$(p_T, \\Delta\\eta, \\Delta\\phi)$. It applies the same first layer $a$ to every particle and sums over particles "
+  "($P$, the first-round objects); computes 64 jet-level context numbers $g$ and adds them to every particle; applies a "
+  "second per-particle round ($s$, $u$) and sums again ($S$, the second-round objects); then two dense layers $h_4$, "
+  "$h_5$ and 16 class neurons $z$, whose ReLU outputs are combined linearly into the five class scores. Units are "
+  "named by layer and index (S29 = unit 29 of $S$). It runs in fixed point with a learned number of bits per entry, and "
+  "entries with zero bits are always zero.\n"
+  "What happened: most units never switch on. Replacing a unit by its average over jets (mean ablation) changes at least "
+  "1 % of decisions for 13 first-layer units and 19 second-round objects.\n"
+  "What it means: the network is small enough to write out unit by unit, which the following steps do.\n"
+  "More: 'How to read this paper' (first explainer below).", 'results/site/X0_architecture.png'),
+ ('2. First layer: cuts on single particles, summed into objects',
+  "Question: what does the first layer compute, and can it be written exactly?\n"
+  "What we did: converted each first-layer unit $\\mathrm{ReLU}(w\\cdot x + b)$, applied to one particle "
+  "$x = (p_T, \\Delta\\eta, \\Delta\\phi)$, into a cut in GeV and radians. Checked that the sum over particles equals "
+  "$\\sum_i \\mathrm{ReLU}(w\\cdot x_i + b) = b\\,|A| + w\\cdot\\sum_{i\\in A} x_i$, where $A$ is the set of particles "
+  "that pass the cut, on 10,000 and on 260,000 jets.\n"
+  "What happened: the 13 live units are 4 cuts on pT only (for example 'pT < 11 GeV') and 9 cuts on direction only "
+  "('on one side of a line through the axis'); none mixes the two. The identity holds with zero error before the "
+  "fixed-point rounding.\n"
+  "What it means: the first half of the network is exact formulas: for each cut, how many particles pass it and their "
+  "summed pT, Δη and Δφ. We call each such sum an object. The direction cuts count particles without pT weighting, "
+  "unlike physics observables, which weight by pT.\n"
+  "Still uncertain: in other official checkpoints and in retrained copies, the pT-only-or-direction-only pattern is what "
+  "random placement of the few non-zero weights gives (steps 13), so it is not shown to be learned.\n"
+  "More: claims A1, B1; Result 1 explained.", 'results/site/X4_first_layer_cuts.png'),
+ ('3. pT-rank windows: which particles each sum counts',
+  "Question: does every particle enter every sum?\n"
+  "What we did: the zero-bit entries mean each second-round sum only counts particles in a fixed range of pT ranks (for "
+  "example the 14 hardest), a 'rank window'. To test that the window acts, we swapped the directions of two neighbouring "
+  "pT-ranked particles across a window edge, and as the control the same swap inside the window, which moves particles "
+  "by the same amount but does not cross the edge. We also moved the edge and removed the window masks.\n"
+  "What happened: the swap across the edge changes the sum and the swap inside barely does; the response moves with the "
+  "edge and disappears without the masks.\n"
+  "Corrected: the same edge response appears when the trained weights are shuffled but the zero-bit masks are kept (X8), "
+  "so it shows where the masks put the window, not that training uses it. In three other official checkpoints windows "
+  "act only at the hardest-particle edge (X6), and none of eight retrained copies has the official network's strong edge "
+  "response (X12). Rank windows are a property of this checkpoint.\n"
+  "More: claims A1, A1r; Results 9, 12, 15, 20.", 'results/jedi/e20_rank_windows.png'),
+ ('4. Context round and second-round objects: near-radial sums',
+  "Question: does the jet as a whole influence the second round, and what do the second-round objects compute?\n"
+  "What we did: replaced the context $g$ by its average over jets. Mapped each second-round object's per-particle "
+  "contribution as a function of the particle's pT, its distance $r$ from the axis and its direction. Rotated whole jets "
+  "about their axis (45°, 90°, 180° and two mirror reflections), which keeps every $r$: an object that depends only on "
+  "$r$ should not move. Moved particles with $r > 0.15$ outward by 10 % and compared the change with the fitted cut.\n"
+  "What happened: averaging the context changes 14.6 % of decisions, almost all through four objects (one is the summed "
+  "pT of the 14 hardest particles). Only 5 of 17 objects stay within a tenth of their normal spread under every "
+  "rotation.\n"
+  "What it means: round two turns the first round's half-plane cuts into sums that depend mainly on $r$. The largest, "
+  "S29, tracks $\\sum p_T r^2$ over the hardest particles. Each object's on-region is a polygon around the axis built "
+  "from several half-planes (E14), close to but not a circle, which is why rotations still move some objects.\n"
+  "More: claims A2, A3; Results 2 and 7.", 'results/site/X5_second_round_objects.png'),
+ ('5. Naming the units one at a time',
+  "Question: can single units be described by one physics formula, and are the network's own units easier to describe "
+  "than other directions in the same layer?\n"
+  "What we did: for every live unit, looked at the jets where it fires strongly, weakly or negatively, wrote a physical "
+  "description and set the unit high or low (steering) to test it. Then a preregistered blind test: a unit counts as "
+  "readable if a short formula of pT and distance sums over rank windows fits it; the same rule was applied to 250 random "
+  "rotations of the layer and to the features of a sparse autoencoder (a learned dictionary of sparse directions), on "
+  "three jet samples.\n"
+  "What happened: 78 % of the live units are described by one quantity; 15 of the 19 object units are readable, more "
+  "than in any of the 250 random rotations.\n"
+  "What it means: naming the object units with physics formulas is supported. Steering a described unit changes as many "
+  "decisions as steering a random unit, except for the class neurons, so most descriptions are correlations, not tested "
+  "causes.\n"
+  "Still uncertain: whether the preferred basis comes from training or from the per-particle ReLU-and-sum architecture.\n"
+  "More: claims A11, A11b; Results 6 and 19.", 'results/site/C_card_S29.png'),
+ ('6. Which variables can be read at which layer',
+  "Question: are complex jet variables computed later in the network than simple ones?\n"
+  "What we did: labelled 45 jet variables by algebraic depth (0 = a sum over particles, 1 = a product or ratio of sums "
+  "such as the mass, 2 = ratios of those such as $D_2$, 3 = needs reclustering such as $\\tau_{21}$). At each layer, "
+  "fitted a linear read-out on half of 20,000 jets and recorded the first layer where it predicts the variable on the "
+  "other half with $R^2 \\ge 0.9$. Control: an untrained network of the same shape. Causal check: edits that change one "
+  "variable at a time.\n"
+  "What happened: sums become readable at the pooling layers, mass and girth at the same or slightly later layers, and "
+  "most depth-2 and depth-3 variables never reach 0.9. Depth and first readable layer correlate at 0.51 (Spearman).\n"
+  "What it means: variables become readable roughly in order of complexity. Readable does not mean used: an edit of "
+  "$D_2$ at fixed mass barely moves the read-out.\n"
+  "More: claim A9; Result 4.", 'results/jedi/F2_variables_over_layers.png'),
+ ('7. The mass: where its pieces are',
+  "Question: does the network compute a mass at all, and from which pieces?\n"
+  "What we did: fitted the mass read-out at every layer. Then two edits with known effects: scaling all angles by $k$ "
+  "(mass × $k$, $M_2$ × $k^2$, $M_0$ unchanged) and scaling all pT by $c$ (mass, $M_0$ and $M_2$ all × $c$). The ratio "
+  "of a unit's responses to the two edits is 1 for a function of the mass, 2 for $M_2$ alone and 0 for $M_0$ alone. "
+  "Finally held the $M_0$ object fixed at each jet's own value while editing.\n"
+  "What happened: the mass is readable from $S$ onward ($R^2$ 0.977) and from $h_4$ ($R^2$ 0.991). In $S$ the pieces are "
+  "separate: S29 and S50 behave like $M_2$, S0 (the summed pT of the 14 hardest particles) like $M_0$; mass-like units "
+  "appear in $h_4$, $h_5$ and $z$.\n"
+  "What it means: $M_0$ and $M_2$ are formed separately in the second round. The class neurons respond to the mass with "
+  "windows (the W neuron z0 peaks near the W mass, the Z neurons near the Z mass).\n"
+  "Still uncertain: where they are multiplied. A first product test (E15) was refuted by its verification; a gradient "
+  "test (E21) finds approximately product-like dependence with large scatter between jets.\n"
+  "More: claims A4, A9; Result 3 (steps 4–7) and Result 11.", 'results/site/X3_mass_path.png'),
+ ('8. Which mass: the shift test',
+  "Question: does the network read the invariant mass $m$ or the mass about the axis $m_A$?\n"
+  "What we did: shifted every particle of 10,000–20,000 fresh jets by the same angle (0.02 to 0.06 rad) with the axis "
+  "kept, which leaves $m$ unchanged and raises $m_A$ as in the Overview's worked example. Controls: a 90° rotation about "
+  "the axis (changes neither mass) and a dilation that changes $m_A$ by the same amount (a real mass change), used to "
+  "calibrate the read-out. Repeated on four official checkpoints.\n"
+  "What happened: at 0.06 rad, 77 % of true W jets are called Z (3 % unshifted). At that shift the mass reading moves as "
+  "much as under a real mass change of the same size (calibrated ratio 1.02); for smaller shifts it moves less.\n"
+  "What it means: the network reads the mass about the given axis; the invariant-mass hypothesis is rejected for every "
+  "shift. Under the matched real mass change only 12 % of W jets become Z, so the decision uses more than this one "
+  "mass variable (the total pT also matters at fixed mass).\n"
+  "Corrected: early text called $\\sqrt{M_0 M_2}$ 'exact'; the calibrated ratio depends on the size of the shift.\n"
+  "More: claim A4; Result 3 (steps 8–10).", 'results/site/T13_mass_axis_stats.png'),
+ ('9. The same sign on real, unedited jets',
+  "Question: does the axis dependence show on real jets, or only on artificially shifted ones?\n"
+  "What we did: took the natural tail of unedited jets whose stored axis lies furthest from their pT-weighted centre. "
+  "Moved their particles so that the jet is centred (keeps $m$, lowers $m_A$), the opposite way, and sideways. The "
+  "sideways translation is the control that tests the mechanism: a rotation of equal displacement is not, because "
+  "near-radial sums ignore rotations whatever the mass formula.\n"
+  "What happened: centring lowers the mass reading; the opposite and sideways moves raise it, the signs the $m_A$ formula "
+  "predicts. At natural offsets few decisions change.\n"
+  "Corrected: E23 reported that the part of the response linear in the centre offset and the part quadratic in the shift "
+  "have different gains; once an estimator bias was removed (E23w) they are weighted nearly equally from the dense layers "
+  "on.\n"
+  "More: claim A4n; Results 14 and 27.", 'results/jedi/e23_tail.png'),
+ ('10. The part that depends on the direction of the shift',
+  "Question: a shift along +Δη and one along −Δη of the same size do not give the same response; 12–20 % of the "
+  "response depends on direction. Where does that part come from, and does the network use the jet's prong structure?\n"
+  "What we did: decomposed the response into per-particle contributions of the second-round polygons (E14). Described "
+  "the two context-only units S31 and S58, which see only the jet-level summary, and held them at their unshifted values "
+  "during a shift; the control holds other second-round units that remove the same amount at $S$ (E24x, E23x). "
+  "Separately, scrambled each particle's azimuth about the axis at fixed pT, distance and mass moments, and moved the "
+  "softer prong of two-prong jets intact versus breaking it up (E24, E24w); a classifier using $\\tau_{21}$ is the "
+  "reference that does use prong shape.\n"
+  "What happened: the polygon contributions reproduce the direction term (0.96–1.05 of it). Holding S31 and S58 removes "
+  "about a quarter of it in the later layers and none in the final W-versus-Z score, less than the control units.\n"
+  "What it means: the direction term comes from the uneven polygon edges and passes mostly through units that read "
+  "individual particles. S31 and S58 follow particle-count shapes (offset and elongation of the count distribution). "
+  "JEDI-linear responds to where a prong sits, not detectably to whether it is intact; Deep Sets and Particle Flow "
+  "Networks change as many decisions under the scramble.\n"
+  "Still uncertain: which particle-reading units carry the direction term.\n"
+  "More: claims A3z, A3c, A13, A4n; Results 7, 22, 24, 26, 28.", 'results/jedi/e23x_centre.png'),
+ ('11. Are $M_0$ and $M_2$ variables inside the network? Is their product?',
+  "Question: do the total pT and the spread about the axis exist as internal quantities that the decision uses, and is "
+  "their product one internal quantity?\n"
+  "What we did: distributed alignment search (DAS) learns one or two directions in a layer such that swapping only the "
+  "values along them, from a source jet into a base jet, reproduces the call the base jet gets when its $M_0$ (or $M_2$, "
+  "or $\\tfrac12\\log M_0M_2$) is edited to the source jet's value. References: random directions of the same size, and "
+  "simply giving the base jet the source jet's decision.\n"
+  "What happened: one or two directions in the object layer reproduce most of the decision changes for $M_0$ and for "
+  "$M_2$; random directions almost never do. No direction behaves as $\\tfrac12\\log M_0M_2$.\n"
+  "What it means: $M_0$ and $M_2$ are separate internal variables from the object layer on, in the 3-feature and the "
+  "16-feature JEDI-linear. Their product is not found as one variable, and a direct test for a unit that multiplies "
+  "them found none but can exclude only large effects.\n"
+  "More: claims A4c, B2m; Results 18, 27, 29.", 'results/jedi/x10_das.png'),
+ ('12. The class neurons and the class rules',
+  "Question: can the 16 class neurons be written as formulas of the objects, and is a class a logical AND of neuron "
+  "windows?\n"
+  "What we did: fitted each class neuron with hinge terms on the second-round objects and substituted the fits into the "
+  "network; tested them under edits and by interchange interventions (setting one internal value to its value on "
+  "another jet in both network and formula). For each class, found a rule of 2–3 conditions on the class neurons and "
+  "imposed it on other jets, either with typical in-class values or just inside the conditions; control: rules found "
+  "after randomly rotating the neuron axes.\n"
+  "What happened: substituting all fits changes about 10 % of decisions, and under edits the fits move the right way by "
+  "about half as much. Imposing typical in-class values moves 26–62 % of other jets into the class; entering the "
+  "windows just barely moves far fewer.\n"
+  "What it means: the class neurons are approximately functions of the objects. A class is a sum of neuron "
+  "contributions (the final layer adds them), and the rules summarise where that sum favours the class.\n"
+  "More: claims A5, A6; Results 8, 10, 13.", 'results/site/F7_e8_conjunctions.png'),
+ ('13. Trained weights, this checkpoint, or the architecture?',
+  "Question: which findings come from training, which belong to this one checkpoint, and which to the inputs?\n"
+  "What we did: compared the official network with null networks that keep its layers, inputs and zero-bit masks but "
+  "have no trained function (X8); with three other official checkpoints (X6); with eight copies retrained from scratch, "
+  "six with fixed-point (HGQ) training and two in float (X12); and with the official 16-feature JEDI-linear, whose "
+  "inputs include ΔR (E25).\n"
+  "What happened: the W → Z flow under the shift appears in every trained network and not in the nulls. The 16-feature "
+  "network sends about half of true W jets to Z at 0.06 rad, through its ΔR input.\n"
+  "What it means: reading $m_A$ belongs to the inputs and training, not to one checkpoint. The rank windows and the pure "
+  "pT-or-direction cuts do not recur, and the 16-feature network has no half-plane cuts at all (its first layer reads "
+  "ΔR), so the detailed circuit depends on what the network is given.\n"
+  "Still uncertain: the retrained copies are 1–4 points less accurate and trained about ten times fewer epochs.\n"
+  "More: claims A1r, A1f, A4; Results 12, 15, 20, 25.", 'results/jedi/x12_final.png'),
+ ('14. Other architectures on the same inputs, and what the training data does',
+  "Question: do other networks trained on the same inputs also read $m_A$, and can training remove it?\n"
+  "What we did: trained Deep Sets (float, with an L1 sparsity penalty, and with HGQ), Linformers, transformers, a Particle "
+  "Flow Network (PFN) and an Energy Flow Network (EFN) on the hls4ml inputs and ran the shift test. Control: the same "
+  "shifted jet with its angles shrunk so that $M_2$ about the axis is unchanged. Then trained PFN, EFN and Deep Sets on "
+  "jets shifted at random by up to 0.04–0.30 rad, and Deep Sets and Linformers with every particle measured from the "
+  "hardest particle.\n"
+  "What happened: every trained model responds to the shift, and holding $M_2$ fixed removes most of the response. "
+  "Networks trained on randomly shifted jets ignore shifts up to the trained range and respond beyond it; the threshold "
+  "moves one-for-one with the range.\n"
+  "What it means: reading the mass about the axis is learned from training jets whose axis always sits at the centre, "
+  "and how large a shift a network tolerates is learned too. Networks trained about the hardest particle read a mixture "
+  "and are not invariant-mass networks either (low confidence).\n"
+  "More: claims A8/A10, A10r, A10c, A12; Results 5, 16, 17, 21, 23.", 'results/jedi/x9x_augrange.png'),
+ ('15. How strongly 56 networks respond, and why',
+  "Question: the size of the shift response differs a lot between networks trained on the same inputs. Is it set by the "
+  "architecture or by the training run?\n"
+  "What we did: the same 5,000 test jets for 56 trained and 87 untrained networks (JEDI-linear, PFN, EFN, Deep Sets, "
+  "Linformers, transformers; 2–3 seeds each). Measured the calibrated ratio R for the shift, and $R_{\\rm rad}$ for a "
+  "radial-only edit that moves each particle's distance from the axis as the shift does but keeps its azimuth. Tested "
+  "whether the architecture family explains the spread of R better than random relabelling.\n"
+  "What happened: all 56 respond differently from a rotation. Two seeds of one small transformer respond at 2.07 and "
+  "at 0.35 of a real mass change of the same size.\n"
+  "What it means: the size of the response measures how much of a network's mass estimate is tied to the stored axis; "
+  "for set networks that share is set by the network type, for transformer-type networks it varies between runs.\n"
+  "Corrected: the verification (X13v) showed that an invariant-mass reader already gives $R_{\\rm rad} \\approx 0.8$, so "
+  "$R_{\\rm rad}$ near 1 does not show use of the axis; the first mechanism reading was refuted (confidence 0.35).\n"
+  "Still uncertain: which units hold the shift-independent part.\n"
+  "More: claim A10s; Result 30.", 'results/jedi/x13_axis_size.png'),
+]
+
+# ---------------------------------------------------------------------------------------------------------------- paper B
+GUIDE['b'] = [
+ ('1. What Paper B asks',
+  "Question: can a trained tagger be rewritten as if-statements a person can read, and how can one tell whether the "
+  "rewrite reproduces the network's reasons and not only its decisions?\n"
+  "What we did: the building block is a hinge term, $\\max(0, Q - t)$ or $\\max(0, t - Q)$, which reads as 'if $Q > t$, "
+  "add $a\\,(Q - t)$', where $Q$ is a physical quantity and $t$ a threshold. Formulas are sums of such terms, chosen one "
+  "at a time by MARS (Multivariate Adaptive Regression Splines). The steps below go from the exact part of the method, "
+  "to the fitted program, to the tests that separate a faithful rewrite from one that only copies decisions, to "
+  "comparisons with standard surrogates (simpler models fitted to a network's outputs).\n"
+  "More: Paper B claims B1–B6s.", None),
+ ('2. The part that needs no fit',
+  "Question: can any part of the network be rewritten exactly?\n"
+  "What we did: for JEDI-linear's layers that apply ReLU units to each particle and then sum over particles, checked the "
+  "identity $\\sum_i \\mathrm{ReLU}(w\\cdot x_i + b) = b\\,|A| + w\\cdot\\sum_{i\\in A} x_i$ ($A$ = the particles that "
+  "pass the cut) on all 260,000 test jets.\n"
+  "What happened: zero error in floating point; the only difference from the network's stored values is the fixed-point "
+  "rounding per particle slot, which an untrained network with the same number formats shows equally.\n"
+  "What it means: for any per-particle-ReLU-then-sum layer, 'count of passing particles and their summed inputs' is "
+  "exact.\n"
+  "More: claim B1; Paper A Result 1.", 'results/site/X4_first_layer_cuts.png'),
+ ('3. The whole network as a nested program',
+  "Question: can every unit be fitted, layer on layer, into one program that stands in for the network?\n"
+  "What we did: fitted each of JEDI-linear's 144 live units with up to 30 hinge terms. The first layer is fitted from "
+  "physical quantities computed from the particles (sums over rank ranges, $\\sum p_T$, $\\sum p_T r^2$, counts, "
+  "half-plane sums and 383 standard jet observables); each later layer from the previous layer's fitted values, so no "
+  "network value enters the program. Tested on held-out jets and, by a second agent, on fresh jets.\n"
+  "What happened: the program makes the same decision as the network on 94 % of held-out jets, with 3,824 terms. Its "
+  "accuracy is not distinguishable from the network's.\n"
+  "What it means: a 6,000-if-statement program reproduces the trigger network's decisions without using the network.\n"
+  "Corrected: an accuracy lead seen first did not hold on fresh jets (E11v, R2), and the W background-rejection ratio "
+  "(0.70× in one rerun, 1.13× in another) is not resolved with the available counts.\n"
+  "More: claim B2; Result 'the whole network as if-statements'.", 'results/site/T5_e11_program.png'),
+ ('4. Edited jets separate rewrites that ordinary jets cannot',
+  "Question: two rewrites that agree with the network on ordinary jets; do they compute the same thing?\n"
+  "What we did: compared the nested program with a formula fitted directly from standard physics observables to the 16 "
+  "class neurons, which agrees with the network on 92.5 % of ordinary jets. Applied the shift that keeps the invariant "
+  "mass and raises the mass about the axis (Overview, step 5).\n"
+  "What happened: the network calls 74.5 % of shifted W jets Z, the nested program 77.6 %, the direct formula 0.1 %.\n"
+  "What it means: the direct formula uses the invariant mass and the network does not; the agreement rate on ordinary "
+  "jets cannot show this, an input edit can. This is the method's main test of faithfulness.\n"
+  "Corrected: without the invariant mass among its inputs, the direct formula does follow the shift partly (E7v), so its "
+  "failure depends on which inputs it is given.\n"
+  "More: claims B3, B2; Paper A Result 10.", 'results/site/T11_e11_faithfulness.png'),
+ ('5. Are the program\'s variables the network\'s variables?',
+  "Question: when the program's intermediate value for a unit is swapped between two jets, does the decision change the "
+  "way it does when the network's own value is swapped?\n"
+  "What we did: interchange interventions: run the network on a base jet with one internal value taken from a source "
+  "jet, do the same in the program, and compare the new decisions (E22). Then distributed alignment search (DAS), which "
+  "learns directions in a layer for $M_0$ and $M_2$, against random directions (X9, X10).\n"
+  "What happened: the program gives the network's new decision for about half to two thirds of the decisions that "
+  "change, better than a guess that ignores the swap only at the class neurons. The program's per-unit formulas swap no "
+  "better than random directions, while learned directions for $M_0$ and $M_2$ reproduce most decision changes.\n"
+  "What it means: the physics quantities are internal variables of the network, but not in the basis of the fitted "
+  "formulas; most of the shortfall lies in the program's later layers.\n"
+  "More: claims B2m, B2; Paper A Results 13 and 18.", 'results/jedi/e22_verify.png'),
+ ('6. Is the program more compact than standard surrogates?',
+  "Question: at equal size, does the nested program reproduce the network better than standard surrogates?\n"
+  "What we did: fitted MARS directly from physics inputs to the class scores, and gradient-boosted decision trees "
+  "(GBDT), on the same jets; compared agreement against description length, on ordinary jets and under the shift. "
+  "Control for the shift: a random displacement that raises the spread about the axis by the same amount.\n"
+  "What happened: the standard surrogates reach the agreement of the small programs with many fewer fitted pieces. Under "
+  "the shift the program agrees a few points more often than the best trees, but by a similar margin under the random "
+  "displacement.\n"
+  "What it means: compactness is not supported, and the program's lead under the shift is not specific to the shift "
+  "mechanism. The surrogate the shift does separate is the direct physics-to-score fit, which uses the invariant mass.\n"
+  "More: claim B4; Result 'the if-statement program vs standard surrogates'.", 'results/jedi/b4_fidelity_dl.png'),
+ ('7. A short formula for the axis behaviour?',
+  "Question: is there a short formula (at most 50 hinge terms) on quantities measured about the axis that changes its "
+  "calls under the shift and the re-axis the way JEDI-linear does?\n"
+  "What we did: fitted programs of 20–50 terms on axis-relative quantities and, as the comparison, programs of equal size "
+  "on shift-invariant quantities; applied the shift (in several directions), the re-axis and a rotation.\n"
+  "What happened: the axis-relative programs bracket the network's overall rate of changed decisions but send too few W "
+  "jets to Z, and none depends on the shift direction. The shift-invariant programs change no decision.\n"
+  "What it means: the edits separate the two kinds of program while ordinary jets do not; a compact formula for the "
+  "network's axis behaviour was not found with this fitter.\n"
+  "More: claim B5c; Result 'a 50-term formula on axis-relative vs invariant observables'.", 'results/jedi/b5_summary.png'),
+ ('8. The blind pipeline on four architectures',
+  "Question: does the procedure work on other networks without looking inside them?\n"
+  "What we did: fitted if-statements on sums over pT-ranked particle windows from the inputs straight to the class "
+  "scores for JEDI-linear, Deep Sets, a PFN and a small transformer. Measured edit fidelity (how well a surrogate follows "
+  "the network's changed decisions under the shift) against description length, with boosted trees, decision trees and "
+  "small neural networks whose settings were tuned on held-out jets as baselines.\n"
+  "What happened: the program follows the networks' changed decisions about as well as the tuned baselines of the same "
+  "size, within about 2 points either way.\n"
+  "What it means: the method transfers across architectures at baseline-level fidelity, not better.\n"
+  "Corrected: an earlier lead came from comparing with one under-fitted boosted-tree setting.\n"
+  "More: claims B6t, B4; Result 'edit fidelity vs description length on four architectures'.", 'results/jedi/b6_trans.png'),
+ ('9. Symbolic regression and standard jet variables',
+  "Question: do formulas found by symbolic regression (a search over formulas built from +, −, ×, ÷, log and similar) "
+  "do as well?\n"
+  "What we did: ran symbolic regression on standard jet variables (mass, groomed mass, N-subjettiness ratios, "
+  "multiplicity, radial moments), and trees and hinge fits on the same variables; tested on ordinary jets, under the "
+  "shift, and under a shift that keeps the spread about the axis fixed.\n"
+  "What happened: the formulas reproduce ordinary decisions almost as well as the program of the same size but do not "
+  "follow the decision changes under the shift; trees and hinge fits on the same variables fail the same way.\n"
+  "What it means: the cause is which variables a surrogate is given, not the search method.\n"
+  "Still uncertain: the size of the gap depends on the sample and on which formula is selected.\n"
+  "More: claim B6s; Result 'symbolic regression and quantised trees as baselines'.", 'results/jedi/b6w_frontier.png'),
+ ('10. Where Paper B stands',
+  "Supported: the exact count-and-sum identity; a nested program that reproduces 94 % of decisions with no network value "
+  "inside it; input edits as the test that separates surrogates computing different things.\n"
+  "Not supported: compactness against standard surrogates; a short formula for the axis behaviour; a lead over tuned "
+  "trees that is specific to the shift mechanism.\n"
+  "Still uncertain: whether refitting the later formulas on swapped values closes the interchange gap; an edit that "
+  "separates rank-window from standard-observable mechanisms; a stand-alone test on at least three architectures or two "
+  "datasets.\n"
+  "More: the 'Open' list at the end of this tab.", None),
+]
+
+# ---------------------------------------------------------------------------------------------------------------- paper C
+GUIDE['c'] = [
+ ('1. ParT and its two possible routes to the mass',
+  "Question: ParT could compute the invariant mass. Does it?\n"
+  "What we did (set-up): ParT (Particle Transformer) is a 2-million-parameter transformer trained on JetClass. Each "
+  "particle enters with features measured from the stored axis ($\\Delta\\eta$, $\\Delta\\phi$, $\\Delta R$) plus "
+  "momentum, and for ParT_full also particle identity and track displacement; ParT_kin has only kinematic features. "
+  "Each pair of particles enters with pair features ($\\ln k_T$, $\\ln z$, $\\ln \\Delta R_{ij}$, $\\ln m_{ij}^2$) that "
+  "do not depend on the axis; the pair masses add up to the jet mass, so the invariant mass is available. The network "
+  "ends with two class-attention blocks in which one learned vector, the class token, reads from all particles; "
+  "coordinate 98 of the class token ('n98') is high for W and low for Z.\n"
+  "What it means: if ParT used only the pair route, shifting the particles about the axis would not change its "
+  "decisions. The steps below test this, then look for where and how the quantity is carried.", None),
+ ('2. The shift test on ParT',
+  "Question: does ParT respond to the shift that keeps $m$ and raises $m_A$?\n"
+  "What we did: moved every particle of 10,000 JetClass jets by 0.06 rad in φ with the stored axis kept. Pair features "
+  "are unchanged by construction. Control: the same shifted jets fed with each particle's $\\Delta R$ input held at its "
+  "unshifted value.\n"
+  "What happened: ParT_full calls 31 % of true W jets Z, against 12 % unshifted; holding $\\Delta R$ removes 92–100 % of "
+  "the response.\n"
+  "What it means: ParT reads its mass mainly from particle distances to the axis, as JEDI-linear does, although the "
+  "invariant mass is available to it.\n"
+  "Corrected: the first version of this claim, 'ParT computes the invariant mass', was refuted by this test.\n"
+  "More: claim C3; Result 'ParT's mass comes mostly through the axis-relative inputs'.", 'results/site/F3_part_translation.png'),
+ ('3. Which route carries a real mass change',
+  "Question: under a real mass change, how much passes through the per-particle inputs and how much through the pair "
+  "features?\n"
+  "What we did: made real mass changes (all angles × $k$, or all pT × $c$) and fed them through one route at a time: pair "
+  "features from the edited jet with per-particle inputs from the unedited jet, and the reverse.\n"
+  "What happened: the per-particle route carries 93–101 % of the change in the mass read-out. For mass increases the "
+  "pair route alone carries 0.10–0.20 of the change of the W − Z score difference.\n"
+  "What it means: ParT uses the pair route, for a small, non-zero part of its response. For mass decreases the two routes "
+  "do not add up, so a share is not defined there.\n"
+  "More: claim C3; same explainer, 'Test 2'.", 'results/site/T12_part_routes.png'),
+ ('4. The shape of the response',
+  "Question: does ParT's response look like a reader of $M_2$ about the stored axis?\n"
+  "What we did: shifted jets in eight directions and in mirror pairs (a shift and its reflection), per jet, and compared "
+  "each jet's response with its response to a real widening of its angles. Then moved one particle at a time slightly "
+  "away from the axis (P27).\n"
+  "What happened: about 93 % of each jet's response is the same for a shift and its mirror image, and its size follows "
+  "the jet's own response to a real widening. Per particle, the response grows with momentum and distance at 0.6–0.8 of "
+  "the slope $M_2$ predicts.\n"
+  "What it means: the response is $M_2$-like and mirror-symmetric; JEDI-linear's direction-dependent term is not seen in "
+  "ParT. For individual particles no simple formula, including JEDI-linear-style rank windows, explains more than about "
+  "8 % of the response; the rest enters through the pair features.\n"
+  "More: claims C12, C14; Results 'the shape of ParT's response' and 'what weight each particle gets'.", 'results/part/p23_axis_surface.png'),
+ ('5. ParticleNet, a network without attention',
+  "Question: is the response specific to attention?\n"
+  "What we did: the same 0.06 rad shift on ParticleNet, a graph network that links each particle to its nearest "
+  "neighbours and reads differences between them (which a shift does not change) as well as each particle's own "
+  "features. Controls: holding $\\Delta R$, freezing the rebuilt neighbour graphs, rotations that keep every distance. "
+  "Inside the network, searched each layer for one direction that carries the response (P15).\n"
+  "What happened: ParticleNet calls 26–28 % of true W jets Z, against 12 % unshifted, about two thirds of ParT's "
+  "increase. The neighbour graphs carry at most about 4 % of the response.\n"
+  "What it means: the response enters through each particle's distance to the axis and through terms that read each "
+  "particle on its own; it is not specific to attention.\n"
+  "Still uncertain: a direction after the second graph layer carries three quarters of the response, but networks with "
+  "shuffled or untrained weights also contain such directions, so it is not shown to be a learned variable.\n"
+  "More: claims C5, C9; Results 'ParticleNet shares the axis-relative mass response' and 'inside ParticleNet'.", 'results/particlenet/p4_wz_shift.png'),
+ ('6. Where ParT holds the axis-moment mass',
+  "Question: at which layer does ParT form $m_A$?\n"
+  "What we did: held each layer at its unshifted value during the shift (patching); learned a one-dimensional direction "
+  "in the jet-averaged particle representation; copied its value between real jets that differ in $m_A$.\n"
+  "What happened: one direction, present from the input embedding onward, follows $m_A$ and carries about two thirds of "
+  "the shift response. Copying its value from real jets moves the W/Z output the way the shift predicts, at about 40 % "
+  "of the strength.\n"
+  "What it means: no single layer builds the quantity; it is readable from the start and passed on.\n"
+  "Still uncertain: in natural jets the W/Z score changes with $m_A$ by only about a seventh of what the shift produces, "
+  "and the shuffled-weight control has not been run in ParT.\n"
+  "Corrected: an earlier null came from donor jets that held $m_A$ fixed.\n"
+  "More: claim C7; Result 'where ParT forms its axis-relative mass'.", 'results/part/p8_mass_formation.png'),
+ ('7. Heads: the 87 GeV switch and the route into the W/Z unit',
+  "Question: which attention heads carry the mass into the decision?\n"
+  "What we did: for each of the 80 heads, fitted a step function to its attention on the class token as a function of "
+  "jet mass. Under a real mass change, held one head at a time at its unedited output and measured how much of n98's "
+  "change disappears.\n"
+  "What happened: one head of the last class-attention block (b2h8) moves its attention off the class token as the jet "
+  "mass passes 87 GeV, between the W and Z masses, and no other head does. The first class-attention block carries "
+  "nearly all of n98's change, about half through one head (b1h3); the switch head carries about 5 %.\n"
+  "What it means: the switch is real but carries little of the mass information.\n"
+  "Corrected: an earlier claim (C2, 400 jets per class) said attention changes carry almost all of the response; at ten "
+  "times the statistics they carry about a third. Retrained ParTs grow switch heads at different heads and masses, and "
+  "pass less through the first block (step 9), so this route belongs to the released checkpoint.\n"
+  "More: claims C2a, C2b, C2, C1; Result 'the 87 GeV switch head'.", 'results/part/p3_wz_circuit.png'),
+ ('8. Searching for a small circuit',
+  "Question: is there a small set of heads, neurons or features that, kept alone, reproduces ParT's W-versus-Z calls?\n"
+  "What we did: a circuit here means literally only its units: everything outside the chosen set is replaced by values "
+  "from a jet of the other class. Searched over the 21,504 connections with attribution ranking, greedy pruning and a "
+  "trained mask; repeated with learned sparse features (transcoders and sparse autoencoders) as units.\n"
+  "What happened: circuits of up to a tenth of the connections reach at most 63 % correct calls, against 83 % for the "
+  "full network; 50 sparse features reach about 51 %.\n"
+  "What it means: no small circuit was found; results are reported as accuracy against circuit size.\n"
+  "Still uncertain: a search that trains the selection over features has not been run.\n"
+  "More: claim C8; Results 'circuit size' and 'learned sparse features'.", 'results/part/p9_eap_wz.png'),
+ ('9. Retrained ParTs: the behaviour recurs, the route does not',
+  "Question: is the response a property of one released checkpoint?\n"
+  "What we did: retrained six ParTs from scratch (full and kinematic inputs, three seeds each) on 2 million JetClass "
+  "jets for 50 epochs, with the authors' script; untrained networks of the same design as the null. Pre-registered four "
+  "tests and applied the same φ shift.\n"
+  "What happened: every retrained network turns 13.6 to 19.1 more true W jets in 100 into Z calls. They pass 0.63–0.83 "
+  "of the mass response through the first class-attention block, against 0.97–0.98 in the released networks.\n"
+  "What it means: reading $m_A$ comes with training on JetClass; the concentrated head-level route of the released "
+  "network does not recur.\n"
+  "Still uncertain: whether the difference comes from the seed or from the released network's 50 times larger training "
+  "set.\n"
+  "More: claim C3s; Results 'ParT retrained with three seeds' and 'six retrained ParTs'.", 'results/part/p11_seed_tests.png'),
+ ('10. ParTs we trained ourselves: labels and random axis offsets',
+  "Question: what in training produces the response, and can training remove it?\n"
+  "What we did: trained ParT_kin on 1.5 million W, Z and QCD jets with the true labels, with a label that flags only a "
+  "mass window, and with the true labels but each training jet shifted by a random offset up to 0.08 rad. Measured R "
+  "(the shift response divided by the response to a real mass change of the same size) for shifts in three directions.\n"
+  "What happened: the true-label networks respond at 0.2 to 0.5 of a real mass change, depending on the shift "
+  "direction, against 0.75 to 0.85 for the released models; the offset-trained network responds at about 0.01 at the "
+  "same accuracy.\n"
+  "What it means: the architecture does not force the response; it is learned from inputs whose axis is always at the "
+  "centre.\n"
+  "Still uncertain: whether 100 million jets, ten classes or a longer schedule gives the released level.\n"
+  "More: claim C10; Results 'ParT trained on planted mass labels', 'mass-window label' and 'true labels and random axis "
+  "offsets'.", 'results/part/p22_planted_true_run.png'),
+ ('11. Sophon: ParT trained on JetClass-II',
+  "Question: does a ParT trained by its authors on a larger dataset with mass-decorrelated training read $m_A$?\n"
+  "What we did: the same shift and dilation comparison on Sophon, using an internal size read-out because its W/Z "
+  "output barely reacts to a real mass change.\n"
+  "What happened: its size reading moves about 0.2 as much under the shift as under a real mass change, against 0.8 to "
+  "1.0 for the JetClass ParT.\n"
+  "What it means: the axis-relative mass is not a property of the architecture.\n"
+  "Still uncertain: which training difference (data size, decorrelation or normalised inputs) causes it; half of "
+  "Sophon's reading still uses the axis-relative angles.\n"
+  "More: claim C13; Result 'Sophon'.", 'results/part/p26_sophon_axis.png'),
+ ('12. Variables over ParT\'s blocks, and prong shape',
+  "Question: does ParT build its variables with the mass last, as JEDI-linear does, and does it follow the standard prong "
+  "variables $\\tau_{21}$, $\\tau_{32}$, $D_2$?\n"
+  "What we did: fitted read-outs of jet variables at each block, against an untrained network of the same design. Then "
+  "edits that change one prong variable at a time at fixed jet mass (for example making both prongs of a W jet "
+  "narrower), compared with classifiers built on those variables.\n"
+  "What happened: particle count, pT and mass are readable early about as well in the untrained network; only "
+  "prong-shape variables are read by the trained network alone, building up over blocks 1–4. Narrower prongs make W, Z "
+  "and top jets less W-like in ParT, the opposite of what a $\\tau_{21}$ classifier does.\n"
+  "What it means: training adds prong shape, but ParT does not follow any of these variables as a single number.\n"
+  "Still uncertain: which prong quantity ParT reads; the edits also change subjet masses and soft-particle placement.\n"
+  "More: claims C4, C11; Results 'the order in which ParT's blocks make jet variables readable' and 'ParT does not "
+  "follow τ21, τ32 or D2'.", 'results/part/p18_stage_pipeline.png'),
+ ('13. L-GATr, the contrast model (pending)',
+  "Question: does a network built to respect the symmetries of special relativity, whose inputs are four-momenta and "
+  "not offsets from an axis, avoid the axis response?\n"
+  "What we did: no trained L-GATr (Lorentz-equivariant Geometric Algebra Transformer) is published for JetClass, so one "
+  "is being trained with the authors' code on 2 million jets. An early checkpoint was checked against a rotation of all "
+  "particles about the beam.\n"
+  "What happened: the early checkpoint ignores that rotation, as it must by construction, and still responds to a real "
+  "mass change.\n"
+  "What it means: nothing yet about its mass. The deciding test, edits that keep the invariant mass but change the "
+  "spread about the axis, is pre-registered for the final checkpoint; the claim is untested (confidence 0.0).\n"
+  "More: claim C6; Result 'L-GATr as the contrast model'.", None),
+]
+
+# ---------------------------------------------------------------------------------------------------------------- paper D
+GUIDE['d'] = [
+ ('1. What Paper D asks and how',
+  "Question: which physical quantities does each tagger use, and which does it not?\n"
+  "What we did: physics edits of real jets, each with a matched control, on taggers from four datasets: JEDI-linear and "
+  "small networks (hls4ml), ParT and ParticleNet (JetClass), ParT, ParticleNet, LorentzNet, PFN and EFN (Top Tagging "
+  "Landscape), and quark–gluon taggers. Each tagger is compared with reference classifiers built on known observables, "
+  "for example a classifier on the jet mass and the three-prong variable $\\tau_{32}$. Many edits produce jets unlike "
+  "real ones; a classifier two-sample test (C2ST: a classifier trained to tell edited from real jets, AUC 0.5 = "
+  "indistinguishable) reports how far off they are.\n"
+  "Background: an observable is infrared and collinear (IRC) safe if adding an infinitely soft particle or splitting a "
+  "particle into two collinear pieces does not change it; such observables can be computed in perturbation theory and "
+  "do not depend on hadronisation details or detector granularity. Particle count (multiplicity) is not IRC safe.\n"
+  "More: Paper D claims D1–D15.", None),
+ ('2. The jet-axis convention',
+  "Question: do the taggers' decisions depend on which accepted axis the particle positions are measured from?\n"
+  "What we did: recomputed every particle's Δη, Δφ about the winner-take-all (WTA) axis or the hardest particle instead "
+  "of the stored E-scheme axis; no particle moves and the invariant mass is unchanged. Compared the change of each "
+  "network's internal mass with the $m_A$ formula's prediction.\n"
+  "What happened: with the WTA axis JEDI-linear changes 30.3 % of its decisions and ParT_full 11.7 %, mostly W jets "
+  "called Z.\n"
+  "What it means: the taggers depend on the axis convention, which the invariant mass does not, in the direction and "
+  "about the size their mass-about-the-axis predicts. A two-prong jet's axis on one prong raises $m_A$ by up to a factor "
+  "$\\sqrt 2$, enough to cross from the W window into the Z window.\n"
+  "More: claim D4; Result 'the taggers depend on the jet-axis convention'.", 'results/site/X2_axis.png'),
+ ('3. Formula or general sensitivity to moved inputs?',
+  "Question: any network not trained on a second axis may change calls when its inputs move. Do the changes follow "
+  "each model's $m_A$ formula, or would any move of the same size do the same?\n"
+  "What we did: ran the axis change in both directions: models trained on the centred axis evaluated about the hardest "
+  "particle, and models trained about the hardest particle evaluated on the centred axis. Control: a translation of the "
+  "same size that keeps the formula's value fixed. On Top Landscape and quark–gluon taggers, where the axis change is "
+  "exactly a shift of all angles, compared it with a shift in a random direction of the same size, against "
+  "shuffled-weight networks.\n"
+  "What happened: centred-trained models turn W into Z and hardest-trained models turn Z into W, as each formula "
+  "predicts; the formula-preserving translation still changes about a third as many decisions, with no W → Z flow.\n"
+  "What it means: in hls4ml and JetClass models the direction and most of the size follow the formula, the rest is "
+  "general sensitivity. On Top Landscape and quark–gluon taggers the changes (3–25 % of decisions) follow each model's "
+  "sensitivity to a random shift, and LorentzNet, whose inputs refer to no axis, changes none.\n"
+  "Still uncertain: confidence is limited (D4m 0.4); a rotation about the axis turned out not to be a valid control.\n"
+  "More: claims D4m, A12; Results 'the axis-convention response in both directions' and 'axis convention on Top "
+  "Landscape and quark–gluon taggers'.", 'results/jedi/x7_axis_reverse.png'),
+ ('4. IRC-safe stand-ins for the networks',
+  "Question: can a classifier built from standard IRC-safe jet shapes stand in for each network?\n"
+  "What we did: for each tagger, chose standard observables (mass, N-subjettiness, energy-flow polynomials) that order "
+  "jets most like the network, measured by average decision ordering (ADO: the fraction of signal–background pairs two "
+  "classifiers order the same way). Applied the axis, translation, boost and split edits to both.\n"
+  "What happened: the stand-ins order W/QCD and top/QCD jets like the networks in more than 90 % of pairs but never "
+  "respond to the axis convention. With the invariant mass replaced by the mass about the network's axis, the stand-in "
+  "reproduces JEDI-linear's axis response (37.7 vs 37.6 % of Z-versus-W calls changed).\n"
+  "What it means: JEDI-linear's axis response is mostly one known variable. The responses to collinear splits and to the "
+  "total pT, and ParT's Z-versus-W ordering, are not described by either stand-in.\n"
+  "More: claim D8; Result 'EFP/ADO-chosen IRC-safe surrogates'.", 'results/physics/h8_fig.png'),
+ ('5. Total pT and boosts along the jet axis',
+  "Question: do the taggers treat the jet mass as boost invariant, or as a combination of pT and angles tied to their "
+  "training pT range?\n"
+  "What we did: boosted each jet along its own axis so its pT falls to 90 %; the invariant mass (and $m_A$) stay fixed. "
+  "Control: a rotation about the axis with the same displacement of every particle. Comparison edits: pT-only scaling "
+  "and angle-only scaling.\n"
+  "What happened: JEDI-linear changes 33 % of its calls under the boost against 2.4 % under the rotation; most changed "
+  "calls are W or Z jets called top. JetClass and Top Landscape taggers change several times fewer calls under the boost "
+  "than under pT-only or angle-only scaling.\n"
+  "What it means: the hls4ml-trained taggers are not boost invariant, and JEDI-linear uses the total pT as a shortcut to "
+  "top. Identical small taggers trained on hls4ml or Top Landscape jets respond alike, so the training sample is not the "
+  "cause in small networks.\n"
+  "Still uncertain: why the two groups of taggers differ; large networks trained on hls4ml were not tested.\n"
+  "More: claims D9, D12, D1; Results 'a boost along the jet axis' and 'boost sensitivity of identical small taggers'.", 'results/physics/h12_boost.png'),
+ ('6. Collinear splits: the taggers are not IRC safe',
+  "Question: do the taggers respond to changes that no IRC-safe observable sees?\n"
+  "What we did: replaced a jet's hardest particle by two pieces moving in exactly the same direction, which leaves every "
+  "IRC-safe observable unchanged and adds one particle. Control: an Energy Flow Network, IRC safe by construction. "
+  "Further edits: splitting more particles, removing the softest particle, adding a very soft one.\n"
+  "What happened: every trained tagger tested (JEDI-linear, Deep Sets, Linformer, a transformer, ParT, ParticleNet) "
+  "changes 1–5 % of its decisions; the energy flow network changes none.\n"
+  "What it means: the taggers are not IRC safe. For the hls4ml and JetClass models the decisions move with the particle "
+  "count, which depends on hadronisation and detector granularity.\n"
+  "Still uncertain: the very soft added particle is softer than any in the data, and its effect depends on where it is "
+  "placed.\n"
+  "More: claim D5; Result 'taggers respond to collinear splits and soft particles'.", 'results/physics/h1_panel.png'),
+ ('7. Quark–gluon taggers do not count particles',
+  "Question: gluon jets carry more particles than quark jets. Do quark–gluon taggers decide by counting?\n"
+  "What we did: a pure count change: split soft particles into exactly collinear halves (more particles, nothing "
+  "IRC-safe changes). Reference: a likelihood ratio that uses only the particle count. Repeated on Herwig jets and with "
+  "taggers trained on Herwig; removed the softest particles at fixed count.\n"
+  "What happened: ParT, ParticleNet and LorentzNet move by a tenth to a third of what the count-only reference does. "
+  "Splitting the hardest particle moves them toward gluon whether or not the count changes.\n"
+  "What it means: these taggers barely use the count; their collinear unsafety comes from how the hard particles share "
+  "momentum. The result does not depend on the generator. They do use the soft particles' momenta and positions.\n"
+  "Still uncertain: which function of the energy sharing they compute.\n"
+  "More: claim D7; Results 'quark–gluon taggers do not count particles', 'on Herwig jets', 'soft-particle count "
+  "response' and 'Herwig-trained taggers'.", 'results/physics/h5_counting.png'),
+ ('8. One soft emission in the Lund plane',
+  "Question: which soft-emission quantity do quark–gluon taggers follow?\n"
+  "What we did: moved one soft particle across the Lund plane (its angle and transverse momentum relative to the jet "
+  "axis) at fixed particle count and jet pT, and mapped the taggers' response; then split the edit into its parts.\n"
+  "What happened: the map is reproducible, and hard wide-angle placements move the networks toward quark while every "
+  "classical reference moves toward gluon.\n"
+  "Corrected: the edit also took up to about 50 GeV from the hardest particle. Separated (H30v), the gluon-ward rise at "
+  "small angle comes from that momentum transfer, while moving the particle at fixed momentum pushes the other way.\n"
+  "What it means: the taggers use both the hard-core energy and the soft particle's position; which emission quantity "
+  "is still open.\n"
+  "More: claim D7; Results 'where in the Lund plane one soft emission moves quark–gluon taggers' and its verification.", 'results/physics/h30_lund_map.png'),
+ ('9. Pileup-like soft particles',
+  "Question: how do the taggers react to extra soft particles from other collisions (pileup)?\n"
+  "What we did: added massless soft particles at random positions over the jet, at increasing density, with the axis "
+  "recomputed, and also placed them at the jet centre where they add almost no mass. Reference: a groomed (soft-drop) "
+  "mass tagger, which removes soft wide-angle radiation.\n"
+  "What happened: every network loses signal efficiency faster than the soft-drop tagger; JEDI-linear's W efficiency "
+  "falls from 87 % to 43 % at the lowest density.\n"
+  "What it means: JEDI-linear reacts to the mass the particles add, like a plain mass window; the JetClass ParT and "
+  "ParticleNet and the Top Landscape ParT, LorentzNet and PFN react mainly to how many particles are added.\n"
+  "Still uncertain: the pileup model is simplified and no network was trained with pileup.\n"
+  "More: claim D10; Result 'pileup-like soft contamination'.", 'results/physics/h13_panel.png'),
+ ('10. The W mass inside top jets (Top Landscape taggers)',
+  "Question: do top taggers check that a top jet contains a W, beyond the total jet mass and the three-prong shape?\n"
+  "What we did: split each top jet into three subjets; the W pair is the pair with mass closest to 80.4 GeV. Moved that "
+  "pair's mass to 60 or 100 GeV while restoring the jet mass and $\\tau_{32}$. Control: the same relative change on a "
+  "non-W pair. References: MLPx, a classifier on the edit's side effects (subjet masses, $\\tau_{21}$, multiplicity, "
+  "subjet pT fractions) without any pair mass, and MLPxW, the same plus the W-pair mass.\n"
+  "What happened: ParT, ParticleNet and LorentzNet lower their top score as much as MLPxW and 2 to 4 times more than "
+  "MLPx; PFN and EFN respond only at the MLPx level.\n"
+  "What it means: these taggers use the W mass inside the top. In the classical reference, the W-pair mass adds about "
+  "28 % to the QCD rejection of mass and $\\tau_{32}$.\n"
+  "More: claims D6, D1; Results 'classical references' and 'top taggers and the W-pair mass inside top'.", 'results/physics/h4_fig_wmass.png'),
+ ('11. The W mass inside top on JetClass, and the axis-build correction',
+  "Question: do JetClass-trained ParT and ParticleNet, and JEDI-linear, also use the W-pair mass?\n"
+  "What we did: the W-pair edit on JetClass and hls4ml top jets. The edit moves the jet's E-scheme axis, so each edited "
+  "jet must be rebuilt about its own axis; otherwise every particle is also shifted relative to the axis. Compared both "
+  "builds, with a translation-only control, against MLPx and retrained MLPxW references.\n"
+  "What happened: rebuilt about their own axis, JetClass ParT and ParticleNet lower their top score by 0.8–1.25 times "
+  "MLPxW at 60 GeV, on three independent jet sets. JEDI-linear stays within the range of classifiers that never see the "
+  "pair mass.\n"
+  "Corrected: an earlier null for JetClass ParT (H3v) is withdrawn; it came from feeding the edited jets about the "
+  "unedited jet's axis, and these networks react strongly to such a shift alone.\n"
+  "What it means: JetClass taggers use the W-pair mass like the Top Landscape taggers; JEDI-linear does not detectably.\n"
+  "Still uncertain: at 90 GeV JEDI-linear raises its top score while every reference lowers it; on hls4ml jets the "
+  "references with and without the pair mass are equally accurate, so the test for JEDI-linear is weak.\n"
+  "More: claims D11, D1; Results 'W-pair edits rebuilt about each jet's own axis' and 'JEDI-linear and the W-pair mass'.", 'results/physics/h19_wpair.png'),
+ ('12. Prong shape inside top',
+  "Question: do top taggers use the shape of the radiation inside the three prongs, at fixed jet mass and W-pair mass?\n"
+  "What we did: scaled every particle's offset from its subjet centre (narrower or wider subjets), then moved the subjets "
+  "to restore the jet mass and the W-pair mass. Control: a rotation inside each subjet with the same particle "
+  "displacement, which keeps $\\tau_{32}$. Verification: changed $\\tau_{32}$ with each subjet's mass held fixed, by "
+  "making the cores inside the subjets sharper or flatter.\n"
+  "What happened: all seven top taggers move the way a $\\tau_{32}$ classifier predicts, by a similar amount. With the "
+  "subjet masses fixed they respond with mixed signs.\n"
+  "What it means: the taggers use the radiation pattern inside the prongs beyond the two masses, but not as the single "
+  "number $\\tau_{32}$.\n"
+  "Still uncertain: both edits make jets a classifier can tell from real ones; which inner-prong quantity each network "
+  "reads is not known.\n"
+  "More: claim D13; Result 'top taggers and the prong shape' and its verification.", 'results/physics/h25_tau32.png'),
+ ('13. The W decay angle inside top',
+  "Question: do top taggers use the angle at which the W decays, which the W polarisation predicts, at fixed top and W "
+  "mass?\n"
+  "What we did: rotated the W decay in the W rest frame so that one daughter is emitted more along the W direction "
+  "(larger $|\\cos\\theta^*|$), keeping the top and W masses. Control: a decay rotation chosen per jet that copies the "
+  "edit's prong energy sharing and $\\tau_{32}$ at a fixed angle. Reference: a classifier that sees neither the angle "
+  "nor the pair masses.\n"
+  "What happened: every tagger's top score drops beyond the control; PFN and EFN keep an angle dependence of about −1 to "
+  "−2 log-odds per unit $|\\cos\\theta^*|$ after correcting for the leftover $\\tau_{32}$ mismatch.\n"
+  "What it means: the taggers use the top decay angle. ParT, ParticleNet and LorentzNet show it only on the subset of "
+  "JetClass tops where the control matches the prong shapes.\n"
+  "Corrected: a first small run (H31) was inconclusive; in H32v the corrected angle slope of ParT, ParticleNet and "
+  "LorentzNet turned out to come from a difference between edit directions.\n"
+  "Still uncertain: no control yet reproduces the edit's full change of $\\tau_{32}$.\n"
+  "More: claim D15; Results 'the W decay angle inside top' and its verification.", 'results/physics/h32_dalitz.png'),
+ ('14. Displaced tracks and b-tagging',
+  "Question: do the taggers with track inputs count displaced tracks (tracks that miss the collision point, as from "
+  "b-hadron decays), use how far they are displaced, or use where in the jet they sit?\n"
+  "What we did: earlier edits on ParT_full: make all tracks prompt, cap each track's displacement significance just "
+  "above threshold (keeps the count of displaced tracks), keep only two displaced tracks. Then, in top jets, swapped the "
+  "impact parameters of displaced tracks from the subjet that holds most of them onto a W subjet, at fixed jet-level "
+  "count; control: the same swap within the subjet, matched in number and momentum of tracks.\n"
+  "What happened: capping the displacement costs 3 points of H → bb̄ calls, keeping only two displaced tracks 61. Moving "
+  "the displacement off its subjet lowers the top score by about 1.7 (ParT) and 1.1 (ParticleNet) log-odds against the "
+  "matched control.\n"
+  "What it means: the taggers respond to the number of displaced tracks more than to their displacement, and to where "
+  "they sit. They follow the subjet that carries the displacement, not the b position implied by the three-prong masses.\n"
+  "Still uncertain: the displacement-heavy subjet may be the true b or a charm quark from the W.\n"
+  "More: claims D2, D14; Results 'where displaced tracks sit' and its verification.", 'results/physics/h35_bprong.png'),
+]
