@@ -113,8 +113,10 @@ quantisation specifics, off-manifold edits, causal-abstraction standard, degener
   Args: `{rounds, nodes_per_round, first_round, seed_review}`; seed_review = the previous round's review weaknesses.
 - Each planner reads the other loops' `running/*.md` and `TREE.md` to avoid duplicates and writes its own file.
 - Only the ledger agent of each loop commits. All loops share one working tree: edit shared files (PAPERS.md, EXPERIMENTS.md,
-  TREE.md, site/*.py) with exact Edit replacements of your own sections only; `git add` explicit paths only and commit with
-  `git commit -m '<msg>' -- <paths>` (a plain `git commit` also takes files another loop staged; this happened once, 5780469);
+  TREE.md, site/*.py) with exact Edit replacements of your own sections only; stage only your own hunks (`git add -p`), check
+  `git diff --cached`, then commit the staged index with a plain `git commit -m '<msg>'`. Do not use `git commit -- <paths>`: it commits
+  the whole working-tree file, including another loop's uncommitted edits to shared files (caught in loop C r6). A plain commit also takes
+  whatever another loop staged (happened once, 5780469), so check the staged list first;
   if `.git/index.lock` exists, wait and retry.
 - Run ids and resume state: `RESUME.md`.
 
