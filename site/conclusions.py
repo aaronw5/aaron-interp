@@ -363,9 +363,10 @@ CLAIM = {
         "the W inside a top jet barely changes the top call. So JEDI-linear tags W, Z and top mainly by mass windows plus "
         "the total pT, and does not check that a top jet contains a W. The momentum-scaling result was reproduced at 10 "
         "times the statistics on two fresh samples (W call 87 % → 27 %, rotation control unchanged). With a control that "
-        "holds the W pair fixed, neither JEDI-linear nor ParT responds to the W-pair mass inside top, though ParT's top "
-        "call drops when the subjet-pair masses are rearranged in general. This holds for models trained on the multi-class "
-        "hls4ml and JetClass data; top taggers trained on the Top Tagging Landscape do use the W-pair mass (claim D6). "
+        "holds the W pair fixed, JEDI-linear does not respond to the W-pair mass inside top. An earlier extension of this "
+        "null to ParT is withdrawn: it came from feeding the edited jets about the unedited jet's axis, and when each "
+        "edited jet is rebuilt about its own axis, JetClass ParT and ParticleNet do use the W-pair mass (claim D11), as "
+        "the Top Landscape taggers do (claim D6). "
         "The momentum edit used here kept the jet mass fixed (it is a boost along the jet axis); scaling only the momenta "
         "lowers the W call to 48 % instead, and most calls changed by the boost are W or Z jets becoming top (claim D9)."
     ),
@@ -400,7 +401,8 @@ CLAIM = {
         "limited, and a rotation about the axis turned out not to be a valid control for these near-radial models. "
         "Small top taggers also change many decisions under a shift that keeps that axis-relative mass fixed, and JetClass "
         "ParT and ParticleNet react strongly to an axis shift alone, so the general-sensitivity part is larger than first "
-        "measured."
+        "measured. A first, unverified measurement shows the same strong response to a shift alone in the Top Landscape "
+        "ParT and ParticleNet when they are fed jets on a fixed axis."
     ),
     'D3': (
         "With 10 times more jets, random JetClass rows, the corrected η build and a matched control for each edit, the "
@@ -431,7 +433,9 @@ CLAIM = {
         "sees only the edit's side effects (smaller subjets, lower τ21). So these taggers check the W mass inside the top, "
         "unlike JEDI-linear on the multi-class data. The same models respond the same way on JetClass top jets, so the "
         "result does not depend on the jet sample. PFN and EFN respond only at the side-effect level, and the most "
-        "extreme edits produce jets a classifier can tell from real ones."
+        "extreme edits produce jets a classifier can tell from real ones. Rebuilding every edited jet about its own axis "
+        "leaves these numbers unchanged, because the original test already did so. The same taggers also use the "
+        "radiation pattern inside the prongs (claim D13)."
     ),
     'D7': (
         "Trained quark–gluon taggers (ParT, ParticleNet, LorentzNet) barely use the particle count itself: splitting soft "
@@ -439,8 +443,11 @@ CLAIM = {
         "moves them by a tenth to a third of what a count-only likelihood ratio does, on Pythia and Herwig jets. Soft "
         "particles that also add energy flow do move them toward gluon, about as much as a network that cannot count. "
         "Splitting the hardest particle moves them toward gluon whether or not the count changes, so their collinear "
-        "unsafety comes from how the hard particles share energy; which function of that sharing is not identified, and "
-        "models trained on Herwig are not yet evaluated."
+        "unsafety comes from how the hard particles share energy; which function of that sharing is not identified. "
+        "The same holds for ParT and ParticleNet trained on Herwig jets instead of Pythia jets, so the absence of counting "
+        "is not a property of one generator; training on Herwig shifts the count response slightly toward quark, by an "
+        "amount not yet compared with the variation between independent trainings. Removing a jet's softest particles "
+        "while keeping the count moves all of them toward quark, so they do use the soft particles' momenta and positions."
     ),
     'D8': (
         "For each tagger, the closest stand-in built from standard IRC-safe jet shapes (mass, N-subjettiness, energy-flow "
@@ -472,10 +479,12 @@ CLAIM = {
     ),
     'D11': (
         "JetClass-trained ParT and ParticleNet lower their top score when the W-candidate subjet pair inside a top jet is "
-        "moved off 80 GeV, at about 3–4 times a classifier that sees only the edit's side effects, like the taggers "
-        "trained on Top Landscape, on both jet samples. An earlier null came from feeding the edited jets about the "
-        "unedited jet's axis: the control edit shifts the axis, and these networks react to that shift alone. This rests "
-        "on the verifier's reruns only, and part of the JetClass full models' response to the control edit is unexplained."
+        "moved off 80 GeV, by about as much as a reference classifier that is given that pair mass directly (0.8–1.25 "
+        "times at 60 GeV), like the taggers trained on Top Landscape, and the drop grows with the distance from 80 GeV as "
+        "expected for a W-mass window. This reproduces on three independent sets of jets once each edited jet is rebuilt "
+        "about its own axis; the earlier nulls came from feeding edited jets about the unedited jet's axis, and these "
+        "networks react to such a shift alone. Why the models with particle-ID and track inputs also react to the control "
+        "edit beyond that shift is not known."
     ),
     'D12': (
         "Three small top taggers trained on hls4ml jets, on hls4ml jets in a narrow pT window, or on Top Landscape jets "
@@ -483,6 +492,14 @@ CLAIM = {
         "mass, against under 1 % for a matched rotation. The training sample changes that share by about one point or "
         "less, so the sensitivity comes from the architecture, inputs and task; with absolute-pT inputs the training "
         "sample sets whether jets move toward top or away from it. Only two seeds and small networks were tested."
+    ),
+    'D13': (
+        "Making the three subjets of a top jet narrower or wider, while keeping the jet mass and the W-pair mass fixed, "
+        "moves every top tagger tested (five trained on Top Landscape, two on JetClass) the way a classifier using the "
+        "three-prong variable τ32 predicts, and by a similar amount. When τ32 is changed with each subjet's mass held "
+        "fixed, by reshaping the particle profile inside the subjets, the taggers respond with mixed signs. So they use "
+        "the radiation pattern inside the prongs beyond the two masses, but not as the single number τ32; both edits make "
+        "jets a classifier can tell from natural ones, and which inner-prong quantity each network reads is not known."
     ),
 }
 
@@ -548,6 +565,31 @@ EXPLAINER = {
         "mass-preserving boost to 90 % of the jet pT, against under 1 % for a rotation, so the training sample is not "
         "what makes them boost-sensitive. With absolute-pT inputs the sample decides the direction of the change. Large "
         "networks trained on hls4ml were not tested."
+    ),
+    'H23_EXPLAINER': (
+        "Rebuilt about each edited jet's own axis, JetClass-trained ParT and ParticleNet lower their top score when the "
+        "W-candidate pair mass moves off 80 GeV about as much as a classifier given that mass, more the farther it moves, "
+        "on two independent jet samples. The earlier ParT null came mostly from an input build that also shifted the jet "
+        "relative to its axis. Part of the full-input models' response to the control edit is not explained by that shift."
+    ),
+    'H24_EXPLAINER': (
+        "ParT and ParticleNet trained on Herwig jets, like those trained on Pythia jets, barely move when soft particles "
+        "are split to raise only the particle count (about a tenth of a count-only classifier or less), so not counting "
+        "is not a Pythia artefact. The generators' different multiplicities do not explain the networks' different "
+        "outputs on their gluon jets. Removing the softest particles at fixed count does move the networks toward quark, "
+        "and only one training per generator was available."
+    ),
+    'H25_EXPLAINER': (
+        "Making the subjets of top and QCD jets narrower or wider at fixed jet mass and W-pair mass moves all seven top "
+        "taggers the way a τ32 classifier predicts, by similar amounts, while a matched rotation inside the subjets moves "
+        "them much less. The edit also changes the subjet masses, so it shows that the taggers use the inner-prong "
+        "pattern but not which quantity of it."
+    ),
+    'H25V_EXPLAINER': (
+        "On fresh jets the subjet-width result reproduces. When τ32 is changed with the subjet masses held fixed, by "
+        "making the cores inside the subjets sharper or flatter, four of seven taggers move toward top for sharper cores, "
+        "the Top Landscape networks barely move for flatter ones, and PFN moves against τ32. The taggers therefore do not "
+        "follow τ32 as one number; the edits are not fully realistic and only two profile shapes were tested."
     ),
     'H4_EXPLAINER': (
         "At fixed jet mass and τ32, moving the W-candidate pair mass off 80 GeV lowers the top score of ParT, ParticleNet "
