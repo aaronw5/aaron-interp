@@ -37,6 +37,8 @@ then big models (ParT, ParticleNet, L-GATr). Target venue: ICML or another top v
   checkpoint stored in their git." Never use other groups' run checkpoints from the volume.
 - 2026-10-17: "Don't freeze paper right we should explore more" and "we have 3 months until deadline we can explore": exploration
   phase. No freezing of theses, no confirmatory-only rounds yet; at least 2 of 3 loop nodes per round are exploratory.
+- 2026-10-19: "I mean it doesn't need to be a circuit paper… if there's no circuit lol keep exploring we don't need to think of an
+  ENTIRE PAPER yet." Follow what the models do; negative findings are results; do not shape rounds around a finished paper.
 - 2026-10-17: "Yes start more loops": three loops (A/B, C, D; section 4).
 
 ### Write-up gate
