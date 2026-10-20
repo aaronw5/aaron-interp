@@ -381,7 +381,9 @@ CLAIM = {
         "at about 0.75 to 0.85 in every direction. Trained with random axis shifts, the same network ignores the shift "
         "(ratio about 0.01) at the same accuracy, so the architecture does not force the axis-relative response. Which "
         "part of the released training (10 classes, 100 million jets or a longer schedule) gives the larger response is "
-        "still untested."
+        "still untested. (Round C7.) Training on all 10 classes with the same 1.5 million jets and step count raises the "
+        "ratio by about 0.1 (to about 0.3), so the 10-class objective contributes but explains only a small part of the "
+        "gap; runs with 5 million jets and with five times the training steps are still training, with one seed per run."
     ),
     'C5': (
         "ParticleNet, a graph network without attention trained on the same JetClass inputs, also calls more true W jets "
@@ -446,6 +448,22 @@ CLAIM = {
         "angular second moment M2 predicts. For individual particles no simple formula, including JEDI-linear-style "
         "momentum-rank windows, explains more than about 8 % of the response. In ParT the rest comes in through the "
         "features between pairs of particles and changes non-smoothly with the step size; what it reads is untested."
+    ),
+    'C15': (
+        "In ParT and ParticleNet models that are given particle-identity flags, the decision that a jet comes from a Higgs "
+        "boson decaying to a lepton, a neutrino and two quarks rests almost entirely on the electron or muon flag of one "
+        "particle: removing only that flag moves about 99 % of these jets to other classes. In ParT one attention head of "
+        "the final class stage reads that particle, but the information also reaches the output by a second route that "
+        "backs it up, and no small set of heads separates this class from top-quark jets with a lepton. A rerun on fresh "
+        "jets is still pending."
+    ),
+    'C16': (
+        "When one particle in a W or Z jet is moved slightly, the part of ParT's response that does not depend on the "
+        "direction of the move comes from that particle's pairs with close neighbours (within about 0.05 rad) and passes "
+        "through two of the eight attention heads that use the pair features. A first-order copy of the network given the "
+        "same input changes produces only about a third of it, so most of it is made by the network's own nonlinear "
+        "response rather than by the logarithm of the pair distance. Measured on W and Z jets in two models only; in the "
+        "kinematic-input model, single-precision rounding of one pair feature also changes about 1 % of decisions."
     ),
     'D1': (
         "In earlier physics edits on JEDI-linear, changing only the mass of W jets (by scaling angles) to the Z mass turns "
@@ -1057,6 +1075,28 @@ EXPLAINER = {
         "the steepness that the angular second moment M2 would give. Particle by particle no simple formula predicts the "
         "shift, and the momentum-rank windows that JEDI-linear uses do no better than M2. In ParT most of the scatter "
         "comes from the features between pairs of particles; what that term reads is untested."
+    ),
+    'P31_EXPLAINER': (
+        "A Particle Transformer trained on all 10 JetClass classes, with the same 1.5 million jets and step count as the "
+        "3-class runs, responds to a rigid shift of the jet about its axis about 0.3 times as strongly as to a real mass "
+        "change of the same size; the 3-class runs give about 0.22 and the released models 0.72 to 0.87. The 10-class "
+        "objective therefore raises the axis response measurably but accounts for only a small part of the gap. There is "
+        "one seed per run, and the larger-data and longer-training runs are still training."
+    ),
+    'P32_EXPLAINER': (
+        "In the ParT and ParticleNet models that receive particle-identity inputs, removing the electron or muon flag from "
+        "one particle moves about 99 % of Higgs-to-lepton-neutrino-two-quark jets to other classes, while the same change "
+        "on a similar hadron moves far fewer. In ParT one head of the final class stage reads that particle, and a second "
+        "route through the earlier blocks backs it up. A three-head subset reproduces the call for this class but also "
+        "gives it to almost all top-quark jets with a lepton, so it is not a specific classifier; a fresh-sample rerun is "
+        "pending."
+    ),
+    'P33_EXPLAINER': (
+        "When one particle in a W or Z jet is moved by 0.01 rad, ParT's direction-independent response through its pair "
+        "features comes mostly from particles with a neighbour closer than about 0.01 rad and passes through two of the "
+        "eight pair-bias heads; both results reproduce on fresh jets. A linearised copy of the network produces only about "
+        "a third of that response, so the network's own nonlinearity makes most of it, not the logarithm of the pair "
+        "distance alone. Which stage of the network produces it is not yet known."
     ),
     'P23_EXPLAINER': (
         "Shifting all of a jet's particles by a small angle changes ParT's W-versus-Z score mostly in the same way for a "

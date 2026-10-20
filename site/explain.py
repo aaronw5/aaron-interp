@@ -675,6 +675,59 @@ P27_EXPLAINER = [
   'The big models\' axis response is $M_2$-like in aggregate but is not carried by a per-particle weight of either the $M_2$ or the JEDI type (new claim C14); no rank-window or threshold form beats $M_2$, which is weak evidence against JEDI-linear\'s per-particle objects in ParT (claim A8), because every form explains under 10 %. What ParT\'s pair term reads, and whether rank windows appear in its smooth per-particle part, is open (P30).', None),
 ]
 
+P31_EXPLAINER = [
+ ('Question', 'The released Particle Transformers (ParT) change their W/Z call when every particle of a jet is shifted rigidly about the stored jet axis, which leaves the invariant mass unchanged. ParTs of the same design that we trained on 3 classes (W, Z, QCD) do this about three times less (claim C10). Does training on all 10 JetClass classes, as the released models were, account for the difference?', None),
+ ('Background',
+  'ParT\'s per-particle inputs include $\\Delta\\eta_i$, $\\Delta\\phi_i$ and $\\Delta R_i$ measured from the stored jet axis; its pair inputs ($\\ln k_T$, $\\ln z$, $\\ln\\Delta R_{ij}$, $\\ln m^2_{ij}$) do not depend on the axis. '
+  'A rigid shift $\\Delta\\phi_i \\to \\Delta\\phi_i + 0.06$ raises the axis moment mass $m_A=\\sqrt{M_0M_2}$, with $M_0=\\sum_i p_{T,i}$ and $M_2=\\sum_i p_{T,i}\\Delta R_i^2$, by about 13 %, and leaves the invariant mass unchanged. '
+  'The ratio $R$ compares the network\'s response to this shift with its response to a real mass change of the same size in $m_A$: $R=1$ means the network reads $m_A$ about the axis, $R=0$ that it reads the invariant mass. Earlier (P22) 3-class training on 1.5M jets gave $R\\approx0.22$, the released models 0.72–0.87.', None),
+ ('Method',
+  'ParT with the kinematic inputs, trained three ways with every other setting fixed (optimiser, learning-rate schedule, seed 14): on 10 classes with 150k jets each (1.5M jets, the same number of optimisation steps as the 3-class run; arm m10s); on 10 classes with 5.0M jets (m10); and the 3-class run for 5× the steps (L). '
+  'Read-out $d=\\ell_Z-\\ell_W$ (Z minus W score before the softmax). For each jet $j$, a dilation $(\\Delta\\eta,\\Delta\\phi)\\to k_j(\\Delta\\eta,\\Delta\\phi)$ is chosen to change $m_A$ by the same amount as the shift. '
+  '$R=\\dfrac{\\sum_j \\Delta d^{\\,\\mathrm{shift}}_j\\,\\Delta d^{\\,\\mathrm{dil}}_j}{\\sum_j (\\Delta d^{\\,\\mathrm{dil}}_j)^2}$ for three shift directions ($\\phi+0.06$, $\\phi-0.06$, $\\eta+0.06$), on 15,000 fresh test jets (5,000 random rows each of W, Z, QCD). '
+  'Statistics: 1,000 bootstrap resamples over jets for intervals; permutation tests of each arm against the 3-class arm with Holm correction; McNemar tests for call changes. Controls: a rotation of the whole jet including its axis (null), an untrained network, a second 3-class seed (t2), and the released models on the same jets.', None),
+ ('Result',
+  'At 1.5M jets, 10-class training gives $R=0.32$ [0.31, 0.33] ($\\phi+$), 0.43 ($\\phi-$), 0.30 ($\\eta+$), against 0.22, 0.47, 0.22 for 3 classes and 0.72, 0.74, 0.87 for the released ParT_kin. '
+  'The share of a real mass change that enters through the per-particle (axis-relative) inputs rises from 0.29 to 0.38 (released 0.83), and the shift moves 9.5 % of true W jets to Z against 6.3 % (released 22–24 %). 3-class accuracy is unchanged (75.2 % vs 74.7 %).', 'results/part/p31_classes_steps_run.png'),
+ ('Checks',
+  'The released models give 74.47 % (ParT_kin) and 85.93 % (ParT_full) 10-class accuracy on the reference sample, as before. The rotation null gives $|R|\\le0.014$. The two 3-class seeds differ by at most 0.04, against the 10-class effect of 0.10 ($\\phi+$) and 0.09 ($\\eta+$); both tests have Holm-corrected $p=0.003$. There is one seed per arm, so the seed comparison rests on that one pair. No verifier rerun yet.', None),
+ ('Why it matters',
+  'The 10-class objective is one contributing factor but closes only about 0.1 of the 0.5–0.65 gap between our networks and the released ones. Whether data volume or a longer schedule supplies the rest is tested by the 5M-jet and 5×-steps runs, still training; their analysis is pre-registered.', None),
+]
+
+P32_EXPLAINER = [
+ ('Question', 'Does ParT recognise semileptonic $H\\to WW^*\\to \\ell\\nu q\\bar q\'$ jets through the one particle flagged as an electron or muon, and is that reading carried by a small set of attention heads? This is the first ParT class studied here outside the W/Z mass question.', None),
+ ('Background',
+  'JetClass gives each particle five particle-ID flags (charged hadron, neutral hadron, photon, electron, muon). A semileptonic $H\\to WW^*$ jet contains a hard lepton; hadronic jets rarely do. ParT ends with two class-attention blocks in which a class token attends over the particles; each block has 8 heads (b1h1–b2h8). The "full" and "kinpid" models receive the flags; "kin" models do not. ParticleNet (PN) is a graph network on the same inputs.', None),
+ ('Method',
+  '5,000 random $H\\to\\ell\\nu qq\'$ jets and 556 random jets of each other class (JetClass test file _115, seed 3215). Lepton candidate: the highest-$p_T$ particle with an electron or muon flag. Edits: (e1) change its flag to charged hadron; (e2, control) give a hadron of similar $p_T$ the lepton flag; (e3) merge the lepton into its nearest charged hadron; (e4) scale the lepton $p_T$ by 0.5 or 2 at fixed $\\sum p_T$; (e5) put a muon flag on the leading hadron of QCD, $H\\to4q$ and $t\\to bqq\'$ jets. '
+  'Effect per jet: $\\Delta\\log\\frac{p_{\\ell\\nu qq}}{1-p_{\\ell\\nu qq}}$ and the share of calls changed, with bootstrap intervals and McNemar tests. '
+  'Inside ParT: for each head, block the class token\'s attention to the lepton (its attention logit $a_{h,\\ell}\\to-10^9$) and compare with blocking a matched hadron; Holm correction over 80 heads. Head circuits: keep chosen heads and replace every other head by its mean output $\\bar o_h=\\mathbb{E}_{\\text{jets, tokens}}[o_h]$ over a class-balanced pool; compare with 100 random head sets of the same size.', None),
+ ('Result',
+  'Changing only the lepton flag moves 98.7 % of ParT_full\'s $H\\to\\ell\\nu qq\'$ calls (mostly to $H\\to4q$, $Z$, $W$); the control flag change moves 14.5 %. ParticleNet behaves the same (98.6 % vs 11.6 %). One class-attention head (b2h1 in ParT_full) puts 99 % of its attention on the lepton and gives the largest single-head drop ($-5.4$ log-odds), but 37 of 80 heads have significant effects. Blocking the lepton in the 16 class heads alone changes 11 % of calls, in the 64 particle-block heads alone 6 %, in all 80 heads 95 %: two routes that back each other up.', 'results/part/p32_lepton_route.png'),
+ ('Checks',
+  'ParT_kin (no flags) gives exactly zero response to the flag edits and responds to removing (88 % of calls) or rescaling (28–32 %) the lepton. Holding ParticleNet\'s neighbour graph fixed keeps 99.6 % of the flag effect. Unedited accuracy on the reference sample: ParT_full 85.9 %, ParT_kin 74.5 %. '
+  'The verifier (re-analysis of the stored output; the fresh rerun did not start because the GPU node failed) found: the three-head circuit keeps 97 % recall but calls 551 of 556 leptonic-top ($t\\to b\\ell\\nu$) jets $H\\to\\ell\\nu qq\'$, and its class-balanced accuracy (mean recall over the 10 classes) is 0.21, not above random three-head sets (95th percentile 0.22, $p=0.12$); the control e2 creates a two-lepton jet and mostly moves calls to $t\\to b\\ell\\nu$, so it is not a null; in ParT_kinpid head b2h7 attends 97 % to the lepton yet has no effect, so attention alone does not identify the head that is used. The circuits keep all MLPs and embeddings, so they are not literal circuits under the project definition.', None),
+ ('Why it matters',
+  'The $H\\to\\ell\\nu qq\'$ decision depends almost entirely on one input flag of one particle, a clean single-particle mechanism (claim C15). But the flag reaches the output through redundant routes, and no small head set acts as a specific $H\\to\\ell\\nu qq\'$ classifier, so small-circuit descriptions of ParT need class-balanced tests against the nearest class.', None),
+]
+
+P33_EXPLAINER = [
+ ('Question', 'When one particle is moved by 0.01 rad, ParT\'s response has a part that is the same for an outward and an inward move (the even part). Almost all of it enters through the pair features $U_{ij}=\\mathrm{MLP}(\\ln k_T,\\ln z,\\ln\\Delta R,\\ln m^2)$, and it does not shrink with the step as a smooth response would (P27v). Which pairs, which channels and which heads carry it, and does the input geometry or the network make it?', None),
+ ('Background',
+  'For a smooth response $d(\\delta)=a\\delta+b\\delta^2+\\dots$ the even part $(d_++d_-)/2$ scales as $\\delta^2$ and the odd part as $\\delta$, so the smoothness ratio $(E/O)_{0.003}/(E/O)_{0.01}$ is $(0.003/0.01)^2=0.09$; a larger value means non-smooth. The input $\\ln\\Delta R_{ij}$ has a log singularity: when the step $\\delta$ is comparable to $\\Delta R_{ij}$, $\\ln|\\Delta R_{ij}\\pm\\delta|$ is not close to its Taylor expansion. '
+  'If the network were linear in the pair features $F$, its response would be $d_{\\rm lin}=\\sum_{c,i,j}\\partial S/\\partial F_{cij}\\,\\Delta F_{cij}$, and its even part would come only from the nonlinearity of $F$ in the particle coordinates. Comparing $d$ with $d_{\\rm lin}$ separates the input\'s nonlinearity from the network\'s.', None),
+ ('Method',
+  '3,000 random W/Z jets (JetClass _116). The 10 leading particles are moved one at a time by $\\pm0.01$ and $\\pm0.003$ rad radially, or together with every particle within $\\Delta R<0.05$ (rigid cluster move, which keeps the moved particle\'s distances to those neighbours). The network is fed edited pair features for one channel at a time, all four, or all four in float64; each head\'s pair bias is reset to its unedited value in turn. Read-out $S=\\ell_Z-\\ell_W$. Controls: the input $\\ln\\Delta R$ alone, untrained and weight-permuted ParT. '
+  'Verifier (fresh _117 rows, 600 jets, float64): the linearised network $d_{\\rm lin}$, cluster moves at radius 0.05 and 0.01, head resets, and float32 vs float64 call changes on 1,500 jets of all 10 classes. Bootstrap intervals over jets; Holm over 8 heads; McNemar for call changes.', None),
+ ('Result',
+  'The even response sits in particles with a neighbour closer than 0.01 rad (93–97 % of it in ParT_full, 86 % in ParT_kin). Moving the particle with all neighbours within 0.05 rad leaves 15–16 %; with only those within 0.01 rad, 65–82 %. The linearised network gives 36 % (ParT_full) and 40 % (ParT_kin) of the even mean square, so most of the even response is the network\'s own nonlinear response, not the logarithm of the pair distance passed through a linear map. ParT_full routes it through pair-bias heads 0 and 2 (77 % of the even part); no single channel carries more than 44 %.', 'results/part/p33_smoothness.png'),
+ ('Checks',
+  'Numerical floor 0; own forward pass equals the reference implementation within $3\\cdot10^{-6}$; unedited accuracy 74.3 % (full) and 61.5 % (kin) on this W+Z sample, matching P27; 86.6 % and 74.1 % on the verifier\'s 10-class sample. The gradient reproduces the odd response where feature changes are small ($R^2$ 0.99–1.00 for $\\Delta R_{nn}>0.03$). In ParT_kin, 42 % of the float32 even response is rounding in the self-pair $\\ln m^2_{ii}$; it disappears with float64 pair features and changes 17 of 1,500 10-class calls (1.1 %, McNemar $p=0.006$); ParT_full 0. P33 first read the non-smoothness as inherited from $\\ln\\Delta R$ alone; the verifier\'s linearised network refutes that reading, and the untrained network, which has the same nonlinearities, was not a valid control for it.', None),
+ ('Why it matters',
+  'The close-pair geometry selects which particles move ParT\'s pair route, but the trained pair embedding and attention produce most of the even response, through two of the eight pair-bias heads (new claim C16). This locates the non-smooth term left open by claim C14 and refines C1: the pair-bias formula\'s response to particle moves is concentrated in two heads. ParT_kin\'s float32 pair features add a numerical dependence that changes about 1 % of its calls.', None),
+]
+
 D4_EXPLAINER = [
  ('Question', 'Does the networks\' way of computing the mass make them depend on how the jet axis is defined?', None),
  ('Background',
@@ -1862,6 +1915,9 @@ PAPER_EXPLAINERS = {
           ('Result explained: ParT trained on the true labels and with random axis offsets: where the axis response comes from (claims C10, C3s; P22, P22v)', P22_EXPLAINER, False),
           ('Result explained: Sophon, a ParT trained on JetClass-II, and the axis-relative mass (claims C13, C3s; P26, P26v)', P26_EXPLAINER, False),
           ('Result explained: what weight each particle gets in the axis response (claims C14, C12, A8; P27, P27v)', P27_EXPLAINER, False),
+          ('Result explained: training on 10 classes instead of 3 and the size of the axis response (claims C10, C3s; P31, running)', P31_EXPLAINER, False),
+          ('Result explained: the lepton flag decides H→ℓνqq′ in ParT and ParticleNet; redundant routes, no specific small circuit (claim C15; P32, P32v)', P32_EXPLAINER, False),
+          ('Result explained: close-neighbour pairs and two pair-bias heads carry ParT\'s even per-particle response (claims C16, C14, C1; P33, P33v)', P33_EXPLAINER, False),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
           ('Result explained: the axis-convention response in both directions, with invariant and rotation controls (claims D4, A12; X7)', X7_EXPLAINER, False),
