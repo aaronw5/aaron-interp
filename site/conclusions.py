@@ -244,27 +244,48 @@ CLAIM = {
         "of total pT times the pT-weighted squared distance of the particles from the jet axis) and carries about two "
         "thirds of the network's response to a shift of all particles at fixed invariant mass. Copying this direction's "
         "value from real jets moves the W/Z output the way the shift predicts, at about 40 % of the strength; it is not an "
-        "exact copy of the axis-moment mass, and nonlinear or per-particle forms have not been tested."
+        "exact copy of the axis-moment mass, and nonlinear or per-particle forms have not been tested. Two newer checks "
+        "lower confidence: in natural jets the W/Z score changes with this mass by only about a seventh of what the shift "
+        "produces, and in ParticleNet directions of this kind also appear in networks with shuffled weights; neither "
+        "control has been run on ParT's direction yet."
     ),
     'C8': (
-        "When everything outside a chosen set of connections is replaced by values from a jet of the other class, no set "
-        "found with up to a tenth of ParT_full's connections reproduces its W-versus-Z calls: the best reach 63 % correct, "
-        "against 83 % for the full network. The found sets beat random sets mainly through the final read-out stage. This "
-        "is a statement about the searches tried (attribution ranking, greedy pruning, a trained mask) and one replacement "
-        "scheme; a different search or coarser units could find a smaller circuit."
+        "When everything outside a chosen set of units is replaced by values from a jet of the other class, no small set "
+        "reproduces ParT_full's W-versus-Z calls. With attention heads and neuron groups, sets of up to a tenth of the "
+        "connections reach at most 63 % correct against 83 % for the full network; with learned sparse features (units "
+        "trained to reconstruct the network's layers from few active components) as units, 50 features reach about 51 %, "
+        "and only while the attention layers are computed on the real jet. This holds for the searches tried, which rank "
+        "units by attribution; a search that trains the selection over features has not been run."
     ),
     'C3s': (
-        "Six copies of ParT (two input sets, three random seeds) are being retrained on the same 2 million jets used for "
-        "L-GATr. After 3 of 50 epochs, the full-input copy already reacts like the released network to a shift of all "
-        "particles that keeps the invariant mass fixed, while the kinematics-only copies react about half as strongly or "
-        "less. Whether the axis response holds across seeds and at this data size is decided by the final checkpoints."
+        "Six copies of ParT (two input sets, three random seeds) were retrained on the same 2 million jets used for "
+        "L-GATr, and all six finished 50 epochs. After 3 of 50 epochs, the full-input copy already reacted like the "
+        "released network to a shift of all particles that keeps the invariant mass fixed, while the kinematics-only "
+        "copies reacted about half as strongly or less. Whether the axis response holds across seeds and at this data "
+        "size is decided by the analysis of the final checkpoints, not yet run."
+    ),
+    'C9': (
+        "ParticleNet's W-versus-Z score responds the same way when every particle is shifted by +0.06 or by −0.06 rad in "
+        "azimuth, neither of which changes the jet mass. After the second graph layer one direction in its internal "
+        "representation reproduces about three quarters of the response to either sign, but it is not a copy of the "
+        "axis-moment mass, and networks with shuffled or untrained weights also contain such directions, so it does not "
+        "show a variable built by training. The neighbour graphs that ParticleNet rebuilds carry at most about 4 % of the "
+        "response, and a few dozen pooled channels kept alone reproduce the W/Z calls but not the 10-class calls."
+    ),
+    'C10': (
+        "Pre-registered test, not yet run: Particle Transformers were trained on labels that depend on only one mass "
+        "variable, either the invariant mass or the axis-moment mass. If the network trained on the invariant mass "
+        "ignores a shift that keeps the invariant mass fixed, ParT's axis response is learned from the data; if it "
+        "still responds, it comes from ParT's axis-relative inputs or architecture. Training has finished; a version "
+        "given only pair features learns the invariant-mass label to 97 %."
     ),
     'C5': (
         "ParticleNet, a graph network without attention trained on the same JetClass inputs, also calls more true W jets "
         "Z when every particle is moved 0.06 rad off the jet axis at fixed invariant mass: from 12 % to 26–28 %, about "
         "two-thirds of ParT's increase. The response enters through each particle's distance to the axis and passes "
         "through terms that read each particle on its own; the neighbour graphs do not carry it, and rotations about the "
-        "axis that keep every distance do not reproduce it. Whether the axis-relative input format causes this, or both "
+        "axis that keep every distance do not reproduce it; on three more samples, freezing the rebuilt neighbour graphs "
+        "removes at most about 4 % of the response. Whether the axis-relative input format causes this, or both "
         "networks learned a similar solution, has not been tested."
     ),
     'C6': (
@@ -556,6 +577,27 @@ EXPLAINER = {
         "response is not a property of one released checkpoint. After 3 of 50 epochs the full-input seed already responds "
         "like the released network (about 23 more true-W jets in 100 called Z); the kinematics-only seeds respond less. "
         "The final checkpoints decide, with pre-registered tests."
+    ),
+    'P13_EXPLAINER': (
+        "Learned sparse features (units trained to reconstruct each layer of ParT_full from a few active components) "
+        "did not give a small circuit for its W-versus-Z decision: 50 features kept alone give about 51 % correct calls "
+        "against the model's 83 %, and 75 % needs 1,000–2,000 features, even with the attention layers left on the real "
+        "jet. The feature most correlated with the axis-moment mass does not carry the response to a mass-preserving "
+        "shift; how the rest of that response is carried is still open."
+    ),
+    'P14_EXPLAINER': (
+        "Particle Transformers were trained on labels that depend on one known mass variable to test the methods and to "
+        "ask whether the axis response is learned from data. Training has finished, but only the released-network "
+        "control is analysed: it responds to a rotation that keeps the invariant mass fixed at about three quarters of "
+        "its response to a matched real mass change, mostly through the per-particle angle inputs. The deciding "
+        "comparison runs next round."
+    ),
+    'P15_EXPLAINER': (
+        "Inside ParticleNet, the response to a mass-preserving azimuthal shift is the same for either sign, and a "
+        "direction after the second graph layer reproduces about three quarters of it; the first-layer direction found "
+        "for the positive shift only records which way the particles moved. Directions like these also exist in untrained "
+        "networks and are not the axis-moment mass. The rebuilt neighbour graphs carry at most about 4 %, and a few dozen "
+        "pooled channels reproduce the W/Z calls but not the 10-class calls."
     ),
     'C3_EXPLAINER': (
         "ParT responds to a shift of all particles that keeps the invariant mass fixed, although its pair features would "

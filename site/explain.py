@@ -491,6 +491,60 @@ P10_EXPLAINER = [
  ('Why it matters', 'The final checkpoints (about 2026-10-20) test the pre-registered statements S1–S4 per seed and give a ParT matched to L-GATr in data size (claim C3s). The epoch-3 numbers are interim.', None),
 ]
 
+P13_EXPLAINER = [
+ ('Question', 'P9 found no small circuit of attention heads and MLP neuron groups that reproduces ParT_full\'s W-versus-Z calls. Heads and neurons may be the wrong units. With learned sparse features as units, is there a small feature circuit, and does a single feature carry the axis-moment mass $m_A$?', None),
+ ('Background',
+  'A transcoder replaces an MLP by a wide, sparse layer trained to reproduce its output: $\\hat y = W_d\\,\\mathrm{TopK}(W_e x + b_e) + W_s x + b$, where $x$ is the MLP input, at most $k$ latents ("features") are non-zero per token, and $W_s x$ is a linear bypass ("skip map"). A sparse autoencoder (SAE) does the same for the residual stream itself ($\\hat x = W_d\\,\\mathrm{TopK}(W_e x)$). '
+  'The difference between the real activation and its reconstruction is kept as an explicit error term, so the network with dictionaries spliced in is exact. '
+  'The axis-moment mass is $m_A=\\sqrt{\\sum_i p_{T,i}\\cdot\\sum_i p_{T,i}\\Delta R_i^2}$; a rigid shift $\\phi\\to\\phi+0.06$ of all particles raises it at fixed invariant mass.', None),
+ ('Method',
+  'Dictionaries on 1,000,000 random training jets: transcoders ($k=32$, 1,024 latents) on all 8 particle-block MLPs and 2 class-block MLPs; SAEs (2,048 latents, $k=32$) on the class-token residual after each class block. '
+  'Attribution: integrated gradients of $D=\\sum_j s_j(\\ell_W-\\ell_Z)_j$ ($s_j=\\pm1$ by class) over masks on every feature and error term, interpolating from a W↔Z donor jet with matched $p_T$ to the clean jet. '
+  'Circuit of size $K$: keep the top-$K$ features; every other feature and every error term takes the donor value. Main variant: attention layers and skip maps computed on the real jet; strict variant: those also take the donor value. '
+  'Controls: 100 random equal-size feature sets; P9 head/MLP circuits. Steering: move the feature most correlated with $\\log m_A$ by the amount a 5 % $m_A$ change produces in natural jets, and set it to its mean under the $\\phi$ shift. '
+  'Samples: N = 20,000 (2,000/class) for 10-class accuracy, 3,000 W/Z jets for attribution, 10,000 for evaluation (random rows, seed 13); verifier on four fresh files.', None),
+ ('Result',
+  'Splicing all dictionaries changes 10-class accuracy by 0.03 pt (86.16 → 86.13 %). Kept alone, 50 features give 50 % W/Z accuracy (model 84 %), 1,000 give 74 %, 2,000 give 79 %; random sets give 16–22 %. In the strict variant accuracy stays below 43 % even with every feature kept. '
+  'The feature most correlated with $\\log m_A$ ($r=-0.76$) does not change the calls when steered at the calibrated step or set to its mean: W → Z flow $-0.02$ [$-0.10$, $+0.06$] points against $+21.1$ for the $\\phi$ shift.', 'results/part/p13_feature_circuit.png'),
+ ('Checks',
+  'Fresh files reproduce the curve (50 features 51.4 % [50.4, 52.4]; top-50 overlap 0.96). The attention and skip paths alone, with all last-layer residual features kept and everything upstream from the donor, give 17 % (= donor). '
+  'Steering all features of one class-token residual SAE together along their natural $m_A$ slopes reproduces the natural slope of the read-out ($dZW$ 0.15–0.16 vs prediction 0.152; permuted control ≈ 0), which is 14 % of the $\\phi$ shift\'s logit change (1.08). '
+  'At 4–8 s.d. the single feature moves calls toward W ($-8$ % at 8 s.d.). The figure\'s x-axis counts only the kept features\' parameters, not the live attention and skip parameters.', None),
+ ('Why it matters',
+  'Under the literal circuit definition, changing units from heads and neurons to learned features does not produce a small W/Z circuit (claim C8 extended). The axis-moment-mass information is spread over many features, and natural $m_A$ variation accounts for only about a seventh of the $\\phi$-shift response, which leaves open what else the shift changes (claim C7). Trained rather than ranked feature circuits are untested.', None),
+]
+
+P14_EXPLAINER = [
+ ('Question', 'Do our tools find a mass variable and route when the answer is planted, and does a ParT trained on an exact invariant-mass label still respond to a shift that keeps the invariant mass fixed?', None),
+ ('Background',
+  'The released ParT responds to a rigid $\\phi$ shift at fixed invariant mass $m$ (claim C3). Two explanations predict different things for a network trained on a known label: if the response is learned from the 10-class data, a network trained to find $|m-85|<10$ GeV should ignore the shift; if ParT\'s axis-relative per-particle inputs bias it toward the axis-moment mass $m_A=\\sqrt{\\sum p_T\\cdot\\sum p_T\\Delta R^2}$, it should respond anyway.', None),
+ ('Method',
+  'ParT (kinematic inputs, 2 outputs, authors\' optimiser, 10 epochs) trained on 1.5M W/Z/QCD jets with four labels: (a) $\\mathbb 1[|m-85|<10]$; (b) $\\mathbb 1[|m_A-84.6|<10]$ with the same positive rate; (c) as (a) but with the per-particle position inputs zeroed, so geometry enters only through the pair features; (s) shuffled (a). '
+  'Test: $R=$ per-jet slope of $\\Delta(\\ell_W-\\ell_Z)$ under $\\phi+0.06$ against a matched real dilation with the same $\\Delta\\log m_A$. Predictions: learned choice, $R_a<0.2$ and $R_b\\approx1$; architecture prior, $R_a\\ge0.5$. '
+  'Control this round: the released ParT_full and ParT_kin on 20,000 random held-out W/Z/QCD jets (seed 14).', None),
+ ('Result',
+  'Released control: $R=0.79$ [0.78, 0.80] (full) and 0.72 [0.71, 0.73] (kin), rotation null ≈ 0; a matched real mass change passes 83 % through the per-particle inputs and 15–17 % through the pair features; under the $\\phi$ shift the pair-only route moves the read-out no more than the rotation null. '
+  'Training: arm c reaches 97 % held-out label accuracy by epoch 2. The arm analysis has not run yet.', 'results/part/p14_planted_released.png'),
+ ('Checks', 'The released models reproduce their P1-sample accuracies (85.93, 74.47 %). Labels a and b agree on 97.5 % of jets (correlation of $m$ and $m_A$ 0.999), so only the $\\phi$ edit separates the two arms. Pair features are not exactly rotation invariant in float32 (0.03–0.8 % of calls), a noise floor for arm c.', None),
+ ('Why it matters', 'Arm c shows ParT can compute the invariant-mass window from pair features alone. Arm a decides whether the axis response is driven by the training data or by ParT\'s inputs and architecture (claim C10, pre-registered); the analysis runs next round.', None),
+]
+
+P15_EXPLAINER = [
+ ('Question', 'ParticleNet shares ParT\'s response to a mass-fixed $\\phi$ shift (claim C5). Inside ParticleNet, is there one direction that carries the response and follows the axis-moment mass, do the rebuilt neighbour graphs carry it, does a small set of channels reproduce the calls, and how do standard attribution and probe baselines compare?', None),
+ ('Background',
+  'ParticleNet applies three EdgeConv blocks (ec1–ec3): each particle is updated from its $k$ nearest neighbours, with the neighbour graph rebuilt from the learned features in blocks 2 and 3; then global pooling and a dense head (fc). '
+  'Distributed alignment search (DAS) fits one direction $u$ in a layer and swaps the jet\'s component along $u$ with that of the shifted jet; the share is the fraction of the shift\'s change in $d=\\ell_W-\\ell_Z$ that the swap reproduces. An axis-moment-mass ($m_A$) direction would respond equally, per unit $\\Delta\\log m_A$, to a $\\phi$ shift, to scaling all angles and to scaling all $p_T$.', None),
+ ('Method',
+  'Official ParticleNet_full and ParticleNet_kin; 20,000 random validation jets (2,000/class, seed 15). One-direction DAS at ec1, ec2, ec3 (pooled) and fc; controls: random directions, the same search on a weight-shuffled network. kNN edges changed and graphs frozen per layer. Channel circuits: top-$K$ pooled channels by integrated gradients kept, others taken from a $p_T$-matched opposite-class jet. LRP-ε relevance; linear probes of $d$ from 35 energy-flow polynomials (EFPs) and primary Lund-plane bins. '
+  'Verifier: fresh file (seed 45); the mirror shift $\\phi-0.06$, which changes $d$ by the same amount; directions fitted on both signs; atlas with standardised rotations.', None),
+ ('Result',
+  'Accuracy 84.5 % (full), 70.1 % (kin). The ec1 direction reproduces 1.16 of the $+0.06$ response but $-0.29$ of the $-0.06$ response: it records the sign of the shift, which the output ignores. The ec2 direction reproduces 0.75–0.80 of each sign. Weight-shuffled networks reach similar one-direction shares. Per unit $\\Delta\\log m_A$, angle scaling moves the ec1–ec2 directions 0.11–0.39 as much as the shift (an $m_A$ copy predicts 1). '
+  'Freezing the rebuilt graphs removes 0.7–4.0 % of the response. 32 pooled channels kept alone give 69–71 % W/Z accuracy against the model\'s 71–72 %, but 20–45 % 10-class accuracy against 83–85 %.', 'results/particlenet/p15_das_layers.png'),
+ ('Checks',
+  'Hooked forward equals weaver\'s ($|\\Delta L|=0$); edits keep $|\\Delta\\log m|\\le1.3\\times10^{-7}$. The post-pooling share varies by sample (0.11–0.57). With centred rotations channels align less with single observables than random directions, with standardised rotations more, so no basis statement is made. EFP and Lund probes cannot respond to a $\\phi$ shift by construction; gradient and LRP predict the per-jet response at $r$ 0.31–0.45.', 'results/particlenet/p15_circuits.png'),
+ ('Why it matters', 'ParticleNet\'s response to the shift does not pass through its rebuilt graphs (claim C5) and is not carried by a trained axis-moment-mass direction; a one-direction match on its own does not show a trained variable, since untrained networks give one too (claim C9; the same control is proposed for ParT\'s C7). Small channel circuits reproduce the binary W/Z decision but not the 10-class decision.', None),
+]
+
 D4_EXPLAINER = [
  ('Question', 'Does the networks\' way of computing the mass make them depend on how the jet axis is defined?', None),
  ('Background',
@@ -1186,6 +1240,9 @@ PAPER_EXPLAINERS = {
           ('Result explained: where ParT forms its axis-relative mass; a direction that follows the axis-moment mass from the embedding onward (claim C7; P8, P8v)', P8_EXPLAINER, False),
           ('Result explained: circuit size for ParT_full W vs Z, whole-network search (claim C8; P9, P9v)', P9_EXPLAINER, False),
           ('Result explained: ParT retrained with three seeds on 2M jets, interim axis battery (claim C3s; P10)', P10_EXPLAINER, False),
+          ('Result explained: learned sparse features (transcoders, SAEs) as circuit units in ParT_full; feature circuits kept alone and m_A-feature steering (claims C8, C7; P13, P13v)', P13_EXPLAINER, False),
+          ('Result explained: ParT trained on planted mass labels; released-model control (claims C10, C3; P14, setup)', P14_EXPLAINER, False),
+          ('Result explained: inside ParticleNet: one-direction search per layer with a mirror-sign test, neighbour graphs, channel circuits, LRP and probe baselines (claims C9, C5; P15, P15v)', P15_EXPLAINER, False),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
           ('Result explained: the axis-convention response in both directions, with invariant and rotation controls (claims D4, A12; X7)', X7_EXPLAINER, False),
