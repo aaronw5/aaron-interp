@@ -273,7 +273,7 @@ CLAIM = {
         "the best boosted trees, but they lead by a similar margin under a random displacement that raises the axis spread "
         "by the same amount, so the lead is not specific to the shift mechanism. The surrogate the shift separates is the "
         "direct physics-to-score MARS fit, which uses the invariant mass and misses most of the network's changed decisions; "
-        "symbolic regression was not run. A later comparison on four networks (2026-10-20) found that, once the boosted "
+        "symbolic regression was not run in that first comparison. A later comparison on four networks (2026-10-20) found that, once the boosted "
         "trees' settings are tuned on held-out jets, the if-statement program and trees of the same size follow the "
         "networks' changed decisions under the shift equally well, within about 2 points either way; the program keeps a "
         "small lead only for a shift that holds the axis spread fixed, in JEDI-linear and the transformer. With symbolic "
@@ -359,8 +359,9 @@ CLAIM = {
     ),
     'C3s': (
         "Six Particle Transformers retrained from scratch on 2 million jets all keep the released network's main "
-        "behaviour on two separate test samples: rotating every particle about the jet axis, which leaves the jet mass "
-        "unchanged, turns 14–20 % more true W jets into Z, while untrained networks of the same design barely respond. "
+        "behaviour on two separate test samples: shifting every particle by 0.06 rad in azimuth while the stored jet axis "
+        "stays where it was (a rotation about the beam line, which leaves the jet mass unchanged but widens the spread "
+        "about the axis) turns 14–20 % more true W jets into Z, while untrained networks of the same design barely respond. "
         "The released network's internal route (almost all of the mass response through the first class-attention "
         "layer, one dominant head) is not reproduced; the retrained networks sit where untrained ones already do. "
         "Whether this difference comes from the random seed or from the 50 times larger training set of the released "
@@ -380,8 +381,8 @@ CLAIM = {
         "of their response to an equal real mass change, depending on the shift direction; the released models respond "
         "at about 0.75 to 0.85 in every direction. Trained with random axis shifts, the same network ignores the shift "
         "(ratio about 0.01) at the same accuracy, so the architecture does not force the axis-relative response. Which "
-        "part of the released training (10 classes, 100 million jets or a longer schedule) gives the larger response is "
-        "still untested. (Round C7.) Training on all 10 classes with the same 1.5 million jets and step count raises the "
+        "part of the released training (10 classes, 100 million jets or a longer schedule) gives the larger response was "
+        "untested after round C6. (Round C7.) Training on all 10 classes with the same 1.5 million jets and step count raises the "
         "ratio by about 0.1 (to about 0.3), so the 10-class objective contributes but explains only a small part of the "
         "gap; runs with 5 million jets and with five times the training steps are still training, with one seed per run."
     ),
@@ -447,7 +448,8 @@ CLAIM = {
         "for particles with more momentum and larger distance from the axis, at 0.6 to 0.8 of the slope that the "
         "angular second moment M2 predicts. For individual particles no simple formula, including JEDI-linear-style "
         "momentum-rank windows, explains more than about 8 % of the response. In ParT the rest comes in through the "
-        "features between pairs of particles and changes non-smoothly with the step size; what it reads is untested."
+        "features between pairs of particles and changes non-smoothly with the step size; a later run traced it to "
+        "particles with close neighbours (C16)."
     ),
     'C15': (
         "In ParT and ParticleNet models that are given particle-identity flags, the decision that a jet comes from a Higgs "
@@ -731,7 +733,9 @@ EXPLAINER = {
         "Particle Flow Network and a transformer change their calls under a small jet shift about as well as boosted trees, "
         "decision trees or small neural networks of the same size tuned on held-out jets, with differences up to about 2 "
         "points either way. An earlier lead came from comparing with one under-fitted boosted-tree setting. The method "
-        "therefore transfers across architectures at baseline-level fidelity per bit; symbolic regression is untested."
+        "therefore transfers across architectures at baseline-level fidelity per bit. Symbolic regression was not run here; "
+        "a later comparison (B6w) found that symbolic-regression formulas on standard jet variables fall behind under the "
+        "shift, as trees on those variables do."
     ),
     'H12_EXPLAINER': (
         "A boost along the jet axis that keeps the invariant mass fixed changes about a third of the calls of every "
@@ -750,7 +754,8 @@ EXPLAINER = {
         "Quark–gluon taggers trained on Pythia ignore one added soft particle on Herwig jets as they do on Pythia jets "
         "(about −0.01 in logit vs +0.09 for a count-only classifier), so the no-counting result does not depend on the "
         "test generator. Their split response comes from how momentum is shared among the hardest particles, not from "
-        "the leading fraction alone. Not yet verified; Herwig-trained models are still training."
+        "the leading fraction alone. H14 had no verifier of its own; the Herwig-trained models it was waiting for were "
+        "tested in H24, verified by H24v, and they do not count particles either."
     ),
     'H18_EXPLAINER': (
         "Soft particles that add energy flow move every tagger toward the high-multiplicity class; for quark–gluon "
@@ -820,7 +825,9 @@ EXPLAINER = {
         "In a small trial run (150 jets per class), rotating the W decay inside top jets at fixed top and W mass lowered "
         "the top score of nine taggers by about 1 log-odds on JetClass tops. A classifier given only the edit's side "
         "effects (τ32 and how energy is shared between prongs) moved as much and no result passed the multiple-test "
-        "correction, so whether taggers use the W decay angle is open until the full run."
+        "correction at this size. The full run (H32, verified by H32v) found a response to the decay angle beyond a "
+        "control matched in those side effects, clearest for PFN and EFN and, for the other taggers, on a small matched "
+        "set of JetClass tops (claim D15)."
     ),
     'H32_EXPLAINER': (
         "At full statistics, rotating the W decay to raise |cos θ*| at fixed top and W mass lowers every tagger's top score "
@@ -894,13 +901,15 @@ EXPLAINER = {
         "On the full Top Tagging Landscape test set, the best classical tagger built here (soft-drop mass, τ32 and the "
         "W-candidate pair mass) rejects QCD about 5 times less well than published ParT, and the W-pair mass adds about 28 % "
         "to the rejection of mass and τ32. In quark–gluon jets the particle count is the strongest single observable, and "
-        "gluons carry 1.59 times as many particles as quarks. The trained networks needed for the edits are still training."
+        "gluons carry 1.59 times as many particles as quarks. The networks needed for the edits were then trained and "
+        "edited in H4 (W-pair mass inside top) and H5 (splits and removals on quark–gluon jets)."
     ),
     'H3_EXPLAINER': (
         "The earlier physics edits return with the same sign at 10 times the statistics: JEDI-linear's W call collapses "
         "under a 10 % momentum scaling that leaves every jet shape unchanged, and ParT's H → bb call follows the number of "
         "significantly displaced tracks, not how far they travel. With a control that keeps the W pair fixed, no network "
-        "responds to the W-pair mass inside top; whether ParT reads the three subjet-pair masses as a set is open."
+        "responded to the W-pair mass inside top in this build; for ParT that null was later withdrawn, because rebuilding "
+        "each edited jet about its own axis shows a W-pair response (H23, claim D11), while for JEDI-linear it holds (H29)."
     ),
     'A1_EXPLAINER': (
         "JEDI-linear's first layer reduces to cuts on single particles: a few select soft particles by pT, the rest select "
@@ -976,11 +985,12 @@ EXPLAINER = {
         "26–28 % of true W jets Z instead of 12 %, about two-thirds of ParT's increase. In both networks the change "
         "enters through each particle's distance to the axis and passes through terms that read each particle on its "
         "own, not through the neighbour graphs; rotations that keep every distance do not reproduce it. So the response is "
-        "not specific to attention; whether the input format causes it is tested next with L-GATr."
+        "not specific to attention; whether the input format causes it is to be tested with L-GATr, which was still "
+        "training on 20 October."
     ),
     'P5_EXPLAINER': (
         "No trained L-GATr is published for JetClass, so one is being trained with the authors' code and settings; the run "
-        "is healthy and should finish around 21 October. An early checkpoint ignores a rotation of all particles about "
+        "was still training on 20 October (job anrunw-ai-c-p5-lgatr2, expected end 21 October). An early checkpoint ignores a rotation of all particles about "
         "the beam, which strongly moves ParT's W/Z calls, but this holds by construction and says nothing yet about how "
         "L-GATr estimates mass. The deciding test, edits that keep the invariant mass but change the spread about the "
         "axis, is pre-registered for the final checkpoint."
@@ -1000,10 +1010,11 @@ EXPLAINER = {
         "smaller circuit."
     ),
     'P10_EXPLAINER': (
-        "ParT is being retrained six times on the 2 million jets used for L-GATr to check that its axis-relative mass "
-        "response is not a property of one released checkpoint. After 3 of 50 epochs the full-input seed already responds "
-        "like the released network (about 23 more true-W jets in 100 called Z); the kinematics-only seeds respond less. "
-        "The final checkpoints decide, with pre-registered tests."
+        "ParT was retrained six times on the 2 million jets used for L-GATr to check that its axis-relative mass "
+        "response is not a property of one released checkpoint. After 3 of 50 epochs the full-input seed already "
+        "responded like the released network; the kinematics-only seeds responded less. On the final checkpoints (P11, "
+        "reproduced by P11v) all six seeds respond at the call level (14–20 more true-W jets in 100 called Z), but the "
+        "released network's concentration of the response in the first class-attention layer is not reproduced."
     ),
     'P13_EXPLAINER': (
         "Learned sparse features (units trained to reconstruct each layer of ParT_full from a few active components) "
@@ -1014,10 +1025,12 @@ EXPLAINER = {
     ),
     'P14_EXPLAINER': (
         "Particle Transformers were trained on labels that depend on one known mass variable to test the methods and to "
-        "ask whether the axis response is learned from data. Training has finished, but only the released-network "
-        "control is analysed: it responds to a rotation that keeps the invariant mass fixed at about three quarters of "
-        "its response to a matched real mass change, mostly through the per-particle angle inputs. The deciding "
-        "comparison runs next round."
+        "ask whether the axis response is learned from data. P14 trained the networks and analysed only the "
+        "released-network control: it responds to a shift of all particles in azimuth with the stored axis kept, which "
+        "leaves the invariant mass unchanged, at about three quarters of its response to a matched real mass change, "
+        "mostly through the per-particle angle inputs. The arm comparison ran in later rounds (P16, P22): ParTs trained "
+        "on the planted or true labels respond at only 0.2 to 0.5 of a matched real mass change, so the architecture "
+        "does not force the released response."
     ),
     'P15_EXPLAINER': (
         "Inside ParticleNet, the response to a mass-preserving azimuthal shift is the same for either sign, and a "
@@ -1028,17 +1041,20 @@ EXPLAINER = {
     ),
     'P11_EXPLAINER': (
         "Six Particle Transformers retrained from scratch all turn 14–20 % more true W jets into Z when every particle is "
-        "rotated about the jet axis at fixed mass, while untrained networks barely respond, so this behaviour comes with "
+        "shifted by 0.06 rad in azimuth with the stored jet axis kept (a rotation about the beam line, which keeps the jet "
+        "mass but widens the spread about the axis), while untrained networks barely respond, so this behaviour comes with "
         "training on JetClass. The released network's internal route, almost all through the first class-attention "
         "layer with one dominant head, is not reproduced; the retrained values lie in the range untrained networks reach. "
         "Seed and the 50 times smaller training set are not yet separated."
     ),
     'P16_EXPLAINER': (
-        "Particle Transformers trained only to flag a jet-mass window respond to a mass-preserving rotation at about 0.2 "
-        "of their response to a real mass change, against about 0.75 for the released models, and compute the mass "
-        "mostly from pairs of particles. So the architecture does not force the released models' axis-relative mass. "
-        "Because the two planted labels agree on almost every real jet, whether the label decides which mass is read, "
-        "and what in the released training produces the larger response, is open."
+        "Particle Transformers trained only to flag a jet-mass window respond to a shift of all particles in azimuth with "
+        "the stored axis kept, which leaves the invariant mass unchanged, at about 0.2 of their response to a real mass "
+        "change, against about 0.75 for the released models, and compute the mass mostly from pairs of particles. So the "
+        "architecture does not force the released models' axis-relative mass. Later runs tested the source: networks "
+        "trained on the true labels (P22) also stay well below the released level, and training on all 10 classes raises "
+        "the response only slightly (P31); what produces the released level, and whether the label decides which mass "
+        "is read, is still open."
     ),
     'P18_EXPLAINER': (
         "In ParT, particle count and pT can be read from the input and the jet mass from the first block, nearly as well "
@@ -1059,8 +1075,9 @@ EXPLAINER = {
         "mass-preserving shift of the jet axis only 0.2 to 0.5 times as strongly as to a matched real mass change, "
         "depending on the shift direction, against about 0.75 to 0.85 for the released JetClass models, and they do not "
         "approach that level during training. Training with random axis shifts removes the response at the same "
-        "accuracy, so it is learned from the inputs rather than built into the architecture. Whether 100 million jets, "
-        "10 classes or a longer schedule produces the released level is untested."
+        "accuracy, so it is learned from the inputs rather than built into the architecture. Which of 100 million jets, "
+        "10 classes or a longer schedule produces the released level is open: a later run (P31) found that 10 classes "
+        "raise the response only slightly, and the larger-data and longer-schedule runs were still training."
     ),
     'P26_EXPLAINER': (
         "Sophon, a Particle Transformer released after training on the much larger JetClass-II dataset, hardly changes "
@@ -1074,7 +1091,8 @@ EXPLAINER = {
         "average the shift grows with the particle's momentum share and its distance from the axis, at 0.6 to 0.8 of "
         "the steepness that the angular second moment M2 would give. Particle by particle no simple formula predicts the "
         "shift, and the momentum-rank windows that JEDI-linear uses do no better than M2. In ParT most of the scatter "
-        "comes from the features between pairs of particles; what that term reads is untested."
+        "comes from the features between pairs of particles; a later run (P33) traced that term to particles with close "
+        "neighbours, read through two of the pair-feature attention heads."
     ),
     'P31_EXPLAINER': (
         "A Particle Transformer trained on all 10 JetClass classes, with the same 1.5 million jets and step count as the "
@@ -1148,8 +1166,10 @@ EXPLAINER = {
         "constant product versus steps along a constant sum) cannot tell a product from a sum, because the two step "
         "directions are too close together. A gradient test shows that the W-versus-Z score and the Z-mass class neuron "
         "depend on the two sums approximately as on their product, more so than for random pairs of sums or random layers, "
-        "but with large scatter from jet to jet. The layer that forms the product is not located, and the repeat on a "
-        "second sample was not reviewed by the verifier."
+        "but with large scatter from jet to jet. The repeat on a second sample was not reviewed by the verifier, and a later "
+        "test with small input edits of the two moments (E21w) found no class neuron and not the W-versus-Z score outside a "
+        "band of random controls, so the product-like reading is not reproduced; that test can exclude only large effects. "
+        "No layer that forms the product has been located."
     ),
     'E22_EXPLAINER': (
         "Interchange interventions (setting one internal value of the network to its value on another jet, and doing the "
@@ -1165,8 +1185,9 @@ EXPLAINER = {
         "sideways translation raise it, so the read-out follows the sign of the axis-relative mass on unedited data, not "
         "only on artificially shifted jets. A rotation of equal displacement leaves the read-out unchanged, but that is "
         "expected for near-radial sums whatever the mass formula; the sideways translation is the control that tests the "
-        "mechanism. The read-out has two different gains, below the prediction for the part quadratic in the shift and "
-        "above it for the part linear in the centre offset, so it is not a single function of the axis-relative mass. At "
+        "mechanism. This run also found two different gains, below the prediction for the part quadratic in the shift and "
+        "above it for the part linear in the centre offset; a later measurement without the estimator bias (E23w and its "
+        "verification) did not reproduce that split: the two parts are weighted nearly equally from the dense layers on. At "
         "natural offsets the changes in decisions are small and follow how far the particles move, not the predicted mass "
         "change."
     ),
@@ -1200,7 +1221,9 @@ EXPLAINER = {
         "Earlier edits: JEDI-linear tags W, Z and top mainly by mass windows plus total pT and does not check for a W "
         "inside a top jet. ParT's b-tagging responds to the number of displaced tracks more than to their displacement, it "
         "uses lepton isolation, and it shows no response to π⁰ → γγ pairing or the heavy-quark dead cone. These come from "
-        "small samples (400 jets per class for ParT) without intervals and still need a full-statistics rerun."
+        "small samples (400 jets per class for ParT) without intervals. H3 reran them at 10 times the statistics with a "
+        "matched control for each edit and the signs returned (claim D3); lepton isolation, π⁰ pairing and the dead cone "
+        "were not rerun by the verifier."
     ),
     'MASS_EXPLAINER': (
         "The networks' mass is the total pT times the pT-weighted squared spread about the given axis, without the "
@@ -1257,7 +1280,9 @@ EXPLAINER = {
         "JEDI-linear's sparsity every remaining first-layer unit uses pT only or angles only, but random placement of that "
         "many weights gives the same. Only the HGQ-trained models have more such units than random placement, in two of "
         "three seeds, and their training script also differs in optimizer and length, so quantization is not isolated. "
-        "No model formed rank windows; short HGQ training did not form slot masks, so where windows come from is open."
+        "No model formed rank windows; short HGQ training did not form slot masks. Later full-length HGQ retrainings of "
+        "JEDI-linear (X12) did form slot masks, but with their edges at other pT ranks (24–45) and without the official "
+        "network's response at the 14-hardest-particle edge."
     ),
     'X9_EXPLAINER': (
         "Two standard set networks of the field, a Particle Flow Network at the same accuracy and an Energy Flow Network at "

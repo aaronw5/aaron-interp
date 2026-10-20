@@ -132,7 +132,8 @@ GUIDE['overview'] = [
   "network that quantity sits, and whether a small circuit (a set of heads and neurons that works on its own) reproduces "
   "its W-versus-Z decision. So far: ParT reads mostly $m_A$ through each particle's distance from the axis; the quantity "
   "is present from the input embedding; no small circuit was found; and how strongly a ParT reads $m_A$ depends on how it "
-  "was trained.", None),
+  "was trained. Outside the mass question, its decision for Higgs jets with a lepton rests on one particle's lepton "
+  "flag, reached through two redundant routes.", None),
  ('12. Paper D: which physics the taggers use',
   "Paper D edits jets in physically meaningful ways (axis convention, boosts, collinear splits, soft particles, pileup, "
   "the W mass inside top, the W decay angle, displaced tracks) and compares each tagger with classical taggers built on "
@@ -142,7 +143,8 @@ GUIDE['overview'] = [
   "described as exact, but the calibrated ratio depends on the size of the shift. The rank-window effect in JEDI-linear "
   "holds only at the hardest-particle edge and also appears with shuffled weights. ParT's route of the mass through one "
   "head belongs to the released checkpoint only. The first version of claim C3, 'ParT computes the invariant mass', was "
-  "refuted. The if-statement program's accuracy lead and its W rejection did not reproduce on fresh jets. A null result "
+  "refuted, and so was the reading that ParT's non-smooth single-particle response comes from the logarithm of the pair "
+  "distance alone (P33v). The if-statement program's accuracy lead and its W rejection did not reproduce on fresh jets. A null result "
   "for the W mass inside top in JetClass ParT was withdrawn, because the edited jets had been fed about the unedited "
   "jet's axis.", None),
 ]
@@ -511,7 +513,7 @@ GUIDE['c'] = [
   "the slope $M_2$ predicts.\n"
   "What it means: the response is $M_2$-like and mirror-symmetric; JEDI-linear's direction-dependent term is not seen in "
   "ParT. For individual particles no simple formula, including JEDI-linear-style rank windows, explains more than about "
-  "8 % of the response; the rest enters through the pair features.\n"
+  "8 % of the response; the rest enters through the pair features (step 14 locates it).\n"
   "More: claims C12, C14; Results 'the shape of ParT's response' and 'what weight each particle gets'.", 'results/part/p23_axis_surface.png'),
  ('5. ParticleNet, a network without attention',
   "Question: is the response specific to attention?\n"
@@ -543,9 +545,10 @@ GUIDE['c'] = [
   "What we did: for each of the 80 heads, fitted a step function to its attention on the class token as a function of "
   "jet mass. Under a real mass change, held one head at a time at its unedited output and measured how much of n98's "
   "change disappears.\n"
-  "What happened: one head of the last class-attention block (b2h8) moves its attention off the class token as the jet "
+  "What happened: one head of the last class-attention block, c2h8 (b2h8; head 8 of class-attention block 2), moves its "
+  "attention off the class token as the jet "
   "mass passes 87 GeV, between the W and Z masses, and no other head does. The first class-attention block carries "
-  "nearly all of n98's change, about half through one head (b1h3); the switch head carries about 5 %.\n"
+  "nearly all of n98's change, about half through one head, c1h3 (b1h3); the switch head carries about 5 %.\n"
   "What it means: the switch is real but carries little of the mass information.\n"
   "Corrected: an earlier claim (C2, 400 jets per class) said attention changes carry almost all of the response; at ten "
   "times the statistics they carry about a third. Retrained ParTs grow switch heads at different heads and masses, and "
@@ -566,7 +569,8 @@ GUIDE['c'] = [
   "What we did: retrained six ParTs from scratch (full and kinematic inputs, three seeds each) on 2 million JetClass "
   "jets for 50 epochs, with the authors' script; untrained networks of the same design as the null. Pre-registered four "
   "tests and applied the same φ shift.\n"
-  "What happened: every retrained network turns 13.6 to 19.1 more true W jets in 100 into Z calls. They pass 0.63–0.83 "
+  "What happened: every retrained network turns 13.6 to 19.8 more true W jets in 100 into Z calls (range over P11 and "
+  "its rerun P11v). They pass 0.63–0.84 "
   "of the mass response through the first class-attention block, against 0.97–0.98 in the released networks.\n"
   "What it means: reading $m_A$ comes with training on JetClass; the concentrated head-level route of the released "
   "network does not recur.\n"
@@ -578,14 +582,17 @@ GUIDE['c'] = [
   "What we did: trained ParT_kin on 1.5 million W, Z and QCD jets with the true labels, with a label that flags only a "
   "mass window, and with the true labels but each training jet shifted by a random offset up to 0.08 rad. Measured R "
   "(the shift response divided by the response to a real mass change of the same size) for shifts in three directions.\n"
+  "Then (P31, round C7) trained the same network on all 10 JetClass classes with the same 1.5 million jets and the same "
+  "number of steps, to test one difference from the released training.\n"
   "What happened: the true-label networks respond at 0.2 to 0.5 of a real mass change, depending on the shift "
   "direction, against 0.75 to 0.85 for the released models; the offset-trained network responds at about 0.01 at the "
-  "same accuracy.\n"
+  "same accuracy. Training on 10 classes raises the response by about 0.1 (to about 0.3 for the φ shift).\n"
   "What it means: the architecture does not force the response; it is learned from inputs whose axis is always at the "
-  "centre.\n"
-  "Still uncertain: whether 100 million jets, ten classes or a longer schedule gives the released level.\n"
-  "More: claim C10; Results 'ParT trained on planted mass labels', 'mass-window label' and 'true labels and random axis "
-  "offsets'.", 'results/part/p22_planted_true_run.png'),
+  "centre. The 10-class objective closes only a small part of the gap to the released models.\n"
+  "Still uncertain: whether the 100 times larger data set or the longer schedule supplies the rest; runs with 5 million "
+  "jets and with five times the steps are still training, one seed each, and P31 has no verifier rerun yet.\n"
+  "More: claim C10; Results 'ParT trained on planted mass labels', 'mass-window label', 'true labels and random axis "
+  "offsets' and 'training on 10 classes instead of 3'.", 'results/part/p22_planted_true_run.png'),
  ('11. Sophon: ParT trained on JetClass-II',
   "Question: does a ParT trained by its authors on a larger dataset with mass-decorrelated training read $m_A$?\n"
   "What we did: the same shift and dilation comparison on Sophon, using an internal size read-out because its W/Z "
@@ -620,6 +627,41 @@ GUIDE['c'] = [
   "What it means: nothing yet about its mass. The deciding test, edits that keep the invariant mass but change the "
   "spread about the axis, is pre-registered for the final checkpoint; the claim is untested (confidence 0.0).\n"
   "More: claim C6; Result 'L-GATr as the contrast model'.", None),
+ ('14. Moving one particle: the close-pair response and two pair-bias heads',
+  "Question: when one particle is moved by 0.01 rad, part of ParT's response is the same for an outward and an inward "
+  "move (the even part) and does not shrink with the step size as a smooth response would. Which particles, inputs and "
+  "heads produce it?\n"
+  "What we did: moved each of the 10 leading particles of 3,000 W and Z jets by ±0.01 and ±0.003 rad, alone or together "
+  "with its neighbours within 0.05 or 0.01 rad (which keeps its distances to those neighbours). Fed the edited pair "
+  "features one channel at a time, reset each head's pair bias to its unedited value in turn, and compared the network "
+  "with a linearised copy of itself given the same input changes (P33, verified by P33v in float64 on fresh jets).\n"
+  "What happened: 93–97 % of the even part in ParT_full comes from particles with a neighbour closer than 0.01 rad, and "
+  "77 % of it passes through two of the eight pair-bias heads (heads 0 and 2). The linearised network gives only about "
+  "a third of it.\n"
+  "What it means: the close-pair geometry selects which particles move the pair route, and the trained pair embedding "
+  "and attention produce most of the even response; this locates the non-smooth term left open in step 4 (claim C14).\n"
+  "Corrected: P33 first read the effect as inherited from the logarithm of the pair distance; the verifier's linearised "
+  "network refuted that reading.\n"
+  "Still uncertain: measured on W and Z jets in two models only; in ParT_kin, single-precision rounding of one pair "
+  "feature also changes about 1 % of decisions.\n"
+  "More: claim C16; Result 'close-neighbour pairs and two pair-bias heads'.", 'results/part/p33_smoothness.png'),
+ ('15. Outside the mass question: the lepton route for H → ℓνqq′',
+  "Question: does ParT recognise jets from a Higgs boson decaying to a lepton, a neutrino and two quarks through the one "
+  "particle flagged as an electron or muon, and does a small set of heads carry that?\n"
+  "What we did: in 5,000 such jets, changed only the lepton's particle-identity flag to 'charged hadron'; control: give "
+  "a hadron of similar pT the lepton flag. Inside ParT, blocked the class token's attention to the lepton head by head, "
+  "and kept small head sets with every other head replaced by its mean output, compared with random head sets of the "
+  "same size and tested against all 10 classes (P32; re-analysed by P32v).\n"
+  "What happened: changing the flag alone moves 98.7 % of ParT_full's calls of this class (ParticleNet 98.6 %); the "
+  "control moves 14.5 %. One class-attention head, c2h1 (b2h1), puts 99 % of its attention on the lepton, but blocking "
+  "the lepton in all 80 heads is needed to reproduce the effect: the class-attention heads and the particle-block heads "
+  "each carry a route that backs up the other.\n"
+  "What it means: this decision rests on one input flag of one particle. No small head set acts as a specific classifier "
+  "for it: the best three-head set also calls 551 of 556 leptonic-top jets H → ℓνqq′, and its class-balanced accuracy is "
+  "no better than random head sets.\n"
+  "Still uncertain: the fresh-sample rerun did not start (failed GPU node), so the verification is a re-analysis of the "
+  "stored output; the control edit creates a two-lepton jet and is not a clean null.\n"
+  "More: claim C15; Result 'the lepton flag decides H→ℓνqq′'.", 'results/part/p32_lepton_route.png'),
 ]
 
 # ---------------------------------------------------------------------------------------------------------------- paper D
