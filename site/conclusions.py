@@ -234,7 +234,30 @@ CLAIM = {
         "half through one head; the 87 GeV switch head carries about 5 %. Most of the change is in what the particles "
         "carry, not in where the heads look. A three-unit circuit made of the two heads and n98, with everything else "
         "replaced, separates W from Z barely above chance (about 52 % against 83 % for the model), but under the same strict "
-        "definition even all 16 heads reach only 63 %, so a small circuit that works on its own has not been found yet."
+        "definition even all 16 heads reach only 63 %, so a small circuit that works on its own has not been found yet. "
+        "The same first layer also carries the response when all particles are shifted off the jet axis at fixed "
+        "invariant mass (99 %), so it reads the network's axis-relative mass, whatever its source."
+    ),
+    'C7': (
+        "ParT does not build its axis-relative mass at any one layer. One direction in the jet-averaged particle "
+        "representation, already present right after the input embedding, follows the axis-moment mass (the square root "
+        "of total pT times the pT-weighted squared distance of the particles from the jet axis) and carries about two "
+        "thirds of the network's response to a shift of all particles at fixed invariant mass. Copying this direction's "
+        "value from real jets moves the W/Z output the way the shift predicts, at about 40 % of the strength; it is not an "
+        "exact copy of the axis-moment mass, and nonlinear or per-particle forms have not been tested."
+    ),
+    'C8': (
+        "When everything outside a chosen set of connections is replaced by values from a jet of the other class, no set "
+        "found with up to a tenth of ParT_full's connections reproduces its W-versus-Z calls: the best reach 63 % correct, "
+        "against 83 % for the full network. The found sets beat random sets mainly through the final read-out stage. This "
+        "is a statement about the searches tried (attribution ranking, greedy pruning, a trained mask) and one replacement "
+        "scheme; a different search or coarser units could find a smaller circuit."
+    ),
+    'C3s': (
+        "Six copies of ParT (two input sets, three random seeds) are being retrained on the same 2 million jets used for "
+        "L-GATr. After 3 of 50 epochs, the full-input copy already reacts like the released network to a shift of all "
+        "particles that keeps the invariant mass fixed, while the kinematics-only copies react about half as strongly or "
+        "less. Whether the axis response holds across seeds and at this data size is decided by the final checkpoints."
     ),
     'C5': (
         "ParticleNet, a graph network without attention trained on the same JetClass inputs, also calls more true W jets "
@@ -470,6 +493,26 @@ EXPLAINER = {
         "the beam, which strongly moves ParT's W/Z calls, but this holds by construction and says nothing yet about how "
         "L-GATr estimates mass. The deciding test, edits that keep the invariant mass but change the spread about the "
         "axis, is pre-registered for the final checkpoint."
+    ),
+    'P8_EXPLAINER': (
+        "ParT does not form its axis-relative mass at one layer: each particle layer adds a little, and about half of the "
+        "response to a shift at fixed invariant mass reaches the class token directly from the input embedding. One "
+        "direction in the jet-averaged particle representation, present from the embedding onward, carries about two "
+        "thirds of the response and follows the axis-moment mass; copying it from real jets moves the W/Z output at about "
+        "40 % of the shift's strength. An earlier null came from donor jets that held the axis-moment mass fixed."
+    ),
+    'P9_EXPLAINER': (
+        "Searching the whole of ParT_full for a small set of connections that, kept alone, reproduces its W-versus-Z "
+        "calls finds none up to a tenth of the network: the best reach 63 % correct against 83 % for the model. A summed "
+        "logit score can reach 98 % at that size without more correct calls, so accuracy is the measure used. What the "
+        "found circuits add over random ones sits mostly in the final read-out; another search could still find a "
+        "smaller circuit."
+    ),
+    'P10_EXPLAINER': (
+        "ParT is being retrained six times on the 2 million jets used for L-GATr to check that its axis-relative mass "
+        "response is not a property of one released checkpoint. After 3 of 50 epochs the full-input seed already responds "
+        "like the released network (about 23 more true-W jets in 100 called Z); the kinematics-only seeds respond less. "
+        "The final checkpoints decide, with pre-registered tests."
     ),
     'C3_EXPLAINER': (
         "ParT responds to a shift of all particles that keeps the invariant mass fixed, although its pair features would "

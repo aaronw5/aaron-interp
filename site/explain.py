@@ -108,6 +108,9 @@ CLAIMS = {
 'C2b': dict(plain='The mass information that reaches ParT\'s W/Z output unit goes through the first class-attention block, about half through one head; the 87 GeV switch head carries only about 5 % of it.', background='Measured by holding one head\'s output at its unedited value while the jet mass is changed, and counting how much of the output unit\'s change disappears.', motivation='Step 3 of the Paper C thesis: which units carry the mass into the decision.'),
 'C5': dict(plain='ParticleNet, a graph network with no attention, also changes its W/Z calls when all particles are shifted relative to the jet axis at fixed mass, through the same input as ParT (each particle\'s distance to the axis).', background='ParticleNet groups each particle with its nearest neighbours in (Δη, Δφ) and reads the differences between them, which a rigid shift does not change; it also reads each particle\'s own features.', motivation='Tests whether the axis-relative mass response of C3 is specific to ParT\'s attention.'),
 'C6': dict(plain='A network built to respect relativity (L-GATr) reads four-momenta, not offsets from a stored axis; the plan is to test whether it responds to mass-preserving changes of the axis spread.', background='No trained L-GATr is published for JetClass, so one is being trained with the authors\' code and settings.', motivation='The contrast model that decides whether the input format causes the axis response (C3, C5).'),
+'C7': dict(plain='Inside ParT, one direction of the averaged particle representation follows the axis-moment mass (total pT times the pT-weighted squared distance from the axis, square-rooted) from the input embedding onward, and carries about two thirds of the response to a shift at fixed invariant mass; no single layer builds it.', background='Patching each layer, a learned one-dimensional direction, and copying its value between real jets that differ in the axis-moment mass.', motivation='Locates where the axis-relative mass of C3 is formed (the ParT-specific mechanism the reviewers ask for).'),
+'C8': dict(plain='No circuit found with up to a tenth of ParT\'s connections reproduces its W-versus-Z calls when the rest comes from a jet of the other class; circuits are reported as accuracy against size.', background='Whole-network search over 21,504 connections with attribution ranking, greedy pruning and a trained mask.', motivation='Tests whether Paper C can name a literal circuit under the user\'s definition.'),
+'C3s': dict(plain='Whether ParT retrained with other random seeds, on the 2M jets used for L-GATr, shows the same axis response; six trainings are running.', background='Interim numbers at epoch 3 of 50; pre-registered statements S1–S4 for the final checkpoints.', motivation='Removes the single-checkpoint and data-scale objections to C3 and the head-level claims.'),
 'D1': dict(plain='JEDI tags W/Z/top mainly with mass windows plus total pT; it does not check that a top jet contains a W.', background='Physics edits from the earlier study.', motivation='Physics audit.'),
 'D2': dict(plain='ParT identifies b-jets by counting displaced tracks rather than by their displacement; it uses lepton isolation; it does not use π⁰ → γγ pairs or the dead cone.', background='Physics edits from the earlier study (400 jets per class).', motivation='Physics audit.'),
 'D4': dict(
@@ -440,6 +443,52 @@ P5_EXPLAINER = [
   'Checkpoint at 2.5 % of training (accuracy 79.2 %): the rotation changes 0.01 % of calls (ParT: true-W → Z 12 → 31 %); $\\eta$ shift and boost 0.5 %; the real mass change moves W → Z from 17.9 to 42.6 %.', None),
  ('Checks', 'Random-init network: rotation 0.00 %; accuracy on this sample equals the run\'s own validation accuracy (79.2 %).', None),
  ('Why it matters', 'The rotation result holds by construction, so it does not show how L-GATr estimates mass. The pre-registered test on the final checkpoint uses edits that keep the invariant mass but change $M_2$ and are not symmetries: an invariant-mass reader predicts a read-out ratio near 0, an axis-moment reader 0.7–1.4 as in ParT.', None),
+]
+
+P8_EXPLAINER = [
+ ('Question', 'ParT\'s W/Z decision reacts to a $\\phi$ shift that leaves the invariant mass unchanged (C3), and the reaction enters through each particle\'s distance $\\Delta R_i$ to the jet axis. Where between that input and the class token is the mass-like quantity formed, and which quantity is it?', None),
+ ('Background',
+  'ParT has 8 particle blocks; each adds an attention output and an MLP output to every particle\'s 128-dimensional residual vector $h_p$. Two class-attention blocks then read the particles into a class token whose coordinate $z_{97}$ ("n98") separates W from Z. '
+  'Candidate quantities, with $S_0=\\sum_i p_{T,i}$ and $S_2=\\sum_i p_{T,i}\\Delta R_i^2$: the invariant mass $m$; the normalised axis moment $M_2=S_2/S_0$; the axis-moment mass $\\mathrm{mom}=\\sqrt{S_0 S_2}$, which equals $m$ for natural jets about the $p_T$ centroid at small angles. '
+  'A rigid shift $\\Delta\\phi_i\\to\\Delta\\phi_i+0.06$ raises $M_2$ and mom at fixed $m$; a $p_T$ rescaling by 1.25 raises $m$ and mom together at fixed $M_2$.', None),
+ ('Method',
+  '(1) Patching: run the shifted jet, put back the unshifted output of one sublayer (or of all sublayers in blocks $1..l$), and measure the restored share $1-\\overline{\\Delta z_{97}^{\\rm patched}}/\\overline{\\Delta z_{97}^{\\rm edit}}$; control: the same patch from a different jet of the same class and mass bin. '
+  '(2) Distributed alignment search: learn a unit vector $q$ such that writing the shifted jet\'s value of $q^\\top\\bar h$ ($\\bar h$ = jet mean of $h_p$) into the unshifted jet, $h_p\\leftarrow h_p+(\\bar h\'-\\bar h)qq^\\top$, reproduces the shifted logits; compare with random $q$ and an untrained network. '
+  '(3) Substitution: copy $q^\\top\\bar h$ from a real donor jet and compare the slope $\\mathrm d\\Delta z_{97}/\\mathrm d\\Delta\\log X$ with the shift\'s own slope, for $X=M_2$ (P8: donors of equal $m$) and $X=$ mom (verifier: donors that differ in mom). '
+  'Samples: 10,000 W + 10,000 Z random test jets (seed 2026); verifier fresh files, 5,000 + 5,000 (seed 7). Unedited ParT_full 85.93 % on the P1 sample.', None),
+ ('Result',
+  'Under $\\phi+0.06$ (true-W called Z 10 → 31 %), no single sublayer restores more than 0.06 of $\\Delta z_{97}$, and these single shares do not exceed the donor control. All 16 sublayers together restore 0.42 [0.41, 0.43]; the other 0.58 reaches the class stage through the residual path of the shifted embedding. '
+  'One direction $q$ reproduces 0.58–0.69 of the logit change at every depth from the embedding to block 8 (random directions $\\le 0.06$). '
+  'With donors of equal $m$ (which also have nearly equal mom, $|\\Delta\\log\\mathrm{mom}|=0.022$) substitution gives no response (ratio 0.004). With donors that differ in mom, $q^\\top\\bar h$ follows $\\Delta\\log\\mathrm{mom}$ ($r=0.87$) and substitution moves $z_{97}$ with the shift\'s sign at 0.42 [0.38, 0.46] of its slope; random directions give about 0. Across natural jets the projection depends on $\\log S_0$ and $\\log(S_2/S_0)$ in the ratio $\\beta_{S_0}/(2\\beta_{M_2})=1.02$ [1.00, 1.05] at block 1 (mom predicts 1, $M_2$ predicts 0).', 'results/part/p8_mass_formation.png'),
+ ('Checks',
+  'Patching and alignment numbers replicate within 0.03 on fresh files; ParT_kin shows the same pattern (all sublayers 0.38, direction 0.69–0.81). Hooks, padding masks, random rows and the corrected $\\eta$ build were reviewed. The direction is not an exact copy of $\\log$ mom: per unit $\\Delta\\log$ mom a $p_T$ rescaling moves it 0.71 as much as the $\\phi$ shift at block 1 (n98 itself 0.74). Under the shift, block-1 class heads carry 0.99 of $\\Delta z_{97}$ (b1h3 0.53).', None),
+ ('Why it matters', 'ParT does not form its axis-relative mass at a particular block: a direction that follows the axis-moment mass is already present in the input embedding and is read by the first class-attention block (claims C7, C2b). Nonlinear and per-particle forms of the quantity are not tested yet.', None),
+]
+
+P9_EXPLAINER = [
+ ('Question', 'Is there a small circuit inside ParT_full that reproduces its W-versus-Z decision when everything else is replaced by values from another jet?', None),
+ ('Background',
+  'User definition: a circuit consists literally of its kept units; every other unit is resample-ablated. P3 found that {b2h8, b1h3, n98} kept alone separates W from Z at about 53 % (model 83 %), searching only the class-attention stage. Here the whole network is searched.', None),
+ ('Method',
+  'Write ParT_full as a graph of 433 nodes (embedding, 64 pair biases, 64 particle heads, 128 particle-MLP groups of 32 units, 16 class heads, 32 class-MLP groups, 128 class-token coordinates) and 21,504 edges, each with a mask $m_e$. A masked edge carries the value from a jet of the other class with matched $p_T$. '
+  'Faithfulness $F=\\frac{\\sum_j s_j(d^{\\rm circ}_j-d^{\\rm corr}_j)}{\\sum_j s_j(d_j-d^{\\rm corr}_j)}$ with $d=\\ell_W-\\ell_Z$, $s_j=\\pm1$ by class; accuracy = W/Z calls correct. '
+  'Rank edges by integrated gradients over the masks, $\\mathrm{score}_e=\\int_0^1 \\partial D/\\partial m_e\\,\\mathrm d\\alpha$ (5 steps), then prune greedily (ACDC). Verifier: train a soft top-$K$ mask $m_e=\\sigma((\\theta_e-\\tau_K)/T)$ to maximise $F$ on separate files. 10,000 discovery and 10,000 evaluation jets (random rows, seeds 2026/2027).', None),
+ ('Result',
+  'Ranked circuits: 5 % of edges give $F=0.51$ and W/Z 55 %; $F$ reaches 0.8 near 29 % of edges. Literal ACDC circuits of 10, 27 and 89 nodes give 29, 36 and 59 % W/Z (random circuits 17 %; model 83 %). A trained mask with 10 % of edges reaches $F=0.98$ but only 63 % W/Z, the same as the ranked circuit of that size: $F$ is a sum over jets and grows by enlarging $d$ on jets already called correctly.', 'results/part/p9_eap_wz.png'),
+ ('Checks',
+  'All masks on reproduces the model to $4\\times10^{-6}$; integrated-gradient completeness 1.02; attributions agree in sign with single-edge resampling for 50/50 top edges and are stable on fresh files (Spearman 0.91). With the read-out kept (embedding, class stage, class-token coordinates), random particle-stage nodes score $F=0.38$ against 0.56 for the 89-node circuit and 0.25 for the read-out alone. The P3 circuits reproduce with uniform donors (52 %, 64 %).', 'results/part/p9_verify2.png'),
+ ('Why it matters', 'Under the literal definition, no circuit found with up to 10 % of the connections reproduces ParT_full\'s W/Z calls; most of what the found circuits add over random sits at the read-out (claim C8). Paper C reports accuracy and faithfulness against circuit size rather than one named circuit. A different search, coarser units or another corruption could change the size.', None),
+]
+
+P10_EXPLAINER = [
+ ('Question', 'Is ParT\'s axis-relative mass response a property of the one released checkpoint (trained on 100M jets), or does every ParT trained on JetClass learn it, also at L-GATr\'s 2M-jet scale?', None),
+ ('Background', 'Rotating all particles by 0.06 rad about the stored jet axis leaves the invariant mass $m$ unchanged but raises the axis moment $M_2=\\sum_i p_{T,i}\\Delta R_i^2/\\sum_i p_{T,i}$; the released ParT then calls more true W jets Z (C3).', None),
+ ('Method',
+  'Train ParT from scratch with the authors\' script on the 2M-jet L-GATr subset, seeds 0/1/2, full and kinematic inputs (samples per epoch 1/10 of the authors\'). On 10,000 random test jets, measure the W → Z change under the shift, under a real 10 % mass change (angles $\\times1.1$) and under a whole-jet rotation (null), and the ratio $R=\\overline{\\Delta(\\ell_W-\\ell_Z)}_{\\phi}/\\overline{\\Delta(\\ell_W-\\ell_Z)}_{\\times1.1}$, compared with the axis-moment prediction 0.97 and the invariant-mass prediction 0.', None),
+ ('Result',
+  'Released ParT_full: +22.0 points, $R=0.76$; ParT_kin +19.0, $R=0.69$. At epoch 3 of 50: full-input seed 0 +22.6 [19.7, 25.4], $R=0.94$ [0.89, 0.99]; kinematic seeds +4 to +9, $R=0.17$–0.35.', 'results/part/p10_battery_e3.png'),
+ ('Checks', 'The released models reproduce their accuracies (86.0, 74.2 %) and P1 numbers on these rows; the whole-jet rotation stays within 0.5 points; an E-scheme re-axis changes at most 0.3 % of calls.', None),
+ ('Why it matters', 'The final checkpoints (about 2026-10-20) test the pre-registered statements S1–S4 per seed and give a ParT matched to L-GATr in data size (claim C3s). The epoch-3 numbers are interim.', None),
 ]
 
 D4_EXPLAINER = [
@@ -1073,6 +1122,9 @@ PAPER_EXPLAINERS = {
           ('Result explained: the 87 GeV switch head and the route of the mass into the W/Z neuron; the literal circuit kept alone (claims C2a, C2b; P3, P3v)', P3_EXPLAINER, False),
           ('Result explained: ParticleNet shares the axis-relative mass response through ΔR (claim C5; P4, P4v)', P4_EXPLAINER, False),
           ('Result explained: L-GATr as the contrast model, training and symmetry checks (claim C6; P5)', P5_EXPLAINER, False),
+          ('Result explained: where ParT forms its axis-relative mass; a direction that follows the axis-moment mass from the embedding onward (claim C7; P8, P8v)', P8_EXPLAINER, False),
+          ('Result explained: circuit size for ParT_full W vs Z, whole-network search (claim C8; P9, P9v)', P9_EXPLAINER, False),
+          ('Result explained: ParT retrained with three seeds on 2M jets, interim axis battery (claim C3s; P10)', P10_EXPLAINER, False),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
           ('Result explained: the axis-convention response in both directions, with invariant and rotation controls (claims D4, A12; X7)', X7_EXPLAINER, False),
