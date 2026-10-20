@@ -47,3 +47,4 @@ Auto-resume cron prompt (session cron, 23,53 * * * *, 7-day expiry → re-create
 - 2026-10-20: C r5 done (commit 6278b74); C r6 wf_c59ffa74-7d9 (main bigmodels script, first_round 6).
 - 2026-10-20: C r6 done (commit f036ff2); C r7 wf_c597aea9... no: C r7 wf_7f21c30f-d84 (main bigmodels script, first_round 7). Ledger commit rule changed (stage own hunks, plain commit); only ledger prompts changed, so resuming A/B r9 and D r7 with the main scripts keeps plan/run/verify cached.
 - 2026-10-20: A/B r9 done (commit 8ec72a5); A/B r10 wf_e1f7ef15-c31 (main JEDI script, first_round 10).
+- 2026-10-20 15:29: A/B r10, C r7, D r7 resumed after the 15:20 reset. A/B r10 done (commit 390b9f3); A/B r11 wf_1d8d2ad4-fae (main JEDI script, first_round 11).
