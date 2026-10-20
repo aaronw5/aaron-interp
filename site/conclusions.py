@@ -389,7 +389,12 @@ CLAIM = {
         "edited jet is rebuilt about its own axis, JetClass ParT and ParticleNet do use the W-pair mass (claim D11), as "
         "the Top Landscape taggers do (claim D6). "
         "The momentum edit used here kept the jet mass fixed (it is a boost along the jet axis); scaling only the momenta "
-        "lowers the W call to 48 % instead, and most calls changed by the boost are W or Z jets becoming top (claim D9)."
+        "lowers the W call to 48 % instead, and most calls changed by the boost are W or Z jets becoming top (claim D9). "
+        "The JEDI-linear W-pair null was retested with each edited jet rebuilt about its own axis, the build that "
+        "overturned the ParT null: JEDI-linear's response then lies within the range of retrained classifiers that never "
+        "see the pair mass, and below every classifier given the pair mass at 100 GeV, on two samples. Still uncertain: "
+        "at 90 GeV JEDI-linear raises its top score while every reference lowers it, and on hls4ml jets the classifiers "
+        "with and without the pair mass are equally accurate, so the test for pair-mass use is weak."
     ),
     'D2': (
         "In earlier physics edits on ParT_full (400 jets per class), making all tracks prompt removes most H → bb̄ calls "
@@ -468,7 +473,11 @@ CLAIM = {
         "The same holds for ParT and ParticleNet trained on Herwig jets instead of Pythia jets, so the absence of counting "
         "is not a property of one generator; training on Herwig shifts the count response slightly toward quark, by an "
         "amount not yet compared with the variation between independent trainings. Removing a jet's softest particles "
-        "while keeping the count moves all of them toward quark, so they do use the soft particles' momenta and positions."
+        "while keeping the count moves all of them toward quark, so they do use the soft particles' momenta and positions. "
+        "Moving a single particle to a new angle at fixed momentum also changes their output, but which soft-emission "
+        "quantity they follow (the gluon/quark emission density in the Lund plane, pT^D or girth) is not established: "
+        "the Lund-plane test moved momentum out of the hardest particle at the same time, and that transfer carried "
+        "most of the effect attributed to the emission's position."
     ),
     'D8': (
         "For each tagger, the closest stand-in built from standard IRC-safe jet shapes (mass, N-subjettiness, energy-flow "
@@ -626,6 +635,37 @@ EXPLAINER = {
         "taggers the way a τ32 classifier predicts, by similar amounts, while a matched rotation inside the subjets moves "
         "them much less. The edit also changes the subjet masses, so it shows that the taggers use the inner-prong "
         "pattern but not which quantity of it."
+    ),
+    'H29_EXPLAINER': (
+        "Rebuilt about each edited jet's own axis, JEDI-linear lowers its top score under a W-pair-mass edit by about "
+        "what a classifier without the pair mass predicts, and less than one given the pair mass, so its \"no W-mass "
+        "constraint\" survives the rebuild that overturned the ParT null. The fixed-axis build gave the opposite sign "
+        "because the control edit moved the jet axis, which JEDI-linear reads through its axis-relative mass. The exact "
+        "ratios depend on which reference fit is used."
+    ),
+    'H29V_EXPLAINER': (
+        "On fresh jets and against five retrained reference classifiers, JEDI-linear's W-pair response sits inside the "
+        "range of classifiers without the pair mass and, at 100 GeV, below every classifier with it. The ratios H29 "
+        "quoted vary by about ±50 % across retrains. At 90 GeV JEDI-linear raises its top score while every reference "
+        "lowers it; that response is not explained."
+    ),
+    'H30_EXPLAINER': (
+        "Moving one soft particle across the Lund plane (angle and transverse momentum relative to the jet axis) at fixed "
+        "particle count and jet pT changes the quark–gluon networks' output in a reproducible map, and hard wide-angle "
+        "placements move them toward quark while every classical reference moves toward gluon. The edit also took up to "
+        "about 50 GeV from the hardest particle, so the map does not isolate the emission's position (see H30v)."
+    ),
+    'H30V_EXPLAINER': (
+        "Splitting H30's edit into its two parts shows that, at small angle and kt about 1.3 GeV, the gluon-ward rise "
+        "comes from the momentum taken out of the hardest particle, while moving the particle at fixed momentum pushes "
+        "the other way; on Herwig jets the rise is absent. The networks use both the hard-core energy and the soft "
+        "particle's position, and which emission quantity they follow is still open."
+    ),
+    'H31_EXPLAINER': (
+        "In a small trial run (150 jets per class), rotating the W decay inside top jets at fixed top and W mass lowered "
+        "the top score of nine taggers by about 1 log-odds on JetClass tops. A classifier given only the edit's side "
+        "effects (τ32 and how energy is shared between prongs) moved as much and no result passed the multiple-test "
+        "correction, so whether taggers use the W decay angle is open until the full run."
     ),
     'H25V_EXPLAINER': (
         "On fresh jets the subjet-width result reproduces. When τ32 is changed with the subjet masses held fixed, by "
