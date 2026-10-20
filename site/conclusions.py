@@ -376,7 +376,22 @@ CLAIM = {
         "from the input embedding and the mass from the first block, but an untrained network of the same design gives "
         "nearly the same read-outs, so these do not show learning. Prong-shape variables (tau21, tau32, which measure "
         "whether the energy sits in one, two or three clusters) are read only by the trained network and build up over "
-        "blocks 1–4; which of them the network uses is not resolved, because the test edit changes them together."
+        "blocks 1–4. Edits that change one of them at a time at fixed mass (round C5) show that the network does not "
+        "follow any of them as a single number, so what this trained stage reads is still not identified."
+    ),
+    'C11': (
+        "At fixed jet mass, ParT does not respond to the standard prong variables the way classifiers built on them do. "
+        "Making the two prongs of W, Z and top jets narrower, which lowers tau21 (a measure of how two-pronged a jet is) "
+        "by about 11 %, makes ParT about 0.1 less W-like in logit, while a classifier on mass and tau21 predicts the "
+        "opposite; QCD jets do follow that classifier. The edits also change subjet masses and the placement of soft "
+        "particles, so which quantity ParT reads instead is not yet known."
+    ),
+    'C12': (
+        "When all of a jet's particles are shifted by a small angle with the mass unchanged, about 93 % of ParT's "
+        "response is the same for a shift and its mirror image, and its size follows the jet's response to a real "
+        "widening of its angles, as expected if ParT reads the angular spread about the stored axis (the second moment "
+        "M2). The direction-dependent centroid term found in JEDI-linear is not seen; ParticleNet has a larger "
+        "direction-dependent part. At fixed shift size the response still varies with direction in a way not explained."
     ),
     'D1': (
         "In earlier physics edits on JEDI-linear, changing only the mass of W jets (by scaling angles) to the Z mass turns "
@@ -855,6 +870,26 @@ EXPLAINER = {
         "learning. Prong-shape variables are what training adds: only the trained network reads them, and the share of "
         "the response to randomising particle directions about the axis that one direction carries grows from about 0 to "
         "about 0.7 over the blocks, while untrained networks stay flat. Which prong observable is used is not resolved."
+    ),
+    'P21_EXPLAINER': (
+        "Changing one prong variable at a time at fixed jet mass shows that ParT does not track tau21, tau32 or D2 the "
+        "way classifiers built on them do: narrower prongs make W, Z and top jets less W-like, the reverse of a tau21 "
+        "classifier. Moving soft particles toward the axis makes ParT about 0.3 more W-like, but that edit also raises "
+        "the mass of the hard particles, which can explain it. Head patching gives the same picture for edits that leave "
+        "the variables unchanged, so it cannot show where the prong quantity is read; what ParT reads is still open."
+    ),
+    'P22_EXPLAINER': (
+        "Four Particle Transformers are training on 1.5 million W, Z and QCD jets: on the true labels (two seeds), on the "
+        "true labels with random shifts of the jet axis, and on a mass-window label. Once finished they will show whether "
+        "the real labels produce the released models' response to a mass-preserving shift, and whether training with "
+        "axis shifts removes it. There is no result yet."
+    ),
+    'P23_EXPLAINER': (
+        "Shifting all of a jet's particles by a small angle changes ParT's W-versus-Z score mostly in the same way for a "
+        "shift and its mirror image, about 93 % per jet, with a size that follows the jet's own response to a real "
+        "widening of its angles. This is what reading the angular second moment about the stored axis predicts, and it "
+        "differs from JEDI-linear's direction-dependent response; ParticleNet has a larger direction-dependent part. "
+        "Why the response still varies with the shift's direction at fixed size is not explained."
     ),
     'C3_EXPLAINER': (
         "ParT responds to a shift of all particles that keeps the invariant mass fixed, although its pair features would "

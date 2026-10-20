@@ -599,6 +599,51 @@ P18_EXPLAINER = [
   'ParT has no JEDI-like mass-last stage (claims C4, A8): count, pT and mass are available almost from the input and nearly as well without training, while prong shape is the variable training builds over the blocks. The scramble changes $\\tau_{21}$, $\\tau_{32}$ and $D_2$ together, so which prong observable is used is not resolved.', None),
 ]
 
+P21_EXPLAINER = [
+ ('Question', 'P18 found that ParT\'s late blocks respond to prong structure only after training. The test edit changed three standard prong variables at once. Does ParT use one of them, $\\tau_{21}$, $\\tau_{32}$ or $D_2$, when the other two and the jet mass are held fixed?', None),
+ ('Background',
+  '$\\tau_N=\\frac{1}{R_0}\\sum_i z_i\\min_k\\Delta R_{i,k}$ with $z_i=p_{T,i}/\\sum_j p_{T,j}$ measures how well $N$ axes describe the jet; a W jet has low $\\tau_{21}=\\tau_2/\\tau_1$, a top jet low $\\tau_{32}=\\tau_3/\\tau_2$. '
+  '$D_2=e_3/e_2^3$ uses the energy correlators $e_2=\\tfrac12\\sum_{ij}z_iz_j\\Delta R_{ij}$ and $e_3=\\tfrac16\\sum_{ijk}z_iz_jz_k\\Delta R_{ij}\\Delta R_{jk}\\Delta R_{ik}$. '
+  'A classifier trained on $(m,\\tau_{21})$ predicts how a W-vs-QCD score should move when only $\\tau_{21}$ changes.', None),
+ ('Method',
+  'Edits on 15,998 random JetClass W, Z, top and QCD jets: E1 scales each particle\'s offset from its 2-subjet centroid by $s\\in\\{0.6,0.8,1.25\\}$, with compensating moves solved per jet so that $\\tau_{32}$ and $D_2$ stay within 2 %; E2 does the same for $\\tau_{32}$; E3 moves the soft particles ($z<0.02$) radially at fixed $\\tau_{21}$, $\\tau_{32}$. Each jet is rebuilt about its own axis and its angles dilated until $m$ is unchanged. '
+  'Control: rotations inside each subjet with the same mean particle displacement. Read-out $\\Delta d_{WQ}=\\Delta(\\ell_W-\\ell_{QCD})$ against gradient-boosted references on the same observables. Location: one-direction DAS share per block (difference-in-differences against an untrained ParT) and head patching in blocks 5–8, $R_h=1-\\sum\\lVert L^{patch}_h-L^{base}\\rVert^2/\\sum\\lVert L^{edit}-L^{base}\\rVert^2$.', None),
+ ('Result',
+  'Lowering $\\tau_{21}$ by about 11 % at fixed $m$, $\\tau_{32}$, $D_2$ moves ParT_full by $-0.14\\,[-0.18,-0.11]$ relative to the rotation (fresh sample: $-0.11\\,[-0.15,-0.07]$), where the $(m,\\tau_{21})$ reference predicts $+0.15$ to $+0.28$. By class: W $-0.75$, Z $-0.28$, top $-0.47$, QCD $+0.26$ (reference $+0.27$). The $\\tau_{32}$ edit lowers the top-vs-QCD score at both doses ($-0.27$, $-0.33$). '
+  'The soft-radial edit ($D_2$ −4 %) moves ParT_full $+0.31\\,[0.28,0.34]$ against the unedited jet; against the rotation, which itself moves $-0.42$, it is $+0.73$.', 'results/part/p21_prong_part.png'),
+ ('Checks',
+  'Unedited accuracy 85.93 % / 74.47 % on the P1 rows; held observables move ≤ 0.14 % on average; Holm $p\\le0.007$ in 30 of 36 cells, reproduced on a fresh sample (22 of 24). The mass-restoring dilation in E3 raises the mass of the hard particles ($z\\ge0.02$) by a median 16 %, and a reference that includes it predicts $+0.29$, so E3 is not a pure $D_2$ edit. '
+  'Head and block patching give the same profile for rotations that leave $\\tau_{21}$, $\\tau_{32}$, $D_2$ within 4 % (head-vector correlation 0.87–0.91), so patching does not locate the stage. DAS does separate them: training-specific late rise $+0.16\\,[0.12,0.20]$ for E1 vs $-0.02$ for its rotation, against $+0.50$ for the full scramble.', None),
+ ('Why it matters',
+  'ParT\'s training-dependent prong stage (claim C4) is not one of the textbook prong variables read as a single number (new claim C11): at fixed mass, narrower prongs make W, Z and top jets less W-like, the reverse of a $\\tau_{21}$ classifier. The edits also change subjet masses and soft-particle placement, which are not held, so the quantity ParT reads is not yet named (P24 proposed).', None),
+]
+
+P22_EXPLAINER = [
+ ('Question', 'The released ParT changes its W-vs-Z decision when all constituents are shifted 0.06 rad in φ about the stored axis, although the invariant mass is unchanged; ParTs trained by us on a mass-window label do so about four times less. Is the response produced by training on the real W/Z/QCD labels, and does training with random axis offsets remove it?', None),
+ ('Background',
+  'ParT\'s per-particle inputs $\\Delta\\eta$, $\\Delta\\phi$, $\\Delta R$ are measured from the stored axis. The axis-moment mass $m_A=\\sqrt{M_0M_2}$ with $M_0=\\sum_i p_{T,i}$, $M_2=\\sum_i p_{T,i}\\Delta R_i^2$ rises under a rigid offset; the invariant mass $m^2=(\\sum_i p_i)^2$ does not.', None),
+ ('Method',
+  'Four ParT_kin trainings on the same 1.5M W/Z/QCD jets and settings as the planted arms (P14): true labels (two seeds), true labels with each training jet shifted by a random offset $|c|\\sim U(0,0.08)$ rad, and a second mass-window seed. Read-out after training: $R=\\sum_j\\Delta d_j^{\\phi}\\Delta d_j^{\\rm dil}/\\sum_j(\\Delta d_j^{\\rm dil})^2$ with $d=\\ell_W-\\ell_Z$ and a per-jet dilation $k_j^2=M_0M_2(\\phi)/M_0M_2$; $R=0$ means only $m$ is read, $R=1$ means $m_A$.', None),
+ ('Result', 'Training (jobs anrunw-ai-c-p22-t, -t2, -u, -a2). The analysis smoke test reproduces the released ParT_kin on fresh jets ($R$ 0.727 [0.684, 0.771]; W → Z 15.7 → 38.7 %). The offset augmentation keeps $m$ within 0.09 % and moves $m_A$ as much as the test edit. No result on the trained arms yet.', None),
+ ('Checks', 'Pre-registered: the true labels produce the response if $R_t$ is 0.6–0.8 and the offset arm gives $R_u<0.3$ at accuracy within 1 point; $R_t\\approx0.2$ would point to data scale or the 10-class task; $R_u\\approx R_t$ would mean the response follows an invariant feature correlated with the axis convention.', None),
+ ('Why it matters', 'It separates the training label from the architecture and data as the source of the axis-relative mass (claims C10, C3s).', None),
+]
+
+P23_EXPLAINER = [
+ ('Question', 'When all particles of a jet are shifted by a small angle $\\vec c$, the invariant mass is unchanged but ParT\'s W/Z score changes (claim C3). Is the response symmetric in the shift, as the axis moment $M_2$ predicts at leading order, or does it depend on the shift\'s direction, as found for JEDI-linear?', None),
+ ('Background',
+  'About the stored axis $M_2(\\vec c)=M_2+2\\,\\vec c\\cdot\\vec M_1+|\\vec c|^2M_0$, with $M_0=\\sum p_T$, $\\vec M_1=\\sum p_T(\\Delta\\eta,\\Delta\\phi)$, $M_2=\\sum p_T\\Delta R^2$. A response that depends on $\\vec c$ only through $M_2$ has an even part $\\propto|\\vec c|^2M_0$ and an odd part $\\propto\\vec c\\cdot\\vec M_1$ (the pT-weighted centroid). For most jets $\\vec M_1$ is small, so the even part dominates.', None),
+ ('Method',
+  '9 × 9 grid of shifts with $|c_i|\\le0.08$ rad on 9,000 random W, Z and QCD jets; ParT_full, ParT_kin, two retrained ParTs, ParticleNet_full/kin, two untrained ParTs. For each jet, $\\mathrm{odd}=\\tfrac12[d(\\vec c)-d(-\\vec c)]$ and $\\mathrm{even}=\\tfrac12[d(\\vec c)+d(-\\vec c)]$, with $d=\\ell_Z-\\ell_W$. '
+  'Each jet\'s even part is compared with its own response $\\kappa_j$ to a real dilation of the angles of equal $\\tfrac12\\Delta\\log M_2$; the odd gradient\'s direction is compared with the jet\'s centroid, with another jet\'s centroid as null.', None),
+ ('Result',
+  'ParT\'s response is a bowl in $\\vec c$. Per jet, about 92 % of the response variance along φ is mirror-symmetric (ParT_full odd share 0.075 [0.071, 0.081]). Among $\\sum p_T|\\vec r+\\vec c|^b$, $b=2$ ($M_2$) fits best, and scaling by each jet\'s own $\\kappa_j$ explains 72 % of the even part against 10 % with another jet\'s $\\kappa$. The odd part does not follow the pT-weighted centroid (cosine 0.13 vs null 0.13). ParticleNet\'s odd share is 0.17–0.19.', 'results/part/p23_axis_surface.png'),
+ ('Checks',
+  'Fresh samples (two further files) reproduce the shares within 0.01. A quadratic symmetric bowl alone is not evidence of $M_2$: an untrained ParT fits it too ($R^2$ 0.92); the per-jet $\\kappa_j$ calibration is the specific test. The pooled "odd gain" of the first analysis is a gain on a regressor that follows the jet\'s $|\\eta|$ (correlation −0.94), not a centroid gain. At fixed $|\\vec c|=0.06$ the response varies with direction (s.d. 0.33 vs mean 0.75), which neither $M_2$ nor the jet\'s long axis explains.', None),
+ ('Why it matters',
+  'ParT\'s response to moving the axis is, per jet, the angular second moment about the stored axis (new claim C12), not JEDI-linear\'s direction-weighted centroid term; ParticleNet has a larger direction-dependent part, so the shape of the axis response depends on the architecture (claims C5, A8). The remaining direction dependence is open (P25).', None),
+]
+
 D4_EXPLAINER = [
  ('Question', 'Does the networks\' way of computing the mass make them depend on how the jet axis is defined?', None),
  ('Background',
@@ -1603,6 +1648,9 @@ PAPER_EXPLAINERS = {
           ('Result explained: six retrained ParTs keep the axis response but not the released head-level route (claims C3s, C2a, C2b; P11, P11v)', P11_EXPLAINER, False),
           ('Result explained: ParTs trained on a mass-window label respond about four times less to a mass-fixed shift (claims C10, C3; P16, P16v)', P16_EXPLAINER, False),
           ('Result explained: the order in which ParT\'s blocks make jet variables readable; prong shape is the trained stage (claims C4, A8; P18, P18v)', P18_EXPLAINER, False),
+          ('Result explained: ParT does not follow τ21, τ32 or D2 at fixed jet mass (claims C11, C4; P21, P21v)', P21_EXPLAINER, False),
+          ('Result explained: the shape of ParT\'s response to shifting the jet axis: mirror-symmetric and M2-like per jet (claims C12, C3, C5; P23, P23v)', P23_EXPLAINER, False),
+          ('Running: ParT trained on the true labels and with random axis offsets (claims C10, C3s; P22, training)', P22_EXPLAINER, False),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
           ('Result explained: the axis-convention response in both directions, with invariant and rotation controls (claims D4, A12; X7)', X7_EXPLAINER, False),
