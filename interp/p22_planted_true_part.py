@@ -240,14 +240,15 @@ def plot(res, path):
         r = res['models'][n]['R']; col = '#999999' if n.startswith('released') else ('#3b6fb6' if n in ('t', 't2', 'u') else '#d08a2c')
         ax.bar(i, r[0], 0.6, color=col); ax.errorbar(i, r[0], yerr=[[r[0] - r[1]], [r[2] - r[0]]], color='k', capsize=3, lw=1)
         ax.text(i, max(r[2], 0) + 0.03, f'{r[0]:.2f}', ha='center', fontsize=8)
-    if 'R_init_range' in res:
-        ax.axhspan(*res['R_init_range'], color='#cccccc', alpha=0.4, label='untrained networks (4 initialisations)')
+    ax.axhspan(0.6, 0.8, color='#3b6fb6', alpha=0.08, label='pre-registered range if true labels alone produced the response')
     ax.axhline(0, color='k', lw=0.8); ax.axhline(1, color='k', lw=0.5, ls=':')
+    ax.set_ylim(-0.05, 1.05)
     ax.set_xticks(range(len(names))); ax.set_xticklabels([LABEL[n] for n in names], fontsize=8)
     ax.set_ylabel('R = response to 0.06 rad shift (invariant mass fixed)\n/ response to matched real mass change')
     ax.set_title('Axis response of ParT_kin by training label (1.5M W/Z/QCD jets, 10 epochs)', fontsize=10)
-    if 'R_init_range' in res: ax.legend(fontsize=8, loc='upper left')
-    fig.text(0.5, -0.02, f'N = {res["N"]} held-out W/Z/QCD jets (test_20M *_104, seed 2204); bars: per-jet slope, bootstrap 95 % CI.', ha='center', fontsize=8)
+    ax.legend(fontsize=8, loc='upper left')
+    fig.text(0.5, -0.02, f'N = {res["N"]} held-out W/Z/QCD jets (test_20M *_104, seed 2204); bars: per-jet slope, bootstrap 95 % CI.\nUntrained networks not shown: their response to a real mass change is ~15x smaller, so their ratio is noise (range '
+             + (f'{res["R_init_range"][0]:+.2f} to {res["R_init_range"][1]:+.2f}' if 'R_init_range' in res else 'n/a') + ').', ha='center', fontsize=8)
     fig.tight_layout(); fig.savefig(path, dpi=130, bbox_inches='tight')
 
 

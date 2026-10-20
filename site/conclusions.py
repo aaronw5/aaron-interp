@@ -336,13 +336,13 @@ CLAIM = {
         "response, and a few dozen pooled channels kept alone reproduce the W/Z calls but not the 10-class calls."
     ),
     'C10': (
-        "Particle Transformers trained from scratch only to flag a jet-mass window respond to a rotation that leaves the "
-        "invariant mass unchanged at about 0.2 of their response to an equal real mass change; the released models "
-        "respond at about 0.75, on fresh jets and with two read-outs. So ParT with these inputs can learn a mostly "
-        "rotation-invariant mass (computed mainly from the pair features), and the released models' axis-relative "
-        "response is not forced by the architecture. The label built on the axis-relative mass equals the invariant-mass "
-        "label on almost every real jet, so whether the training target decides which mass is read, and which part of "
-        "the released training (10 classes, data size, training length, seed) produces the larger response, is open."
+        "Particle Transformers trained from scratch on 1.5 million W, Z and QCD jets, either on the true labels or only "
+        "to flag a mass window, respond to a shift of the jet axis that leaves the invariant mass unchanged at 0.2 to 0.5 "
+        "of their response to an equal real mass change, depending on the shift direction; the released models respond "
+        "at about 0.75 to 0.85 in every direction. Trained with random axis shifts, the same network ignores the shift "
+        "(ratio about 0.01) at the same accuracy, so the architecture does not force the axis-relative response. Which "
+        "part of the released training (10 classes, 100 million jets or a longer schedule) gives the larger response is "
+        "still untested."
     ),
     'C5': (
         "ParticleNet, a graph network without attention trained on the same JetClass inputs, also calls more true W jets "
@@ -392,6 +392,21 @@ CLAIM = {
         "widening of its angles, as expected if ParT reads the angular spread about the stored axis (the second moment "
         "M2). The direction-dependent centroid term found in JEDI-linear is not seen; ParticleNet has a larger "
         "direction-dependent part. At fixed shift size the response still varies with direction in a way not explained."
+    ),
+    'C13': (
+        "Sophon, the Particle Transformer architecture trained by its authors on the larger JetClass-II dataset with "
+        "mass-decorrelated training, has a W/Z output that barely reacts to a real change of the jet mass. Its internal "
+        "size reading moves about 0.2 as much under a mass-preserving shift of the jet axis as under a real mass change, "
+        "against 0.8 to 1.0 for the JetClass ParT, so the axis-relative mass is not a property of the architecture. "
+        "Half of Sophon's size reading still uses the axis-relative angles, and which training difference causes the "
+        "change (data size, decorrelation or normalised inputs) is unknown."
+    ),
+    'C14': (
+        "When a single particle is moved slightly away from the jet axis, ParT and ParticleNet respond on average more "
+        "for particles with more momentum and larger distance from the axis, at 0.6 to 0.8 of the slope that the "
+        "angular second moment M2 predicts. For individual particles no simple formula, including JEDI-linear-style "
+        "momentum-rank windows, explains more than about 8 % of the response. In ParT the rest comes in through the "
+        "features between pairs of particles and changes non-smoothly with the step size; what it reads is untested."
     ),
     'D1': (
         "In earlier physics edits on JEDI-linear, changing only the mass of W jets (by scaling angles) to the Z mass turns "
@@ -879,10 +894,26 @@ EXPLAINER = {
         "the variables unchanged, so it cannot show where the prong quantity is read; what ParT reads is still open."
     ),
     'P22_EXPLAINER': (
-        "Four Particle Transformers are training on 1.5 million W, Z and QCD jets: on the true labels (two seeds), on the "
-        "true labels with random shifts of the jet axis, and on a mass-window label. Once finished they will show whether "
-        "the real labels produce the released models' response to a mass-preserving shift, and whether training with "
-        "axis shifts removes it. There is no result yet."
+        "Particle Transformers trained on 1.5 million W, Z and QCD jets with the true labels respond to a "
+        "mass-preserving shift of the jet axis only 0.2 to 0.5 times as strongly as to a matched real mass change, "
+        "depending on the shift direction, against about 0.75 to 0.85 for the released JetClass models, and they do not "
+        "approach that level during training. Training with random axis shifts removes the response at the same "
+        "accuracy, so it is learned from the inputs rather than built into the architecture. Whether 100 million jets, "
+        "10 classes or a longer schedule produces the released level is untested."
+    ),
+    'P26_EXPLAINER': (
+        "Sophon, a Particle Transformer released after training on the much larger JetClass-II dataset, hardly changes "
+        "its W/Z output when the jet mass is really increased. Its internal size reading moves about 0.2 as much under "
+        "a mass-preserving shift of the jet axis as under a real mass change, against 0.8 to 1.0 for the JetClass ParT, "
+        "so it mostly ignores where the axis sits, although half of it still uses the axis-relative angles. Whether the "
+        "larger data set, the mass-decorrelated training or the momentum-normalised inputs causes the difference is open."
+    ),
+    'P27_EXPLAINER': (
+        "Moving one particle slightly away from the jet axis shifts ParT's and ParticleNet's W-versus-Z score; on "
+        "average the shift grows with the particle's momentum share and its distance from the axis, at 0.6 to 0.8 of "
+        "the steepness that the angular second moment M2 would give. Particle by particle no simple formula predicts the "
+        "shift, and the momentum-rank windows that JEDI-linear uses do no better than M2. In ParT most of the scatter "
+        "comes from the features between pairs of particles; what that term reads is untested."
     ),
     'P23_EXPLAINER': (
         "Shifting all of a jet's particles by a small angle changes ParT's W-versus-Z score mostly in the same way for a "
