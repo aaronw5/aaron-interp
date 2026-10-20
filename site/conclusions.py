@@ -48,19 +48,22 @@ CLAIM = {
         "linear map from its internal units to log mass, fitted on ordinary jets) rises by about the predicted amount for "
         "large shifts and by less for small ones, and 77 % of W jets become Z calls, in four official checkpoints. On "
         "training jets the axis is the centre and the two definitions agree, so the difference appears only when the axis "
-        "is moved. Retrained copies of the network, with and without fixed-point training, show the same behaviour. Not "
+        "is moved. Retrained copies of the network, with and without fixed-point training, show the same behaviour, and so "
+        "does the official 16-feature JEDI-linear, which reads the spread through each particle's distance from the axis. Not "
         "established: part of the response depends on the shift direction, and the total pT and the spread are each found "
         "as separate internal directions, but their combination (the logarithm of their product) is not found as one "
-        "internal quantity in any layer."
+        "internal quantity in any layer, and a direct test for a unit that multiplies them found none but can exclude only "
+        "large effects."
     ),
     'A4n': (
         "On real, unedited jets whose axis is slightly off the pT-weighted centre, moving the particles so that the jet is "
         "centred keeps the invariant mass fixed but lowers JEDI-linear's mass read-out, and moving them the opposite way or "
         "sideways raises it, as the axis-relative mass predicts in sign. So the axis dependence is not limited to the "
-        "artificial off-centre jets made by the large shift. The size does not match one formula: the part that grows with "
-        "the square of the shift enters below the prediction and the part linear in the centre offset above it. These "
-        "natural offsets are a few milliradians, and at that size the changes in the network's decisions follow how far "
-        "the particles move, not the predicted mass change."
+        "artificial off-centre jets made by the large shift. An earlier finding that the two parts of the response (one "
+        "growing with the centre offset, one with the square of the shift) enter with clearly different weights did not "
+        "hold up: measured without bias they are weighted nearly equally from the dense layers on, and unequally only at "
+        "the first summed layer. Most of the direction-dependent part follows the plain average position of the particles, "
+        "not the momentum-weighted one, which the axis-relative mass formula does not predict."
     ),
     'A5': (
         "This is partly supported. The class neurons (the units just before the final linear layer) can be approximated by "
@@ -144,8 +147,24 @@ CLAIM = {
         "soft multiplicity, radial spreads) nearly unchanged. The extra calls that change, beyond a plain rotation of the "
         "jet, pass through two units that see only a jet-level summary built from the first-layer direction cuts. Deep "
         "Sets and Particle Flow Networks change as many calls under the same edit, so at the level of decisions this test "
-        "does not distinguish JEDI-linear's description from a generic pooled network. Which jet-level quantity the two "
-        "summary units compute is not known."
+        "does not distinguish JEDI-linear's description from a generic pooled network. The two summary units were later "
+        "found to follow fixed-frame particle-count shapes (claim A3c)."
+    ),
+    'A3c': (
+        "The two JEDI-linear units that carry its response to where particles sit in azimuth never look at individual "
+        "particles; they read only the jet-level summary. That summary follows plain particle counts, not momentum: one "
+        "unit tracks how far the centre of the particle count sits from the jet axis, the other how elongated the "
+        "particle-count distribution is, both in a fixed (Δη, Δφ) frame rather than as rotation-invariant jet quantities. "
+        "These descriptions explain about 93–95 % of the units' jet-level thresholds. Not explained: the elongation unit "
+        "still changes when the jet is turned by 180°, which an elongation measure cannot see, and the network's per-slot "
+        "rounding shapes the other unit's response."
+    ),
+    'A1f': (
+        "The more accurate official JEDI-linear with 16 input features does not build its angular information from "
+        "half-plane cuts as the 3-feature version does. Its first layer ignores the separate Δη and Δφ inputs and reads "
+        "each particle's distance ΔR from the jet axis, often in the same cut as its pT, so its second-round sums are radial "
+        "because their input already is. The detailed circuit therefore depends on which inputs the network is given, "
+        "while the mass behaviour (claim A4) is the same in both. There is no usable untrained comparison for this model."
     ),
     'A13': (
         "On W-like jets with two prongs, moving the softer prong around the jet axis changes JEDI-linear's decisions, and "
@@ -564,6 +583,29 @@ CLAIM = {
 }
 
 EXPLAINER = {
+    'E25_EXPLAINER': (
+        "The official 16-feature JEDI-linear reads particle angles only through each particle's distance from the stored "
+        "jet axis and ignores the separate Δη and Δφ inputs, so it has no half-plane cuts. Its mass-like response is still "
+        "not recentred: moving all particles 0.06 rad off the axis turns about half of true W jets into Z calls, through the "
+        "distance column alone, and the response follows the pT-weighted spread of the particles about the axis rather than "
+        "any change of the distances. There is no usable untrained comparison, and where the mass forms in later layers "
+        "was not tested."
+    ),
+    'E24X_EXPLAINER': (
+        "JEDI-linear's two context-only summary units, S58 and S31, do not read individual particles; they read only the "
+        "jet-level summary, and their thresholds follow plain particle-count shapes in a fixed frame: the offset of the "
+        "particle-count centre from the axis (S31) and the elongation of the particle-count distribution (S58), each with "
+        "about 93–95 % of the threshold variance explained. The elongation name does not explain S58's change under a "
+        "180° turn of the jet, and the network's per-slot rounding shapes S31's response to rotations."
+    ),
+    'E23W_EXPLAINER': (
+        "When naturally off-centre jets are shifted sideways, the part of JEDI-linear's response that depends on the jet's "
+        "centre offset and the part that depends on the shift size are weighted nearly equally from the dense layers on, "
+        "once a measurement bias is removed; only the first summed layer weighs the first part less, as its radial sums "
+        "predict. The earlier reading of a strong imbalance came from the estimator. Most of the direction-dependent "
+        "response follows the plain average position of the particles, and no unit was found that multiplies total pT and "
+        "spread, though that test can exclude only large effects."
+    ),
     'X9X_EXPLAINER': (
         "Particle Flow Networks, Energy Flow Networks and Deep Sets trained on jets shifted at random by up to some "
         "amount, between 0.04 and 0.30 rad, ignore whole-jet shifts up to about that amount and change their decisions "

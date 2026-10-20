@@ -1072,6 +1072,63 @@ B6_EXPLAINER = [
  ('Why it matters',
   'The pipeline runs unchanged on four architectures and gives tree-level fidelity per bit on each (claim B6t); the claim that it beats compact baselines at equal DL (B4) is not supported. Paper B\'s case rests on the exact identity, the call reproduction and the readable structure, with this figure as the baseline comparison (review weaknesses 3, 6).', None),
 ]
+E25_EXPLAINER = [
+ ('Question',
+  'Does the program found in the 3-feature JEDI-linear (pure $p_T$ cuts and angular half-plane cuts, assembled into radial objects, read as an un-recentred mass) also appear in the official 16-feature JEDI-linear, whose inputs include $\\Delta R$, absolute $\\eta,\\phi$, energies and a rotated frame?', None),
+ ('Background',
+  'The 16-feature model is the more accurate official JEDI-linear (81.6 % vs 81.3 % on the same jets). Its inputs include $\\Delta R_i=\\sqrt{\\Delta\\eta_i^2+\\Delta\\phi_i^2}$, each particle\'s distance from the stored axis. In the 3-feature model the first layer has only $p_T$ ramps and half-planes $\\mathrm{ReLU}(w_\\eta\\Delta\\eta+w_\\phi\\Delta\\phi+b)$, and a rigid shift of 0.06 rad turns 77 % of W jets into Z calls, because the mass variable behaves like $\\sqrt{M_0M_2}$ with $M_2=\\sum_i p_{T,i}r_i^2$ about the stored axis. '
+  'H0: the 16-feature net recentres (no response to a shift beyond a matched rotation). H1: it responds as the 3-feature net does. Routes: (a) mass through $\\Delta R$; (b) through half-planes; (c) through absolute coordinates.', None),
+ ('Method',
+  'Main sample(3000, 2501), 15,000 jets; fresh sample(1500, 2502) minus overlap, 7,059. (1) Resample ablation to find live units. (2) Each live first-layer cut written as $\\mathrm{ReLU}(\\sum_f\\alpha_f x_f+\\beta)$ in physical units, inputs grouped. (3) One particle moved around rings about the axis (radial share); input groups set to their training mean. '
+  '(4) Edits with every column recomputed from the edited $(p_T,\\eta,\\phi)$: T (shift 0.06 rad), T with only $\\Delta R$ changed, T with $\\Delta R$ held, T with only $\\Delta\\eta,\\Delta\\phi$ changed, absolute shifts of $\\eta$ and $\\phi$, R (matched rotation, control), dilM2 (dilation with the same $M_2$ as T). Metric: fraction of true W jets called Z, bootstrap CI, McNemar vs R with Holm over 21 tests.', None),
+ ('Result',
+  'Zero first-layer weight on $\\Delta\\eta,\\Delta\\phi,\\eta,\\phi$; angles enter through $\\Delta R$ (10 of 17 live cuts, 8 mixed with $p_T$, e.g. $\\Delta R<0.091+2.8\\times10^{-4}\\,p_T/\\mathrm{GeV}$) and one rotated-frame cut. Setting $\\Delta R$ to its mean changes 75.1 % of calls, $\\Delta\\eta/\\Delta\\phi$ 0.00 %. The top second-round units are exactly radial (share 1.000). '
+  'W → Z: T 0.489 [0.470, 0.506] vs R 0.015; only $\\Delta R$ edited 0.494; $\\Delta R$ held 0.014; absolute shifts 0.014–0.015; dilM2 0.468. The 3-feature net gives 0.77 under T. Route (a) fits; (b) and (c) are excluded.', 'results/jedi/e25_edits.png'),
+ ('Checks',
+  'The loader reproduces sample()\'s $p_T,\\Delta\\eta,\\Delta\\phi$ exactly. The fresh sample reproduces every number within 0.01 (T 0.489, $\\Delta R$ held 0.020). The 16-feature-perminv model gives the same pattern (T 0.505, $\\Delta R$ held 0.027). Untrained redraws are not a usable baseline (8 of 9 give one constant call).', None),
+ ('Verification (E25v; confidence 0.8)',
+  'New sample (seed 2507, 6,864 jets), edits re-implemented: T 0.476 [0.448, 0.502], R 0.013, $\\Delta R$ held 0.012. A new control scrambles the $\\Delta R$ values by the same mean amount with $M_2=\\sum_i p_{T,i}\\Delta R_i^2$ held: W → Z 0.031 (McNemar vs the $\\Delta R$ translation 23/639, $p=2\\times10^{-157}$), so the response follows $M_2$, not any $\\Delta R$ change. Flow vs an $M_2$-matched $\\Delta R$ dilation: 0.98 [0.95, 1.02] at 0.03 rad, 1.07 [1.01, 1.13] at 0.06 rad; W → Z is not monotone in shift size (0.53, 0.48, 0.04 at 0.03, 0.06, 0.09 rad). '
+  'Correction: the share of mixed pT–$\\Delta R$ cuts equals random placement of the nonzero weights among the active units ($p$ 0.85); E25\'s null had included the 47 all-zero units.', None),
+ ('Why it matters',
+  'The un-recentred $M_2$-like mass response is common to two official JEDI-linear families (claims A4, A10m). The half-plane construction is specific to the 3-feature inputs: given $\\Delta R$, the network uses it directly (claim A1f). Statements about how JEDI-linear computes mass hold at the level of the observable, $\\sum p_T r^2$ about the stored axis, not at the level of the circuit. Open: where the 16-feature net forms the mass in its dense layers.', None),
+]
+E24X_EXPLAINER = [
+ ('Question',
+  'JEDI-linear\'s context-only second-round objects S58 and S31 carry most of the call change when a soft prong is moved (E24w), but fits on the pooled half-plane counts explained at most 19 % of them. What jet quantity do they compute?', None),
+ ('Background',
+  'In JEDI-linear, $u_i=\\mathrm{ReLU}(W_3(s_i+g)+b_3)$ and $S=\\frac1{16}\\sum_i u_i$. For S58 and S31 the nonzero entries of $W_3$ sit only on $s$ channels that are 0 for every particle, so $u_i=\\mathrm{ReLU}(-\\theta)$ with the jet-level threshold $\\theta=-(W_3\\cdot g+b_3)$. Each context unit is $g_k=\\mathrm{ReLU}(W_dP+b_d)_k$, and $P$ is a sum over particles of half-plane ramps, so $g_k$ is a rectified sum over particles of a per-particle field. '
+  'Count multipoles (no $p_T$ weight): dipole $\\sum_i\\Delta\\eta_i$, $\\sum_i\\Delta\\phi_i$ ($m=1$); quadrupole $\\sum_i r_i\\cos2\\alpha_i$, $\\sum_i r_i\\sin2\\alpha_i$ ($m=2$), $\\alpha_i$ the particle\'s azimuth. A dipole changes sign under a 180° rotation; a quadrupole is unchanged by it and changes sign under 90°.', None),
+ ('Method',
+  'Fit sample(3000, 3101) ($N$ 15,000), test sample(1500, 3102) minus overlap ($N$ 7,034). (0) All particles replaced by a donor\'s with $g$ held. (1) $g$ pre-activations fitted on nested multipole blocks $m\\le0,1,2,3$, passed through ReLU, $W_3$, $b_3$; compared with MARS / boosted trees on rotation-invariant observables ($\\sum p_T$, $p_T^{\\rm lead}$, $M_2$, ...), trees on $g$ and the E24w half-plane fit. '
+  '(2) $g$ swapped between jets; predicted vs actual $\\Delta S$; random $g$ directions as control. (3) A hard particle outside S58\'s slot window moved, with $g$ free vs frozen. Untrained redraws; Holm over 2 units × 2 arms.', None),
+ ('Result',
+  'Replacing every particle with $g$ held leaves S58 and S31 unchanged in 3,000/3,000 jets. S31\'s four inputs are rectified $\\pm\\sum\\Delta\\eta$, $\\pm\\sum\\Delta\\phi$; S58\'s are rectified $\\pm\\sum r\\cos2\\alpha$, $\\pm\\sum r\\sin2\\alpha$. Held-out $R^2$ of $\\theta$: 0.95 (S31) and 0.93 (S58), against $\\le0.27$ for rotation-invariant observables. Under $g$ interchange the named $\\theta$ predicts $\\Delta S_{58}$ with slope 0.98 [0.96, 0.99]; for S31 the slope is 0.68, the same as the exact $\\theta$.', 'results/jedi/e24x_context.png'),
+ ('Checks',
+  'Probe identical to jedi_core ($\\max|\\Delta S|=0$). With $g$ frozen, single-particle edits change S58, S31 by exactly 0. Untrained redraws: their $g$ inputs are also fitted by $m\\le2$ ($R^2$ 0.96–0.99) but mix orders; only the pure-dipole / pure-quadrupole split is specific to training.', None),
+ ('Verification (E24xv; confidence 0.68)',
+  'Fresh seed 4101/4102: $\\theta$ $R^2$ 0.93 (S58), 0.95 (S31); $\\Delta S=0$ with $g$ held in 2,000/2,000 jets. Rotating or mirroring every particle changes S58 by 0.22–0.56 sd and S31 by 0.25–0.30 sd, which excludes a rotation-invariant threshold. A 180° rotation leaves every quadrupole sum unchanged yet moves S58 by 40 % of its 90° response ($p$ 0.001); the named $\\theta$ explains 10 % of that change, the exact $\\theta$ 72 %, so the quadrupole name is not a complete causal account. S31\'s per-slot quantizer (slopes 0.18–1.08) shapes its response, so even the exact $\\theta$ predicts its edit response poorly.', None),
+ ('Why it matters',
+  'This names the last two of the 19 second-round objects (claim A3c): they are built from jet statements only, and they follow fixed-frame count shapes, not rotation-invariant jet quantities, consistent with the azimuth-dependent context response of E24/E24w (A13). Open: the part of S58 outside the quadrupole fit.', None),
+]
+E23W_EXPLAINER = [
+ ('Question',
+  'How does JEDI-linear weigh the two parts of the change in $M_2$ under a rigid shift of a naturally off-centre jet, the part linear in the centroid offset ($2\\vec c\\cdot\\vec M_1$) and the part quadratic in the shift ($|\\vec c|^2M_0$)? At which layer does any imbalance appear, and does any unit combine $M_0$ and $M_2$ as a product?', None),
+ ('Background',
+  'About the stored axis, a shift $\\vec c$ of every particle changes $M_2=\\sum p_Tr^2$ by $2\\vec c\\cdot\\vec M_1+|\\vec c|^2M_0$, with $\\vec M_1=\\sum p_T(\\Delta\\eta,\\Delta\\phi)$, and leaves $M_0=\\sum p_T$ unchanged. A network that reads one function of $M_0M_2$ responds to both parts with the same gain ($a_1/a_2=1$); one that reads the invariant mass responds to neither. The responses to $+\\vec c$ and $-\\vec c$ split into an odd part (linear in $\\vec c\\cdot\\vec M_1$) and an even part. '
+  'A unit linear in the product $M_0M_2$ has mixed slope $\\partial\\log(\\partial U/\\partial\\log M_2)/\\partial\\log M_0=1$; an additive one has 0.', None),
+ ('Method',
+  'Tail jets: the 5 % most off-centre per class (median offset 7.4 mrad), 1,250 jets from sample(5000, 2311) and 1,133 from a disjoint replicate (seed 2312). Shifts $|\\vec c|$ = 10, 20, 40, 60 mrad at 8 azimuths, each compared with a matched dilation by the predicted $\\tfrac12\\Delta\\log(M_0M_2)$. Gains per stage (S, h4, h5, z, W−Z margin): $a_1$ = regression of the shift\'s odd response on the dilation\'s odd response; $a_2$ the same for the even parts (projection estimator). '
+  'Controls: reflected and bulk jets, a rotation, untrained redraws. Product test: separate 5 % edits of $M_0$ and $M_2$ on 2,000 jets; null of 200 random S-unit pairs; BH over 123 units.', None),
+ ('Result',
+  'Projection $a_1/a_2$: 0.51 at S, 0.42 at h4, 0.53 at h5, 0.71 at z, 0.79 at the margin (replicate 0.61–0.78), all below 1 (Holm $p\\le1.4\\times10^{-3}$). Product test: no z unit and not the margin lies outside the random-pair band, which spans about ±10 to ±20; the h4/h5 units outside it have slopes −32 to +20, not 1.', 'results/jedi/e23w_gains.png'),
+ ('Checks',
+  'Shift edits reproduce the predicted $\\Delta\\log M_2$ to $3\\times10^{-8}$. Reflection flips the odd part with matched size. Untrained networks give an even gain of about 0.5. A per-jet regression that keeps the fixed-direction response gives about 1.0 at z and 1.7–2.8 at the margin, so the values depend on the estimator.', None),
+ ('Verification (E23wv; reading refuted, confidence 0.2)',
+  'On a third disjoint sample (seed 2313, 1,024 tail jets) the projection reproduces (0.47–0.87), but it is biased toward 0: the dilation response used as regressor is itself a noisy network response, of which only 14–31 % is the predicted change. Instrumented on the analytic prediction, $a_1/a_2$ is 0.77 [0.64, 0.91] at S, 0.97 [0.87, 1.08] at h4, 0.86 at h5, 0.87 [0.80, 0.94] at z, undetermined at the margin. '
+  'S-type radial sums ($\\sum r$, $\\log M_2$ over ranks $\\ge1$) give 0.69 with both estimators, so the value at S is what such sums produce. The term $\\vec c\\cdot\\vec M_1$ explains 2–4 % of the odd response; the unweighted particle centroid explains 16–35 %.', None),
+ ('Why it matters',
+  'The two-gain description of the mass read-out (A4n v1) does not survive an unbiased estimator: the gains are near equal from h4 on, and a single function of full-jet $M_0M_2$ is excluded only at the S sums (A4n v2). The direction-dependent part follows the plain particle centroid more than the pT-weighted one, which points at count-based context objects such as S31 (claim A3c; untested link). No product unit was found, but the null band excludes only large effects.', None),
+]
 X9X_EXPLAINER = [
  ('Question',
   'X9w showed that set networks trained on jets shifted at random by up to 0.08 rad ignore a 0.06 rad shift but respond to a 0.12 rad shift. Does the shift they tolerate follow the training range $A$ (a learned range) or stay fixed (a property of the architecture)? Inside the range, do they cancel the shift by reading off the jet centre?', None),
@@ -1657,7 +1714,10 @@ PAPER_EXPLAINERS = {
           ('Result 21 explained: recentred inputs and shift-augmented training in PFN, EFN, Deep Sets and JEDI-linear (claims A10r, A10m; X9w, X9wv)', X9W_EXPLAINER, False),
           ('Result 22 explained: scrambling each particle\'s direction around the axis at fixed mass moments (claims A3z, A13, A3; E24, E24v)', E24_EXPLAINER, False),
           ('Result 23 explained: how far a shift-trained network ignores shifts, and whether it reads the jet centre (claims A10r, A10c; X9x, X9xv)', X9X_EXPLAINER, False),
-          ('Result 24 explained: breaking up vs moving the softer prong at fixed mass (claims A13, A3z; E24w, E24wv)', E24W_EXPLAINER, False)],
+          ('Result 24 explained: breaking up vs moving the softer prong at fixed mass (claims A13, A3z; E24w, E24wv)', E24W_EXPLAINER, False),
+          ('Result 25 explained: the official 16-feature JEDI-linear reads angles through ΔR, and its mass is still not recentred (claims A1f, A4, A10m; E25, E25v)', E25_EXPLAINER, False),
+          ('Result 26 explained: what the context-only objects S58 and S31 compute (claims A3c, A3z, A13; E24x, E24xv)', E24X_EXPLAINER, False),
+          ('Result 27 explained: the two gains of the mass read-out under shifts, and a test for a product unit (claims A4n, A4d, A4; E23w, E23wv)', E23W_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True),
           ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False),
           ('Result explained: interchange interventions, per variable (claim B2; E22)', E22_EXPLAINER, False),
