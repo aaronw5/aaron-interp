@@ -72,7 +72,7 @@ spec:
         args:
         - |
           mkdir -p {root}/logs
-          bash {root}/code/train/gpu_job.sh {job} {conc} {runs} > {root}/logs/train-{jname}.log 2>&1
+          bash {root}/code/train/{script} {job} {conc} {runs} > {root}/logs/train-{jname}.log 2>&1
         resources:
           limits: {{nvidia.com/gpu: "1", memory: "{mem}Gi", cpu: "{cpu}"}}
           requests: {{nvidia.com/gpu: "1", memory: "{mem}Gi", cpu: "{cpu}"}}
@@ -111,17 +111,26 @@ def job_sets():
     x8 = {"n64-x8": dict(runs=[f"dsets-d64:64:{s}:-shuf:--shuffle_labels,--patience=100" for s in SEEDS]
                              + [f"jedis-d64:64:{s}:-shuf:--shuffle_labels,--patience=100" for s in SEEDS]
                              + [f"jedis-d64:64:{s}" for s in SEEDS], conc=4, cpu=4, mem=10)}
-    return {"main": main, "extra1": extra1, "e18": e18, "x5": x5, "x8": x8}
+    # X12: JEDI-linear n64 retrained (train/train_hgq_jedi.py via train/gpu_job_x12.sh, keras/jax/hgq2 env on the GPU); run spec
+    # arm:seed[:tag[:flags]] -> models/small/jedi-n64-x12-<arm><tag>/seed<seed>; HGQ seeds 0-2 and the pipeline-matched float arm
+    # (quantizers = identity) seeds 0, 1; x12-smoke: 3 epochs on 60,000 jets per arm to measure the epoch time first
+    x12 = {"x12-smoke": dict(runs=["hgq:0:-smoke:--epochs=3,--max_train=60000,--max_test=20000,--keep_epochs=2,--save_every=2",
+                                   "float:0:-smoke:--epochs=3,--max_train=60000,--max_test=20000,--keep_epochs=2,--save_every=2"],
+                             conc=2, cpu=2, mem=8, script="gpu_job_x12.sh"),
+           "x12": dict(runs=[f"hgq:{s}" for s in (0, 1, 2)] + [f"float:{s}" for s in (0, 1)], conc=5, cpu=5, mem=16,
+                       script="gpu_job_x12.sh")}
+    return {"main": main, "extra1": extra1, "e18": e18, "x5": x5, "x8": x8, "x12": x12}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--set", default="main", help="main | extra1 | e18 | x5 | x8")
+    ap.add_argument("--set", default="main", help="main | extra1 | e18 | x5 | x8 | x12")
     ap.add_argument("--only", default="", help="comma-separated job names")
     ap.add_argument("--suffix", default="", help="job-name suffix for resubmits, written --suffix=-b")
     ap.add_argument("--conc", type=int, default=None, help="trainings running at once per GPU (default: the set's)")
     ap.add_argument("--cpu", type=int, default=None, help="default: the set's")
     ap.add_argument("--mem", type=int, default=None, help="Gi (default: the set's)")
+    ap.add_argument("--runs", default="", help="override the set's run specs (space-separated), e.g. to change --epochs")
     args = ap.parse_args()
     here = os.path.dirname(os.path.abspath(__file__))
     os.makedirs(os.path.join(here, "jobs"), exist_ok=True)
@@ -135,8 +144,9 @@ def main():
         jname = job + args.suffix
         path = os.path.join(here, "jobs", f"{jname}.yaml")
         with open(path, "w") as f:
-            f.write(TEMPLATE.format(jname=jname, job=job, conc=conc, runs=" ".join(cfg["runs"]), root=ROOT,
-                                    cpu=cpu, mem=mem, bad_nodes=BAD_NODES, gpus=GPUS))
+            runs = args.runs.split() if args.runs else cfg["runs"]
+            f.write(TEMPLATE.format(jname=jname, job=job, conc=conc, runs=" ".join(runs), root=ROOT,
+                                    cpu=cpu, mem=mem, bad_nodes=BAD_NODES, gpus=GPUS, script=cfg.get("script", "gpu_job.sh")))
         print(f"{path}: {len(cfg['runs'])} runs, {conc} concurrent, {cpu} CPU, {mem} Gi")
 
 if __name__ == "__main__":

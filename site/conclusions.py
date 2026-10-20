@@ -17,7 +17,9 @@ CLAIM = {
         "pT-or-direction split is about what random placement of the few nonzero weights gives, the window effect appears "
         "only at the hardest-particle edge, and a variant without rank windows is as accurate. The window-edge response "
         "also appears when the trained weights are rearranged but the zero-bit masks are kept, so it shows where the "
-        "masks put the window, not that the trained weights use it beyond the masks."
+        "masks put the window, not that the trained weights use it beyond the masks. Networks retrained from scratch with "
+        "the same architecture form the same kind of masks but not the official network's strong window-edge response, so "
+        "that response belongs to the official checkpoint (or to its much longer training)."
     ),
     'A2': (
         "Before the second round of cuts the network computes jet-level numbers from the first-round sums, mainly the "
@@ -35,7 +37,9 @@ CLAIM = {
         "S29 (a sum of a hinge in ln pT and r that tracks the pT-weighted squared distance from the axis), changes by the "
         "amount its fitted hinge predicts when particles are moved outward, while its shorter physics name is only a "
         "correlated approximation. So round two turns the first round's directional cuts into near-radial quantities, not "
-        "exactly radial ones: their on-regions are polygons around the axis, not circles."
+        "exactly radial ones: their on-regions are polygons around the axis, not circles. A preregistered, blind fit "
+        "confirms that most of these units (15 of 19) are each a short formula of pT and distance sums over rank windows, "
+        "more often than any random mixing of the same units."
     ),
     'A4': (
         "JEDI-linear's internal mass behaves like the total pT times the pT-weighted squared spread of the particles about "
@@ -44,9 +48,10 @@ CLAIM = {
         "linear map from its internal units to log mass, fitted on ordinary jets) rises by about the predicted amount for "
         "large shifts and by less for small ones, and 77 % of W jets become Z calls, in four official checkpoints. On "
         "training jets the axis is the centre and the two definitions agree, so the difference appears only when the axis "
-        "is moved. Not established: part of the response depends on the shift direction, and whether, and in which layer, "
-        "the total pT and the spread are multiplied is open; a gradient test shows a product-like dependence at the class "
-        "neurons only."
+        "is moved. Retrained copies of the network, with and without fixed-point training, show the same behaviour. Not "
+        "established: part of the response depends on the shift direction, and the total pT and the spread are each found "
+        "as separate internal directions, but their combination (the logarithm of their product) is not found as one "
+        "internal quantity in any layer."
     ),
     'A4n': (
         "On real, unedited jets whose axis is slightly off the pT-weighted centre, moving the particles so that the jet is "
@@ -90,7 +95,33 @@ CLAIM = {
         "or no description that fits well, and these sit mostly in the dense layers and the class neurons. This supports "
         "naming most units with physical formulas. Steering (setting a unit to a high value on jets where it is off) changes "
         "as many decisions for a random unit as for the described one, except for the class neurons, so for most units the "
-        "description is not causally tested. The tally depends on chosen thresholds and has not been rerun independently."
+        "description is not causally tested. The tally depends on chosen thresholds and has not been rerun independently; "
+        "a later preregistered, blind test of the object layer (claim A11b) supports the naming part."
+    ),
+    'A11b': (
+        "Most of JEDI-linear's pooled object units (15 of 19) can each be written as a short formula of particle pT and "
+        "distance-from-axis sums over pT-rank windows, on three independent jet samples, and no random mixing of the same "
+        "units reaches that rate. A sparse autoencoder (a learned dictionary of sparse directions, the usual alternative "
+        "basis) makes the layer less readable by this measure, not more. Deep Sets also prefers its own unit basis at a "
+        "lower rate, while the Particle Flow Network latent does not; whether the preference comes from training or from "
+        "the per-particle ReLU-and-sum architecture is still open."
+    ),
+    'A4c': (
+        "Swapping one or two learned directions of JEDI-linear's object layer between two jets changes its decision as an "
+        "input edit of the total pT, or of the pT-weighted squared spread about the axis, would, for most of the decisions "
+        "that edit changes; random directions of the same size almost never do. So these two moments are separate internal "
+        "quantities from the object layer on. Their combination, the log of their product, is not found as one quantity: the "
+        "directions found for it only follow a rescaling of all pT, and the same change made through the angles runs through "
+        "the spread directions. For the spread, the gain over simply giving the edited jet the other jet's decision is small."
+    ),
+    'A1r': (
+        "JEDI-linear retrained from scratch, with and without fixed-point (quantization-aware) training, reads the jet mass "
+        "through the pT-weighted spread about the stored axis as the official network does, so that behaviour belongs to the "
+        "architecture and inputs, not to one checkpoint. The official network's strong response at the 14-hardest-particle "
+        "boundary appears in none of eight retrained copies, although the quantized ones form the same kind of zero-bit "
+        "masks. Fixed-point training keeps very few first-layer weights, and at that sparsity every cut is pT-only or "
+        "angle-only automatically. Uncertain: the retrained copies are 1–4 points less accurate and trained about ten times "
+        "fewer epochs than the official one."
     ),
     'A12': (
         "Deep Sets and Linformer models retrained with every particle measured from the hardest particle (so the axis is "
@@ -113,7 +144,8 @@ CLAIM = {
         "only on the mass result. Later tests (2026-10-19) add Deep Sets trained with L1 or fixed-point training, a "
         "Particle Flow Network and an Energy Flow Network: all respond to the shift, through the pT-weighted spread about "
         "the axis, while networks without trained function do not. Rank windows, pure cuts above chance and nearly exact "
-        "radial objects were found only in JEDI-linear."
+        "radial objects were found only in JEDI-linear. Retrained JEDI-linear copies with and without fixed-point training "
+        "also respond to the shift about as much as to a real widening of the same spread."
     ),
     'B1': (
         "The identity that a ReLU unit summed over particles equals the number of passing particles times its bias plus its "
@@ -132,6 +164,14 @@ CLAIM = {
         "variables match the network's causal variables only partly. So it reproduces the network's decisions; it is not "
         "shown to reach them through the same internal variables. An accuracy lead reported first did not hold on fresh "
         "jets, and the background-rejection comparison is not resolved with the available counts."
+    ),
+    'B2m': (
+        "The question is whether the program's variables are variables inside the network: if a variable's value is "
+        "swapped between two jets inside the network, does the decision change as an input edit of that variable predicts? "
+        "Swapping the program's per-unit formulas works no better than swapping random directions, but learned "
+        "one- or two-dimensional directions for the total pT and the pT-weighted spread do reproduce most such decision "
+        "changes. So the physics quantities are present as internal variables, not in the basis of the fitted formulas, and "
+        "the log of their product is not found as one variable."
     ),
     'B3': (
         "Agreeing with the network on ordinary jets does not show that a surrogate computes the same thing. A formula "
@@ -595,6 +635,30 @@ EXPLAINER = {
         "cut purity comparison mixes architecture with fixed-point training. Swapping the program's variables between jets "
         "agrees with the network no better than swapping random directions in the same space."
     ),
+    'X10_EXPLAINER': (
+        "A method that learns which few directions of a layer to swap between two jets finds one or two directions in "
+        "JEDI-linear's object layer that carry the total pT and the pT-weighted spread about the axis: swapping them "
+        "reproduces most decision changes of the matching input edits, and random directions almost never do. The "
+        "directions found for the log of their product only follow a rescaling of all pT; the same change made with angles "
+        "runs through the spread directions, so the product is not one internal quantity. Untrained networks also beat "
+        "random directions, so the meaningful reference is 'give the jet the other jet's decision', which the trained "
+        "network beats for both moments and untrained networks never do."
+    ),
+    'X11_EXPLAINER': (
+        "Fifteen of JEDI-linear's 19 pooled object units are each a short formula of pT and distance sums over pT-rank "
+        "windows, on three jet samples, and none of 250 random mixings of the same units is as readable. Sparse-autoencoder "
+        "features of the same layer are readable less often. Deep Sets also prefers its own units, the Particle Flow Network "
+        "does not, and untrained networks have almost no readable units; whether the preferred basis comes from training "
+        "or from the architecture is open."
+    ),
+    'X12_EXPLAINER': (
+        "Eight JEDI-linear networks retrained from scratch, six with fixed-point training and two without, all read the jet "
+        "mass through the pT-weighted spread about the stored axis: compared with a real widening of the jet that gives the "
+        "same spread, they respond to an off-centre shift about equally. The official network's strong response at the "
+        "14-hardest-particle boundary appears in none of them, although the fixed-point ones form the same zero-bit masks. "
+        "Pure pT-only or angle-only first-layer cuts follow from how few weights fixed-point training keeps; the retrained "
+        "copies are less accurate and trained far fewer epochs than the official one."
+    ),
 }
 
 KEY_RESULT = {
@@ -612,7 +676,9 @@ KEY_RESULT = {
         "which equals the invariant mass only when the axis is at the jet's centre, as on all training jets. Shifting all "
         "particles together, which keeps the invariant mass, raises this quantity and turns 77 % of JEDI-linear's W jets "
         "into Z calls, and fewer of ParT's. The same sign holds on unedited off-centre jets, but the response is not one "
-        "exact formula: part of it depends on the shift direction, and where the two sums are multiplied is not located."
+        "exact formula: part of it depends on the shift direction, and the two sums are found as separate internal "
+        "directions while their product is not found as one internal quantity. JEDI-linear copies retrained from scratch, "
+        "with and without fixed-point training, read the mass the same way."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "

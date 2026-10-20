@@ -115,6 +115,22 @@ CLAIMS = {
     background='Experiments define the jet axis in different ways. The standard (E-scheme) axis is the summed momentum direction. The winner-take-all (WTA) axis follows the hardest branch when the jet is reclustered; it is less sensitive to soft radiation and is used for some substructure observables. For a two-prong W jet the WTA axis points along the harder prong, a median 0.075 rad from the centre.',
     motivation='A practical consequence of A4/C3: the networks\' mass sense depends on a convention that the true mass does not depend on. The size of the change is predicted by the $M_0 M_2$ formula (ParT_full read-out $\\Delta\\log\\hat m = +0.133$ vs predicted $+0.138$). The networks were trained with one convention, so part of any change is a distribution shift; the formula predicts its direction and size.'),
 'D3': dict(plain='Rerun all physics edits with more jets and error bars.', background='Earlier runs used 400 jets per class.', motivation='Needed before publication.'),
+'A11b': dict(
+    plain='JEDI-linear\'s pooled units are individually readable as short physics formulas far more often than random mixings of the same units, and a sparse autoencoder does not make them more readable.',
+    background='Any layer can be read in a rotated basis $v = Qh$ ($Q$ orthogonal) without losing information. If single units are special, they should be easier to describe than rotated directions. A sparse autoencoder (SAE) learns an overcomplete dictionary of sparse directions and is the usual alternative basis in interpretability work.',
+    motivation='Review weakness 4: the framing "the units are already clean" needs a test against rotations and SAE features, with a rule fixed before the data are seen.'),
+'A4c': dict(
+    plain='Total pT and the pT-weighted spread about the axis each sit in one or two internal directions of the object layer; swapping those directions between jets changes the decision as editing the jet would. Their log-product is not one internal direction.',
+    background='Distributed alignment search (DAS) learns an orthonormal $Q$ so that $h\' = h_b + (h_s - h_b)QQ^\\top$ reproduces the call of an input edit that sets a variable to the source jet\'s value. Effective IIA is the fraction of call-changing pairs it reproduces.',
+    motivation='X9 found the program\'s named formulas no better than random rotations (review weakness 3). A learned subspace separates "no causal variable" from "wrong basis for the variable", and tests where $\\tfrac12\\log(M_0M_2)$ forms.'),
+'A1r': dict(
+    plain='Retraining JEDI-linear from scratch reproduces its axis-dependent mass reading, but not the strong rank-window effect of the official network; the "pure" first-layer cuts follow from sparsity.',
+    background='JEDI-linear is trained with HGQ, which learns bit widths per weight and per particle slot; zero-bit weights are zeros and zero-bit slots are masks that fix pT-rank windows. The official network trained for 2,868 epochs.',
+    motivation='Review weaknesses 2, 6, 7: are the program elements a property of the architecture and training, or of one checkpoint, and which need quantization-aware training? The float arm uses the same script with quantizers off.'),
+'B2m': dict(
+    plain='Are the program\'s variables also variables inside the network? Swapping a variable\'s value between two jets inside the network should change the decision as an input edit would.',
+    background='Interchange intervention / causal abstraction (Geiger et al.): replace part of a layer for a base jet by its value on a source jet and compare the call with the call after an input edit that sets the variable to the source value.',
+    motivation='Matching the network\'s calls (B2) does not show that the program computes the same intermediate quantities.'),
 }
 
 PAPER_MOTIVATION = {
@@ -982,6 +998,48 @@ X9_EXPLAINER = [
   'The axis-dependent mass response (claims A4, D4) is measured in three set architectures trained on the same stored-axis inputs and runs mainly through $M_2$ about that axis in all of them (claim A10m); whether it comes from the input representation in general (recentred or augmented training) is not tested. The rank-window response, the pure cut types and the near-exactly radial objects are measured only in JEDI-linear. Interchange agreement of the S formulas is not above that of random rotations of the aligned subspace (claim B2m).', None),
 ]
 
+X10_EXPLAINER = [
+ ('Question', 'Does JEDI-linear hold the mass ingredients $M_0=\\sum_i p_{T,i}$ and $M_2=\\sum_i p_{T,i}r_i^2$ (about the stored axis), their combination $\\Delta=\\tfrac12\\log(M_0M_2)$, and the W−Z score in a few linear directions of a layer? If it does, where does each first appear?', None),
+ ('Background',
+  'Interchange intervention: take a base and a source jet, copy part of a layer from the source into the base, and run the rest of the network. If that part is the variable $V$, the base jet should then be called as if an input edit had set its $V$ to the source value. Distributed alignment search (DAS; Geiger et al. 2023) learns which directions to copy. X9 had swapped the program\'s named formulas and found them no better than random rotations.', None),
+ ('Method',
+  'For a layer $h\\in\\mathbb{R}^d$ ($S$, $h_4$, $h_5$) and orthonormal $Q\\in\\mathbb{R}^{d\\times k}$, the interchanged state is $$h\'=\\Pi\\!\\left(h_b+(h_s-h_b)\\,QQ^\\top\\right),$$ with $\\Pi$ the clip to the next layer\'s fixed-point input range (the unsigned quantizers wrap otherwise). $Q$ minimises $$\\mathcal{L}(Q)=-\\sum_{(b,s)}w_{bs}\\,\\log\\operatorname{softmax}\\!\\big(f_{>L}(h\')\\big)_{y^H_{bs}},$$ where $f_{>L}$ is the exact downstream network and $y^H_{bs}$ the network\'s call on the base jet after the input edit do($V=V_s$): $p_T\\to c\\,p_T$ with angles $\\times c^{-1/2}$ for $M_0$; angles scaled for $M_2$; $p_T$ scaled for $\\Delta$. Score: effective IIA, the fraction of call-changing test pairs $E_H$ with $\\arg\\max f_{>L}(h\')=y^H_{bs}$. Samples: fit sample(4000, 0), test sample(4000, 17) minus fit jets (18,410), 5,000 test pairs. Controls: 1,000 random $Q$, permuted-label DAS, untrained networks (seeds 0–2), PFN latent.', None),
+ ('Result',
+  'Effective IIA (DAS vs random mean): $M_0$ 0.87 at $S$ with $k=1$ (0.10); $M_2$ 0.75 at $S$, 0.78 at $h_4$ (≤ 0.07); W−Z 0.43 at $S$, 0.82 at $h_5$; $\\Delta$ 0.51 at $S$, 0.62 at $h_4$. All 36 cells above random (Holm 0.036). Patching the 2-direction $\\Delta$ subspace at $h_4$ from 0.06 rad translated jets carries 0.73 of the translation\'s mass read-out shift and sends 82 % of W to Z; the $M_0$ subspace carries 0–2 % (a translation does not change $M_0$).', 'results/jedi/x10_das.png'),
+ ('Checks', 'Exact fixed-point network throughout (80.79 % on the test jets); the training tail reproduces the exact tail on 100 % of calls; two pipeline faults (float tail, wrap) found and fixed before the reported run; bootstrap over pairs.', None),
+ ('Verification (X10v, two passes, confidence 0.45)',
+  'Fresh disjoint samples (sample(2500, 41) / sample(2500, 43), 4,000 pairs): all 36 cells within 0.06. Full-swap baseline $\\Pr[y^H=\\hat y_s\\mid y^H\\ne\\hat y_b]$: $M_0$ 0.35, $M_2$ 0.61, $\\Delta$ 0.33, W−Z 0.51; DAS exceeds it by about +0.5 ($M_0$), +0.05 to +0.17 ($M_2$), +0.15 to +0.30 (W−Z at $h_4$/$h_5$). Angle-only $\\Delta$ edit $(\\Delta\\eta,\\Delta\\phi)\\to c\\,(\\Delta\\eta,\\Delta\\phi)$ ($M_0$ fixed, $M_2\\times c^2$): the $\\Delta$ subspace reproduces it on 0.19–0.43 of pairs, below its full swap (0.61) in 9/9 cells; the $M_2$ subspace reproduces it (0.65–0.73), and a subspace trained on it overlaps $Q_{M_2}$ by 0.68–0.99 ($\\|Q_1^\\top Q_2\\|_F^2/k$). Untrained networks beat their random subspaces in 41/72 cells but stay below the full swap in 36/36 $M_0$/$M_2$ cells.', None),
+ ('Why it matters', '$M_0$ and $M_2$ about the stored axis are causal variables in low-dimensional subspaces from $S$ on (claim A4c), so X9\'s null came from the formula basis (claim B2m). $\\Delta$ is not one internal variable: its subspace encodes the response to a pT rescale. For causal-abstraction tests on small networks, the full-swap baseline, not random subspaces, separates trained from untrained networks.', None),
+]
+
+X11_EXPLAINER = [
+ ('Question', 'Are JEDI-linear\'s hidden units individually readable as physics formulas, or would any mixing of the same activations (a random rotation) or a sparse-autoencoder dictionary be as readable or more?', None),
+ ('Background',
+  'A layer with $d$ live units $h\\in\\mathbb{R}^d$ can be read in any basis $v=Qh$, $Q$ orthogonal, without losing information. A sparse autoencoder learns $f=\\mathrm{ReLU}(W_e(x-b_d)+b_e)$, $\\hat x=W_df+b_d$, minimising $\\lVert x-\\hat x\\rVert^2/d+\\lambda\\sum_k f_k$. If units are privileged, single units should be describable by short formulas more often than rotated directions.', None),
+ ('Method',
+  'Preregistered rule. For each direction $v_j$ fit $\\hat v_j=c_0+\\sum_{t\\le 8}c_tB_t(\\mathcal O)$, with $B_t$ linear terms, hinges $\\max(0,\\pm(\\mathcal O_k-\\tau))$ and products, on 97 rank-window observables such as $\\sum_{i\\in w}p_{T,i}r_i^2$ and $\\sum_{i\\in w}(r_i-0.2)_+$; $v_j$ is named if $R^2=1-\\mathbb E[(v_j-\\hat v_j)^2]/\\mathrm{Var}(v_j)\\ge 0.9$ on 22,551 held-out jets (fit on 16,666). Edit test: scale $p_T$ or angles by 1.1 in the top term\'s window; pass if the slope of $\\Delta v_j$ on $\\Delta\\hat v_j$ has its 95 % CI in $[0.8,1.2]$. Bases: native, 20 random rotations, PCA, SAE 2×/4×; layers: JEDI-linear $S$ and $h_4$, Deep Sets pooled layer, PFN latent.', None),
+ ('Result',
+  'Fraction named: JEDI $S$ 0.79 (15/19; rotations 0.32–0.63, SAE 0.16–0.21); $h_4$ 0.55 (rotations 0.20–0.36); Deep Sets 0.29 (rotations 0.00–0.12); PFN 0.10 (rotations 0.07–0.20). SAE − native: −0.58 to −0.63 for JEDI $S$ (Holm 0.028). Edit test: 7 of 19 JEDI $S$ units pass; mismatched formula 0/15.', 'results/jedi/x11_atlas.png'),
+ ('Checks', 'Rule frozen before fitting and checked unchanged on the cluster; accuracy 80.87 %; fit and test jets disjoint; azimuthal-rotation control leaves the library unchanged (≤ 2.2e-6 s.d.).', None),
+ ('Verification (X11v, two passes, confidence 0.85)',
+  'Two fresh samples: JEDI $S$ 0.789 with the same 15 units; 0 of 200 and 0 of 50 new rotations reach it ($p=0.005$, $0.020$; $p=(1+\\#\\{f_{\\rm rot}\\ge f_{\\rm nat}\\})/(n+1)$); $h_4$ 0.564 vs 40 rotations (max 0.364); a generic 380-observable library gives 0.74 vs ≤ 0.58. Among named directions, native and rotated pass the edit test equally (0.47 vs 0.50), so the edit-test excess follows from naming. Untrained networks (weights from $\\mathcal N(\\mu_{\\rm layer},\\sigma_{\\rm layer})$): 0/56, 1/57 (JEDI architecture), 0/46 (Deep Sets) named.', None),
+ ('Why it matters', 'Supports naming JEDI-linear\'s object units one by one (claims A11, A11b, A3) against the two standard alternatives. Not unique to JEDI-linear (Deep Sets has a weaker preference); whether the preference is learned or comes from the per-particle ReLU-sum architecture is not decided, because the untrained control is at floor.', None),
+]
+
+X12_EXPLAINER = [
+ ('Question', 'Are the parts of the JEDI-linear program (pT-only / angle-only first-layer cuts, rank-window masks, the un-recentred mass response) a property of the architecture and its training, or of the one official checkpoint? Which need quantization-aware training?', None),
+ ('Background',
+  'JEDI-linear is trained with HGQ, which learns a bit width for every weight and per-particle activation; a penalty $\\beta\\cdot\\mathrm{EBOPs}$ pushes bits to zero. A zero-bit weight is a zero; a zero-bit slot is a mask, so in $S_c=\\sum_i u_{ic}$ particles at masked pT ranks drop out (a rank window). The official network has 20 nonzero first-layer weights of 192 and responds to a rigid shift through $M_2=\\sum_i p_{T,i}r_i^2$.', None),
+ ('Method',
+  'Retrain the same architecture: HGQ-150 seeds 0–2 (300 epochs, primary), HGQ-50 seeds 0–2 (200 epochs), float seeds 0–1 (quantizers = identity, same script). On sample(5000, 0) (25,000 jets): purity of live first-layer units $a_c=\\alpha_{pT}p_T+\\alpha_\\eta\\Delta\\eta+\\alpha_\\phi\\Delta\\phi+\\beta$ (pure if ≥ 90 % of the spread comes from $p_T$ alone or the angles alone) vs a column-permutation null and a sparsity-matched null; zero-bit masks; an angle swap of adjacent pT ranks across a mask edge vs inside, against weight-permuted copies that keep the masks and classify above chance; a 0.06 rad translation vs a random-direction translation and an $M_2$-held translation; single-particle maps of $S$.', None),
+ ('Result',
+  'Every quantized first layer is 100 % pure, as are its sparsity nulls. Across/inside ratio at the top edge: official 5.28 (13|14); retrained 0.00–1.48 at their own edges (ranks 24–45). Translation W→Z: official 0.76, usable HGQ 0.61–0.78, float 0.21–0.35; $M_2$-held 0.03–0.19 in all.', 'results/jedi/x12_final.png'),
+ ('Checks', 'Battery forward equals Jedi.run and the Keras model exactly; parameter count and quantizer-table shapes match the official network; mask-keeping nulls have non-constant output (accuracy 0.30–0.75); Holm over 15. One primary seed collapsed to 57 % at its last epoch and is kept as preregistered.', None),
+ ('Verification (X12v, seeds 1 and 2, confidence 0.55)',
+  'A shift by $d=0.06$ rad leaves the invariant mass unchanged and raises $M_2$ by about $M_0d^2$; a real widening (angles $\\times s_T$, $s_T=\\sqrt{M_2(T)/M_2}$, mean 1.32) gives the same $(M_0,M_2)$. Ratio $R=\\Delta_{W\\to Z}(T)/\\Delta_{W\\to Z}(\\mathrm{dil}_{M_2})$: official 1.22, HGQ 1.02–1.38, float 0.69–1.30 (network-level $p=0.24$); a reader of $(M_0,M_2)$ only gives $R=1$, a recentred-mass reader $R\\approx0$. Under a real W→Z widening by $m_Z/m_W$, float 0.85 vs HGQ 0.80–0.84 W→Z. At the official 13|14 edge the retrained networks give 0.20–0.90 (official 5.18). Radial-hinge excess with quantization: network-level permutation $p=0.048$ (all usable) / 0.17 (primary).', None),
+ ('Why it matters', 'The uncentred mass reading is a property of this architecture and its inputs in both training arms (claims A10m, A1r); the float networks differ only in where the Z class ends in mass. The 13|14 rank-window effect is specific to the official checkpoint or its long training (claim A1). "Pure cuts" reduce to "HGQ makes the first layer sparse" (A1q reworded).', None),
+]
+
 
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
@@ -1001,10 +1059,14 @@ PAPER_EXPLAINERS = {
           ('Result 14 explained: naturally off-centre jets and recentring with the mass fixed (claims A4, D4; E23)', E23_EXPLAINER, False),
           ('Result 15 explained: do the edit responses need the trained weights? Functional nulls and resample ablation (claims A1, A2, A3, A4, D4; X8)', X8_EXPLAINER, False),
           ('Result 16 explained: Deep Sets trained float, with L1 and with HGQ (claims A1, A10; X5)', X5_EXPLAINER, False),
-          ('Result 17 explained: EFN and PFN on the same inputs (claims A4, A10, B2m; X9)', X9_EXPLAINER, False)],
+          ('Result 17 explained: EFN and PFN on the same inputs (claims A4, A10, B2m; X9)', X9_EXPLAINER, False),
+          ('Result 18 explained: learned directions for the mass moments inside the network (claims A4c, A4, B2m; X10, X10v)', X10_EXPLAINER, False),
+          ('Result 19 explained: are the units a preferred basis? Rotations and sparse autoencoders (claims A11b, A11, A3; X11, X11v)', X11_EXPLAINER, False),
+          ('Result 20 explained: JEDI-linear retrained with and without quantization (claims A1r, A1, A10; X12, X12v)', X12_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True),
           ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False),
           ('Result explained: interchange interventions, per variable (claim B2; E22)', E22_EXPLAINER, False),
+          ('Result explained: learned subspaces instead of named formulas (claim B2m; X10, explained in Paper A result 18)', X10_EXPLAINER, False),
           ('Result explained: the if-statement program vs standard surrogates of the same size (claims B3, B4; B4)', B4_EXPLAINER, False),
           ('Result explained: a 50-term formula on axis-relative vs invariant observables under shift and re-axis edits (claims B3, B5c; B5)', B5_EXPLAINER, False)],
     'c': [('Result explained: ParT\'s mass comes mostly through the axis-relative inputs, not the pair features (claim C3)', C3_EXPLAINER, True),
