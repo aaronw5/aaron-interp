@@ -523,7 +523,10 @@ CLAIM = {
         "change is exactly a shift of all particle angles, the share of changed decisions follows each model's response "
         "to a random shift of the same size, and the part that depends on the shift's direction is no larger than in "
         "untrained networks with shuffled weights; on these datasets general sensitivity to moved inputs accounts for "
-        "the response."
+        "the response. A first, unverified comparison with six untrained networks of each architecture (rather than "
+        "shuffled weights) gives the same picture: the trained top and quark–gluon taggers' direction effect is never "
+        "outside the untrained range, and its sign depends on the decision threshold. Second-seed and shuffled-label "
+        "trainings, which test whether the sign is stable across trainings, are still running."
     ),
     'D3': (
         "With 10 times more jets, random JetClass rows, the corrected η build and a matched control for each edit, the "
@@ -641,6 +644,23 @@ CLAIM = {
         "(about −1 to −2 log-odds per unit |cos θ*|); ParT, ParticleNet and LorentzNet show it only on a small set of "
         "JetClass top jets where the control matched the prong shapes. The taggers therefore use the top decay angle, "
         "as the W polarisation predicts, but no control yet reproduces the edit's full change of the three-prong variable τ32."
+    ),
+    'D16': (
+        "Quark–gluon ParT and ParticleNet that see particle types use the sign of the jet charge (the momentum-weighted sum "
+        "of particle charges): swapping every particle for its antiparticle, with all momenta unchanged, moves their quark "
+        "score by about 0.24 log-odds against the charge sign, about 85 % of what a fit on jet charge alone does, while "
+        "random-weight networks barely move. This is consistent with the quark jets of this Z+jet sample being mostly "
+        "u-quark jets, a property of the sample rather than of quark versus gluon radiation, though that origin was not "
+        "tested. They also score soft photons toward quark and soft neutral hadrons toward gluon, but random-weight "
+        "networks move by similar amounts, and a null trained on shuffled labels is still missing."
+    ),
+    'D17': (
+        "JetClass ParT and ParticleNet, including the versions that see only four-momenta, lower their W, Z and H→bb "
+        "score when soft particles near a prong are moved from the side facing the other prong to the far side, and "
+        "raise it for the reverse move, with jet mass, τ21, girth and D2 held within 5 %. A classifier on those shape "
+        "variables does not respond, so the networks use where soft radiation sits relative to the two prongs, the "
+        "colour-flow pattern of a colour-singlet decay. About half of the raw response also appears for a "
+        "direction-neutral mirror, and the predicted opposite response on QCD jets is not resolved."
     ),
 }
 
@@ -864,6 +884,36 @@ EXPLAINER = {
         "size, trained networks differ by −1.7 to +4.0 points, inside the range of untrained shuffled-weight networks "
         "(−3.0 to +3.2), so no learned use of the axis direction is shown. LorentzNet's zero holds because its inputs do "
         "not depend on the axis."
+    ),
+    'H39_EXPLAINER': (
+        "Compared with six untrained copies of the same architecture, the trained taggers' extra response to shifting "
+        "the jet image toward its hardest particle is never outside the untrained range, and its sign changes with "
+        "where the decision threshold is placed. Untrained energy-weighted networks (EFN) already show such a direction "
+        "effect of a few points, so it does not require training. The test is weak with six untrained networks, and the "
+        "second-seed and shuffled-label trainings are still running."
+    ),
+    'H40_EXPLAINER': (
+        "With every momentum fixed, relabelling particle types moves the quark score of the particle-ID quark–gluon "
+        "networks, while networks without particle ID do not move. Swapping all particles for antiparticles moves the "
+        "score against the sign of the jet charge, at about the rate of a fit on jet charge; soft photons count toward "
+        "quark and soft neutral hadrons toward gluon; kaons and protons cannot be told from pions in these inputs."
+    ),
+    'H40V_EXPLAINER': (
+        "On fresh jets the jet-charge response reproduces (about 0.24 log-odds, 85 % of a jet-charge fit) and lies far "
+        "outside 12 random-weight networks. ParticleNet does respond to flipping the hardest charged particle once the "
+        "flip is signed by that particle's charge. The neutral-species response reproduces in direction, but random "
+        "PN networks move by similar amounts, so only its direction separates it from the null."
+    ),
+    'H41_EXPLAINER': (
+        "Moving soft radiation from between the two prongs to outside them, at fixed mass and τ21, lowers the W, Z and "
+        "H→bb scores of ParT and ParticleNet, while a random-weight network and a mass/τ21/multiplicity classifier "
+        "do not respond. This is the radiation pattern of a colour-singlet decay; the opposite response on QCD jets was "
+        "not resolved, and other shape variables were not yet held fixed."
+    ),
+    'H41V_EXPLAINER': (
+        "On fresh jets the colour-flow response holds with girth and D2 also fixed within 5 %, where a shape-variable "
+        "classifier shows none, and the two halves of the edit act in opposite directions. About half of the raw "
+        "response also appears for a direction-neutral mirror, and at a 2 % shape match the W-jet effect is not resolved."
     ),
     'H25V_EXPLAINER': (
         "On fresh jets the subjet-width result reproduces. When τ32 is changed with the subjet masses held fixed, by "
