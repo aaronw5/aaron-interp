@@ -545,6 +545,60 @@ P15_EXPLAINER = [
  ('Why it matters', 'ParticleNet\'s response to the shift does not pass through its rebuilt graphs (claim C5) and is not carried by a trained axis-moment-mass direction; a one-direction match on its own does not show a trained variable, since untrained networks give one too (claim C9; the same control is proposed for ParT\'s C7). Small channel circuits reproduce the binary W/Z decision but not the 10-class decision.', None),
 ]
 
+P11_EXPLAINER = [
+ ('Question', 'Does every Particle Transformer trained on JetClass respond to the jet axis rather than to the invariant mass, and does it pass that response through the same attention heads as the released network?', None),
+ ('Background',
+  'A rigid shift $\\phi\\to\\phi+0.06$ rad of all particles about the stored axis keeps the invariant mass $m$ fixed but raises the axis moment $\\sqrt{M_0M_2}$, with $M_0=\\sum_i p_{T,i}$ and $M_2=\\sum_i p_{T,i}\\Delta R_i^2$. The released ParT turns true-W jets into Z under this edit (claim C3). '
+  'In the released ParT_full the first class-attention block (the layer where the summary "class token" first reads the particles) carries 98 % of the W/Z unit\'s response to a mass change (C2b), and head b2h8 switches its attention at 87 GeV (C2a). All of this comes from one checkpoint.', None),
+ ('Method',
+  'Six networks retrained from scratch with the authors\' script (P10: full and kinematics-only inputs, seeds 0–2, 2M jets, 50 epochs), the released networks, and untrained networks of the same design. On 10,000 true W and 10,000 true Z test jets (random rows): '
+  'the edit $\\phi+0.06$ against a matched dilation that scales each jet\'s angles by $k_j=\\exp(\\tfrac12\\Delta\\log M_0M_2)$ (same axis-moment change, real mass change). '
+  '$R=\\sum_j\\Delta g_j^{\\phi}\\Delta g_j^{k}/\\sum_j(\\Delta g_j^{k})^2$ with $g=\\ell_W-\\ell_Z$ over true W; an invariant-mass tagger gives $R=0$, a pure axis-moment tagger $R=1$. '
+  'Block share: patch the 8 heads of class block 1 to their unedited values and measure the removed share $1-\\sum_j dP_j\\,dE_j/\\sum_j dE_j^2$ of the W/Z unit\'s response to angles × 1.1. Switch scan: fit $y=a+c/(1+e^{(m-m_{50})/w})$ to each of 80 heads, Benjamini–Hochberg over heads. Pre-registered (P10): S1 read-out ratio 0.7–1.4, S2 per-particle route > 0.8, S3 block-1 share > 0.9, S4 a switch head.', None),
+ ('Result',
+  'Every retrained seed turns more W into Z under the shift: +13.6 to +19.1 points (released +18 to +19), with McNemar $p\\le 5\\times10^{-245}$. $R$ is 0.65–0.81 (full; released 0.79) and 0.53–0.57 (kin; released 0.72). '
+  'The class-block-1 share is 0.63–0.83 in the seeds against 0.97–0.98 in the released networks (S3 fails in 6 of 6); class block 2 carries 0.17–0.36. Strong switch heads appear in 4 of 6 seeds, each at a different head and mass (64–105 GeV).', 'results/part/p11_seed_tests.png'),
+ ('Checks',
+  'Verifier on fresh rows (second test file): all numbers within 1.3 points, 0.01 in $R$ and 0.011 in block shares. Eight untrained networks change W → Z by −0.3 to +4.0 points but give block-1 shares 0.32–0.87 and $R$ from −0.23 to 0.78, so the seeds\' route values and $R$ values lie inside the untrained range; only the call-level shift and the released 0.97–0.98 exceed it. '
+  'Training seed 0 longer on the same 2M jets leaves its block-1 share flat (epochs 9–49). Whole-jet rotation null: $R=0.000$. Seeds share no weights ($|r|\\le0.16$).', None),
+ ('Why it matters',
+  'The axis-relative mass response is a reproducible property of ParT trained on JetClass (claim C3s). The head-level read-out described for the released checkpoint is not reproduced by retraining at 2M jets, so C2a and C2b are stated for that checkpoint. Seed, data size (2M vs 100M jets) and training length are not yet separated.', None),
+]
+
+P16_EXPLAINER = [
+ ('Question', 'If a Particle Transformer is trained only to flag jets inside a mass window, does it still respond to a shift that keeps the invariant mass fixed? This separates "the axis response is forced by ParT\'s architecture and axis-relative inputs" from "it comes from how the released model was trained".', None),
+ ('Background',
+  'The axis-moment mass is $m_A=\\sqrt{M_0M_2}$ about the stored axis; for centred jets it equals the invariant mass $m$, and on real jets the two correlate at 0.999. The shift $\\phi\\to\\phi+0.06$ leaves $m$ fixed and raises $\\log m_A$ by 0.125. '
+  'Predictions: if the architecture forces an axis reading, a network trained on an exact $m$ label gives $R\\ge0.5$; if not, $R\\approx0$.', None),
+ ('Method',
+  'ParT with kinematic inputs and 2 outputs, 10 epochs on 1.5M W/Z/QCD jets, four labels: (a) $\\mathbb 1[|m-85|<10]$; (b) $\\mathbb 1[|m_A-84.6|<10]$; (c) label a with the per-particle position inputs zeroed, so geometry enters only through the rotation-invariant pair features; (s) shuffled label a. '
+  'On 20,000 random held-out jets: $R=\\sum_j\\Delta g_j^{\\phi}\\Delta g_j^{k}/\\sum_j(\\Delta g_j^{k})^2$ against a per-jet dilation with the same $\\Delta\\log m_A$, with a 2,000-resample bootstrap; route split (pair features only vs per-particle only); permutation tests between arms. Released ParT_full and ParT_kin on the same jets.', None),
+ ('Result',
+  '$R_a=0.185$ [0.181, 0.189], $R_b=0.215$, $R_c=0.000$, against 0.790 (full) and 0.723 (kin) for the released models; permutation $p=0.0005$ for every difference. The planted arms take 80–83 % of a real mass change through the pair features; the released models take 82–84 % through the per-particle angles. The shift changes 5.9–6.3 % of the planted arms\' calls against 18.5–31.0 % of the released models\'.', 'results/part/p14_planted_p16.png'),
+ ('Checks',
+  'Fresh rows (second test file): $R_a=0.184$, released 0.793 / 0.719. With a W-or-Z vs QCD read-out the released models give 0.654 / 0.628. Arm a\'s $R$ moves between 0.12 and 0.24 over its 10 epochs. Arm a errs only within 2 GeV of the window edges, where the shift\'s call changes concentrate. '
+  'Limits: labels a and b agree on 97.7 % of jets and the arms share initialisation and data order, so arm b does not test whether the label decides which mass is read; arm s learned a constant output; one seed per arm. One-direction DAS and EAP circuits did not separate arms a and b.', 'results/part/p16_verify.png'),
+ ('Why it matters',
+  'ParT with these inputs can learn a mostly rotation-invariant mass from pair features, so the released models\' axis-relative response is not forced by the architecture (claim C10). What in the released training (10 classes, 100M jets, training length, seed) produces the larger response is open; a planted ParT trained on the true class labels with the same data is the next control.', None),
+]
+
+P18_EXPLAINER = [
+ ('Question', 'In which ParT block do the jet variables become readable and used: particle count, pT, mass and prong shape? Does ParT build them in JEDI-linear\'s order, with the mass last?', None),
+ ('Background',
+  'A linear probe measures readability: $R^2$ of a ridge fit of a target (e.g. $\\log m_A$, $\\tau_{21}$, $\\tau_{32}$, multiplicity $N$) on a block\'s jet-averaged particle representation $\\bar h=\\sum_i p_{T,i}h_i/\\sum_i p_{T,i}$. Readability alone can come from the inputs, so two causal measures are added. '
+  'Calibration gain: slope of the probe\'s change on the true change under a real edit. One-direction interchange (DAS): fit a unit vector $u$, replace $u\\cdot\\bar h$ of the clean jet by that of the edited jet, and report the fraction of the output change reproduced (IIA). The azimuth scramble randomises each particle\'s azimuth about the axis at fixed $p_T$ and $\\Delta R$: it keeps the mass moments and destroys prong structure.', None),
+ ('Method',
+  'Released ParT_full and ParT_kin; 50,000 random test jets (5,000 per class), probes fitted on half and evaluated on the other half. Sites: embedding, blocks b1–b8, class blocks c1–c2. Edits: matched dilation (mass), azimuth scramble (prong), 5 soft particles ($N$), $p_T\\times1.1$, $\\phi+0.06$. '
+  'Controls: untrained ParT (two seeds), weight-permuted ParT, random-rotation basis, 1,000 random directions; Holm over 55 site × edit cells. Depth effects are tested as difference-in-differences (DiD) against the untrained network.', None),
+ ('Result',
+  '$N$ and $\\log p_T$ are readable at the embedding ($R^2$ 0.99), the masses from block 1 (0.94) with no later rise. $\\tau_{21}$ rises to 0.73 at b1 and 0.80 at b4, $\\tau_{32}$ to 0.51 at b4. Order: (count, pT) → mass, $\\tau_{21}$ → $\\tau_{32}$; the mass-last order is not observed (mass − prong first-readable site −0.4 to −0.7 blocks).', 'results/part/p18_stage_pipeline.png'),
+ ('Checks',
+  'An untrained ParT reads $N$ and $p_T$ at 0.99 and the masses at 0.80–0.89, but $\\tau_{21}$ only at 0.38 and $\\tau_{32}$ at 0.11; the scramble calibration gain is 0.77–0.80 trained vs 0.00–0.05 untrained. Untrained networks also reach one-direction IIA 0.45–0.95, so IIA levels are not evidence of training. '
+  'The training-specific signal is the depth profile: under the full-jet scramble the one-direction share rises from 0.02 at the embedding to 0.68 at blocks 6–7 while untrained networks stay flat near 0.5 (DiD $+0.44$ [0.42, 0.47], both seeds, both models). Fresh rows reproduce the probes within 0.03–0.04.', 'results/part/p18_verify.png'),
+ ('Why it matters',
+  'ParT has no JEDI-like mass-last stage (claims C4, A8): count, pT and mass are available almost from the input and nearly as well without training, while prong shape is the variable training builds over the blocks. The scramble changes $\\tau_{21}$, $\\tau_{32}$ and $D_2$ together, so which prong observable is used is not resolved.', None),
+]
+
 D4_EXPLAINER = [
  ('Question', 'Does the networks\' way of computing the mass make them depend on how the jet axis is defined?', None),
  ('Background',
@@ -1364,6 +1418,9 @@ PAPER_EXPLAINERS = {
           ('Result explained: learned sparse features (transcoders, SAEs) as circuit units in ParT_full; feature circuits kept alone and m_A-feature steering (claims C8, C7; P13, P13v)', P13_EXPLAINER, False),
           ('Result explained: ParT trained on planted mass labels; released-model control (claims C10, C3; P14, setup)', P14_EXPLAINER, False),
           ('Result explained: inside ParticleNet: one-direction search per layer with a mirror-sign test, neighbour graphs, channel circuits, LRP and probe baselines (claims C9, C5; P15, P15v)', P15_EXPLAINER, False),
+          ('Result explained: six retrained ParTs keep the axis response but not the released head-level route (claims C3s, C2a, C2b; P11, P11v)', P11_EXPLAINER, False),
+          ('Result explained: ParTs trained on a mass-window label respond about four times less to a mass-fixed shift (claims C10, C3; P16, P16v)', P16_EXPLAINER, False),
+          ('Result explained: the order in which ParT\'s blocks make jet variables readable; prong shape is the trained stage (claims C4, A8; P18, P18v)', P18_EXPLAINER, False),
           ('Earlier results in brief (claims C1, C2)', EARLIER_C, False)],
     'd': [('Result explained: the taggers depend on the jet-axis convention (claim D4)', D4_EXPLAINER, True),
           ('Result explained: the axis-convention response in both directions, with invariant and rotation controls (claims D4, A12; X7)', X7_EXPLAINER, False),

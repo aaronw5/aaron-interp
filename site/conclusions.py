@@ -262,7 +262,9 @@ CLAIM = {
         "Z masses; no other head of the class-token stage does this, and the result reproduces on new jets. The switch "
         "also moves when all particles are shifted off the jet axis at fixed mass, so it follows the network's "
         "axis-relative mass rather than the invariant mass. What the switch is used for is not known, because it carries "
-        "little of the mass information that reaches the decision (C2b)."
+        "little of the mass information that reaches the decision (C2b). ParTs retrained from scratch also develop such "
+        "switch heads in four of six cases, but at different heads and masses, so this head is a property of the "
+        "released checkpoint."
     ),
     'C2b': (
         "When the jet mass is changed, the change of ParT_full's W/Z output unit (n98, a coordinate of the class token "
@@ -272,7 +274,9 @@ CLAIM = {
         "replaced, separates W from Z barely above chance (about 52 % against 83 % for the model), but under the same strict "
         "definition even all 16 heads reach only 63 %, so a small circuit that works on its own has not been found yet. "
         "The same first layer also carries the response when all particles are shifted off the jet axis at fixed "
-        "invariant mass (99 %), so it reads the network's axis-relative mass, whatever its source."
+        "invariant mass (99 %), so it reads the network's axis-relative mass, whatever its source. ParTs retrained from "
+        "scratch on 2 million jets pass only 63–84 % through this layer, a range untrained networks also reach, so the "
+        "concentration in one layer is a property of the released checkpoint."
     ),
     'C7': (
         "ParT does not build its axis-relative mass at any one layer. One direction in the jet-averaged particle "
@@ -294,11 +298,13 @@ CLAIM = {
         "units by attribution; a search that trains the selection over features has not been run."
     ),
     'C3s': (
-        "Six copies of ParT (two input sets, three random seeds) were retrained on the same 2 million jets used for "
-        "L-GATr, and all six finished 50 epochs. After 3 of 50 epochs, the full-input copy already reacted like the "
-        "released network to a shift of all particles that keeps the invariant mass fixed, while the kinematics-only "
-        "copies reacted about half as strongly or less. Whether the axis response holds across seeds and at this data "
-        "size is decided by the analysis of the final checkpoints, not yet run."
+        "Six Particle Transformers retrained from scratch on 2 million jets all keep the released network's main "
+        "behaviour on two separate test samples: rotating every particle about the jet axis, which leaves the jet mass "
+        "unchanged, turns 14–20 % more true W jets into Z, while untrained networks of the same design barely respond. "
+        "The released network's internal route (almost all of the mass response through the first class-attention "
+        "layer, one dominant head) is not reproduced; the retrained networks sit where untrained ones already do. "
+        "Whether this difference comes from the random seed or from the 50 times larger training set of the released "
+        "network is not yet separated."
     ),
     'C9': (
         "ParticleNet's W-versus-Z score responds the same way when every particle is shifted by +0.06 or by −0.06 rad in "
@@ -309,11 +315,13 @@ CLAIM = {
         "response, and a few dozen pooled channels kept alone reproduce the W/Z calls but not the 10-class calls."
     ),
     'C10': (
-        "Pre-registered test, not yet run: Particle Transformers were trained on labels that depend on only one mass "
-        "variable, either the invariant mass or the axis-moment mass. If the network trained on the invariant mass "
-        "ignores a shift that keeps the invariant mass fixed, ParT's axis response is learned from the data; if it "
-        "still responds, it comes from ParT's axis-relative inputs or architecture. Training has finished; a version "
-        "given only pair features learns the invariant-mass label to 97 %."
+        "Particle Transformers trained from scratch only to flag a jet-mass window respond to a rotation that leaves the "
+        "invariant mass unchanged at about 0.2 of their response to an equal real mass change; the released models "
+        "respond at about 0.75, on fresh jets and with two read-outs. So ParT with these inputs can learn a mostly "
+        "rotation-invariant mass (computed mainly from the pair features), and the released models' axis-relative "
+        "response is not forced by the architecture. The label built on the axis-relative mass equals the invariant-mass "
+        "label on almost every real jet, so whether the training target decides which mass is read, and which part of "
+        "the released training (10 classes, data size, training length, seed) produces the larger response, is open."
     ),
     'C5': (
         "ParticleNet, a graph network without attention trained on the same JetClass inputs, also calls more true W jets "
@@ -339,11 +347,15 @@ CLAIM = {
         "response, and under real mass changes the per-particle inputs carry most of the change while the pair features "
         "carry about a tenth to a fifth of the W-to-Z change. So ParT's mass sense comes mainly from particle positions "
         "measured from the axis, as in JEDI-linear, with a small nonzero contribution from the pair features. For mass "
-        "decreases the two routes do not add, so a share is not defined there."
+        "decreases the two routes do not add, so a share is not defined there. The response reproduces on further fresh "
+        "jets and with a second read-out of the network's output."
     ),
     'C4': (
-        "This is open: the test of whether quantities become readable in ParT's blocks in order of algebraic depth has not "
-        "been run."
+        "ParT does not build its jet variables with the mass last, as JEDI-linear does. Particle count and pT can be read "
+        "from the input embedding and the mass from the first block, but an untrained network of the same design gives "
+        "nearly the same read-outs, so these do not show learning. Prong-shape variables (tau21, tau32, which measure "
+        "whether the energy sits in one, two or three clusters) are read only by the trained network and build up over "
+        "blocks 1–4; which of them the network uses is not resolved, because the test edit changes them together."
     ),
     'D1': (
         "In earlier physics edits on JEDI-linear, changing only the mass of W jets (by scaling angles) to the Z mass turns "
@@ -698,6 +710,27 @@ EXPLAINER = {
         "for the positive shift only records which way the particles moved. Directions like these also exist in untrained "
         "networks and are not the axis-moment mass. The rebuilt neighbour graphs carry at most about 4 %, and a few dozen "
         "pooled channels reproduce the W/Z calls but not the 10-class calls."
+    ),
+    'P11_EXPLAINER': (
+        "Six Particle Transformers retrained from scratch all turn 14–20 % more true W jets into Z when every particle is "
+        "rotated about the jet axis at fixed mass, while untrained networks barely respond, so this behaviour comes with "
+        "training on JetClass. The released network's internal route, almost all through the first class-attention "
+        "layer with one dominant head, is not reproduced; the retrained values lie in the range untrained networks reach. "
+        "Seed and the 50 times smaller training set are not yet separated."
+    ),
+    'P16_EXPLAINER': (
+        "Particle Transformers trained only to flag a jet-mass window respond to a mass-preserving rotation at about 0.2 "
+        "of their response to a real mass change, against about 0.75 for the released models, and compute the mass "
+        "mostly from pairs of particles. So the architecture does not force the released models' axis-relative mass. "
+        "Because the two planted labels agree on almost every real jet, whether the label decides which mass is read, "
+        "and what in the released training produces the larger response, is open."
+    ),
+    'P18_EXPLAINER': (
+        "In ParT, particle count and pT can be read from the input and the jet mass from the first block, nearly as well "
+        "as in an untrained network of the same shape, so there is no mass-last stage and these read-outs do not show "
+        "learning. Prong-shape variables are what training adds: only the trained network reads them, and the share of "
+        "the response to randomising particle directions about the axis that one direction carries grows from about 0 to "
+        "about 0.7 over the blocks, while untrained networks stay flat. Which prong observable is used is not resolved."
     ),
     'C3_EXPLAINER': (
         "ParT responds to a shift of all particles that keeps the invariant mass fixed, although its pair features would "

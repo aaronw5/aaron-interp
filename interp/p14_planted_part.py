@@ -330,14 +330,14 @@ def main():
     log('P14 analysis DONE')
 
 
-LABEL = dict(a='a: invariant-\nmass label', b='b: axis-moment\nmass label', c='c: invariant label,\npair route only', s='s: shuffled\nlabels',
-             released_full='released\nParT_full (W-Z)', released_kin='released\nParT_kin (W-Z)')
+LABEL = dict(a='a: $m$\nwindow', b='b: $m_A$\nwindow', c='c: $m$ window,\npair only', s='s: shuffled\n(constant)',
+             released_full='released\nfull', released_kin='released\nkin')
 
 
 def plot(res, path):
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
     names = [n for n in ('a', 'b', 'c', 's', 'released_full', 'released_kin') if n in res['models']]
-    fig, axs = plt.subplots(1, 2, figsize=(11, 4.2), gridspec_kw=dict(width_ratios=[1.2, 1]))
+    fig, axs = plt.subplots(1, 2, figsize=(12, 4.4), gridspec_kw=dict(width_ratios=[1.2, 1]))
     ax = axs[0]
     for i, n in enumerate(names):
         r = res['models'][n]['R']; col = '#3b6fb6' if n in ('a', 'b', 'c', 's') else '#999999'

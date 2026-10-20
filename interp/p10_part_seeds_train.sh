@@ -19,6 +19,11 @@
 #   interp/p10_part_seeds_train.sh <full|kin> <seed> [<seed> ...]
 # PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 is set (allocator setting only; no effect on the computation).
 set -uo pipefail
+# The body is one function, parsed completely before it runs: bash reads a plain script incrementally, so a ./sync.sh that
+# rewrote this file while a 9 h training was waiting (2026-10-19, header comment lengthened) made the four jobs started before
+# that sync resume at a stale byte offset after the final test step ("line 54: port: command not found", "line 56: syntax error
+# near unexpected token `)'", exit 2; P11 diagnosis). Training and the final test had completed.
+main() {
 FEAT=$1; shift
 V=/j-jepa-vol/aaron-interp; PT=$V/ext/particle_transformer
 mkdir -p $PT/datasets/JetClass/Pythia
@@ -53,6 +58,11 @@ done
 rc=0
 for p in "${PIDS[@]}"; do wait $p || rc=1; done
 kill $MON 2>/dev/null
-for S in "$@"; do echo "== ${FEAT}_s$S"; grep -E "Test metric|Best epoch" $V/models/part_seeds/${FEAT}_s$S/train.log | tail -3; done
+# weaver prints one "Test metric" (accuracy) per test file group = per class file (100k jets each): print all ten and their mean
+for S in "$@"; do echo "== ${FEAT}_s$S"; grep -E "Running on test file group|Test metric" $V/models/part_seeds/${FEAT}_s$S/train.log \
+  | sed -E 's/.*file group ([A-Za-z0-9]+).*/\1/; s/.*Test metric ([0-9.]+).*/\1/' | paste - - \
+  | awk '{print; s += $2; n++} END {if (n) printf "mean over %d class files: %.5f\n", n, s / n}'; done
 echo "[$(date -u +%FT%TZ)] p10 train done rc=$rc"
-exit $rc
+return $rc
+}
+main "$@"; exit $?
