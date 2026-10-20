@@ -125,12 +125,17 @@ def job_sets():
     cells = [("-rc", "--recentre"), ("-aug", "--aug=0.08"), ("-rcaug", "--recentre,--aug=0.08")]
     x9w = {"x9w": dict(runs=[f"dsets-d64:64:{s}:{t}:{f}" for s in SEEDS for t, f in cells] + [f"hgq:0:{t}:{f}" for t, f in cells],
                        conc=6, cpu=6, mem=24, script="gpu_job_x9w.sh")}
-    return {"main": main, "extra1": extra1, "e18": e18, "x5": x5, "x8": x8, "x12": x12, "x9w": x9w}
+    # X9x: augmentation-range scan: Deep Sets d64 N = 64 trained with --aug A for A in {0.04, 0.16, 0.30} rad (stored axis, no
+    # recentring), seeds 0, 1, directory tags -aug04 / -aug16 / -aug30 (A = 0 and A = 0.08 reuse the main and X9w -aug runs).
+    # PFN / EFN of the same scan run as CPU Jobs (energyflow venv): train/x9w_cpu_batch.sh via job.sh (see interp/x9x_augrange.py).
+    x9x = {"x9x": dict(runs=[f"dsets-d64:64:{s}:-aug{t}:--aug={a}" for s in SEEDS for t, a in (("04", "0.04"), ("16", "0.16"), ("30", "0.30"))],
+                       conc=6, cpu=6, mem=14)}
+    return {"main": main, "extra1": extra1, "e18": e18, "x5": x5, "x8": x8, "x12": x12, "x9w": x9w, "x9x": x9x}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--set", default="main", help="main | extra1 | e18 | x5 | x8 | x12 | x9w")
+    ap.add_argument("--set", default="main", help="main | extra1 | e18 | x5 | x8 | x12 | x9w | x9x")
     ap.add_argument("--only", default="", help="comma-separated job names")
     ap.add_argument("--suffix", default="", help="job-name suffix for resubmits, written --suffix=-b")
     ap.add_argument("--conc", type=int, default=None, help="trainings running at once per GPU (default: the set's)")

@@ -124,12 +124,19 @@ CLAIM = {
         "fewer epochs than the official one."
     ),
     'A10r': (
-        "Three standard set networks (Particle Flow Network, Energy Flow Network, Deep Sets) respond to a small sideways "
-        "shift of the whole jet only because their training jets were never shifted: trained on jets randomly shifted by "
-        "up to 0.08 rad, they ignore such shifts (W jets called Z about 1 % or less, against about two thirds before) and "
-        "lose at most about one accuracy point. They do not learn a mass that is independent of the axis, since a shift of "
-        "0.12 rad, outside the trained range, again moves most W jets to Z. Uncertain: two seeds per network and one "
-        "augmentation range; JEDI-linear's augmented retrainings were under-trained and two of three kept the response."
+        "Three standard set networks (Particle Flow Network, Energy Flow Network, Deep Sets) trained on jets randomly "
+        "shifted sideways by up to some amount ignore whole-jet shifts up to about that amount and change their decisions "
+        "beyond it, towards heavier classes. Across training ranges from 0.04 to 0.30 rad the point where they start to "
+        "respond moves one-for-one with the range, so how large a shift they tolerate is learned from the training jets, "
+        "not fixed by the architecture. Uncertain: two seeds per setting, and JEDI-linear itself was not part of this scan."
+    ),
+    'A10c': (
+        "Inside the range of shifts they were trained on, Deep Sets and Energy Flow Networks partly cancel a shift by "
+        "reading off where the jet's centre is: removing the part of their internal response that lies along two "
+        "directions which linearly encode the centre position makes them respond to the shift again, more than removing "
+        "two random directions of the same size does. The Particle Flow Network does not show this clearly. Uncertain: "
+        "one sample, and the result passes a false-discovery-rate correction but not the stricter Holm correction at the "
+        "number of random draws used."
     ),
     'A3z': (
         "Moving every particle to a random direction around the jet axis, while keeping its momentum, its distance from the "
@@ -141,12 +148,12 @@ CLAIM = {
         "summary units compute is not known."
     ),
     'A13': (
-        "When each particle's direction around the jet axis is randomised at fixed mass moments, which destroys the "
-        "two-prong pattern of W jets, JEDI-linear changes about as many calls (7 %) as a boosted-tree classifier that uses "
-        "the two-prong variable tau21 (N-subjettiness ratio). Its extra change over a rotation and its accuracy loss lie "
-        "between a classifier that ignores prong shape and one that uses it, so JEDI-linear's calls depend on how particles "
-        "are arranged around the axis. Whether that dependence is prong shape is not determined: on these jets prong shape "
-        "adds little accuracy beyond mass and radial shape, so the edit has little power to tell."
+        "On W-like jets with two prongs, moving the softer prong around the jet axis changes JEDI-linear's decisions, and "
+        "this works through its jet-level summary units. Breaking that prong apart instead, with every particle's momentum, "
+        "distance from the axis and the jet mass kept the same, changes the same share of decisions, while a classifier "
+        "using the two-prong variable tau21 (N-subjettiness ratio) changes about 4 points more. So JEDI-linear responds to "
+        "where the prong is, not detectably to whether it is intact; a small effect, or one hidden behind its response to "
+        "jet mass, is not ruled out."
     ),
     'A12': (
         "Deep Sets and Linformer models retrained with every particle measured from the hardest particle (so the axis is "
@@ -206,7 +213,9 @@ CLAIM = {
         "by more than half of all decisions under the shift. The direct formula's failure depends on its inputs: without "
         "the invariant mass among them it does follow the shift, and no fitted program reproduces the network's dependence "
         "on the shift direction. So the agreement rate on ordinary jets cannot separate mechanisms; input edits that "
-        "separate candidate mechanisms can."
+        "separate candidate mechanisms can. A later test (2026-10-20) found the same with formulas from symbolic "
+        "regression and with trees on standard jet variables: close agreement on ordinary jets, but wrong decision "
+        "changes under a shift that keeps the axis spread fixed."
     ),
     'B5c': (
         "This was not supported. No hinge program of up to 50 terms on quantities measured about the jet axis reproduces "
@@ -228,7 +237,9 @@ CLAIM = {
         "symbolic regression was not run. A later comparison on four networks (2026-10-20) found that, once the boosted "
         "trees' settings are tuned on held-out jets, the if-statement program and trees of the same size follow the "
         "networks' changed decisions under the shift equally well, within about 2 points either way; the program keeps a "
-        "small lead only for a shift that holds the axis spread fixed, in JEDI-linear and the transformer."
+        "small lead only for a shift that holds the axis spread fixed, in JEDI-linear and the transformer. With symbolic "
+        "regression added and more samples, the program's lead over trees on the same sums swings from negative to "
+        "positive depending on the sample, and is the same for a shift in a random direction."
     ),
     'B6t': (
         "The same extraction procedure, if-statements on sums over pT-ranked particle windows fitted from the inputs to the "
@@ -236,7 +247,17 @@ CLAIM = {
         "transformer as well as on JEDI-linear. On each, it follows how the network changes its decisions when the jet is "
         "shifted about as well as boosted trees, decision trees or small neural networks of the same size whose settings "
         "were tuned on held-out jets, but not better; much larger surrogates follow the network more closely. Symbolic "
-        "regression was not tested, and the size measure (32 bits per stored number) favours the program."
+        "regression was tested later (2026-10-20): on standard jet variables it falls behind, but so do trees on those "
+        "variables. The size measure (32 bits per stored number) favours the program."
+    ),
+    'B6s': (
+        "Formulas found by symbolic regression on standard jet variables (mass, groomed mass, N-subjettiness ratios, "
+        "multiplicity, radial moments) reproduce the networks' decisions on ordinary jets almost as well as the "
+        "if-statement program of the same size, but do not follow how those decisions change when the jet is shifted "
+        "sideways; under a shift that keeps the axis spread fixed they do worse than a surrogate that never changes its "
+        "decision. Trees and hinge fits on the same standard variables fail the same way, so the cause is which variables "
+        "the surrogate is given, not the search method. Uncertain: the size of the gap depends on the sample and on "
+        "which formula is selected; some formulas of similar size match the program in JEDI-linear."
     ),
     'C1': (
         "In ParT, the fixed pair bias (a learned function of each particle pair's geometry: ln kT, ln z, ln ΔR, ln m²) "
@@ -504,6 +525,27 @@ CLAIM = {
 }
 
 EXPLAINER = {
+    'X9X_EXPLAINER': (
+        "Particle Flow Networks, Energy Flow Networks and Deep Sets trained on jets shifted at random by up to some "
+        "amount, between 0.04 and 0.30 rad, ignore whole-jet shifts up to about that amount and change their decisions "
+        "beyond it, towards heavier classes. The shift at which they start to respond moves one-for-one with the training "
+        "range in all three architectures, so the tolerated shift is learned from the data. In Deep Sets and Energy Flow "
+        "Networks part of the tolerance comes from a linear read-out of the jet centre; JEDI-linear was not in this scan."
+    ),
+    'E24W_EXPLAINER': (
+        "On two-prong jets, rotating the softer prong intact around the axis and scattering its particles in azimuth, both "
+        "with each particle's momentum, distance from the axis and the jet mass kept, change the same share of "
+        "JEDI-linear's decisions, about 7 %. A classifier using the two-prong variable tau21 changes about 4 points more "
+        "when the prong is broken up. JEDI-linear's response follows where the prong sits and runs through its jet-level "
+        "summary; a small effect of prong integrity, or one hidden behind a mass response, is not ruled out."
+    ),
+    'B6W_EXPLAINER': (
+        "Symbolic regression on standard jet variables finds short formulas that reproduce the networks' decisions on "
+        "ordinary jets almost as well as the rank-window if-statement program of the same size, but not how those "
+        "decisions change under a sideways shift of the jet. Trees and hinge fits on the same standard variables fail the "
+        "same way, so the difference comes from the variables, not from symbolic regression. The two edits meant to "
+        "separate the program from trees on the same sums changed under 2 % of decisions and could not decide between them."
+    ),
     'X9W_EXPLAINER': (
         "Particle Flow Networks, Energy Flow Networks and Deep Sets trained on jets randomly shifted by up to 0.08 rad stop "
         "calling W jets Z when the jet is shifted by 0.06 rad, while the same networks trained on unshifted jets send about "
@@ -982,8 +1024,8 @@ KEY_RESULT = {
         "exact formula: part of it depends on the shift direction, and the two sums are found as separate internal "
         "directions while their product is not found as one internal quantity. JEDI-linear copies retrained from scratch, "
         "with and without fixed-point training, read the mass the same way. Three standard set networks trained on "
-        "randomly shifted jets stop responding to shifts inside the trained range, so the behaviour comes from training "
-        "jets whose axis is always at the centre."
+        "randomly shifted jets stop responding to shifts inside the trained range, whatever its size, and respond beyond "
+        "it, so the behaviour comes from training jets whose axis is always at the centre."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "
@@ -1001,6 +1043,7 @@ KEY_RESULT = {
         "between jets, and standard surrogates such as boosted trees reproduce the decisions with fewer fitted pieces. "
         "Mass-type terms first appear in the dense layers of the fit, which is consistent with, but does not locate, where "
         "the network combines total pT and spread. A blind version of the procedure, applied to three other architectures, "
-        "follows their decision changes as well as tuned trees of the same size, not better."
+        "follows their decision changes as well as tuned trees of the same size, not better, and better than symbolic "
+        "regression on standard jet variables, which copies decisions on ordinary jets but not under the jet shift."
     ),
 }
