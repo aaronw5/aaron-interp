@@ -1277,6 +1277,51 @@ H14_EXPLAINER = [
   'The networks\' insensitivity to an extra soft particle does not depend on the test generator, so a generator-dependent multiplicity is not what they use. Their response to a collinear split comes from how momentum is shared among the hardest particles; the leading fraction alone is not it, and $p_T^D$ is not separated from the angular energy flow. Whether a model trained on Herwig counts particles is not yet measured.', None),
 ]
 
+H18_EXPLAINER = [
+ ('Question', 'Quark–gluon taggers ignore one added soft particle (H5v, H14), while JetClass and Top taggers follow the number of added diffuse particles (H13v). Is the difference due to the edits or to the models?', None),
+ ('Physics background',
+  'Multiplicity $N$ is IRC unsafe: adding a soft particle changes $N$ by one but leaves IRC-safe observables (energy-flow polynomials, EFPs) almost unchanged if the particle carries little $p_T$ or sits near the axis. A count-only reference is $\\mathrm{LR}(N)=\\log p(N|S)-\\log p(N|B)$; an IRC-safe network (EFN) and a GBDT on EFPs cannot count.', None),
+ ('Method',
+  '10,000 jets per dataset (QG Pythia and Herwig, JetClass, Top Landscape, hls4ml; seed 4181). Signal log-odds $s$. Edits on each model\'s own jets: e1 one on-manifold soft particle; $k=1..20$ copies of soft-half particles at their radius; H13 diffuse disc $\\rho=5,20$ GeV/area; c4 the disc particles at $r/20$ (count and $\\sum p_T$ kept, IRC-safe content $\\approx$ fixed); c5 one particle with the same mass and $\\sum p_T$; c0 positions permuted. '
+  'Per-particle response $\\overline{\\Delta s}/\\overline{\\Delta N_{\\rm seen}}$, slope in $k$, 95 % bootstrap ($B=1000$), sign-flip $p$, Holm over 512 tests; references LR($N$), GBDT(EFP+$N$), GBDT(EFP) trained per dataset; C2ST per edit.', None),
+ ('Result',
+  '$k$-slope per particle: QG networks $-0.068$ to $-0.081$, IRC-safe EFN $-0.060/-0.067$, LR($N$) $-0.077/-0.081$; JetClass W vs QCD networks $-0.11$ to $-0.12$ (LR $-0.041$). Count at fixed IRC-safe content: e1 QG networks $+0.002$ to $+0.024$ (LR $-0.095$), JetClass W networks $-0.05$ to $-0.11$; c4 per particle QG $-0.045$ to $+0.011$ (LR $-0.08$), JetClass W $-0.03$ to $-0.18$. Top-tagging networks move against the sign of LR($N$).', 'results/physics/h18_softcount.png'),
+ ('Verifier: a count-only edit that is the same on every dataset',
+  'Split a soft particle $i$ into two exactly collinear halves: $p_i\\to\\tfrac12 p_i+\\tfrac12 p_i$. Then $N\\to N+1$ while $\\sum p_T$, the $p_T$-weighted centroid and every IRC-safe observable are unchanged (EFN response exactly 0). Per added particle (fresh seed 9311): QG networks $-0.006$ to $-0.020$ (ParT_kin $-0.0082\\,[-0.0086,-0.0079]$) vs LR($N$) $-0.068$, i.e. 0.1–0.3 × LR($N$); JetClass W-vs-QCD networks $-0.055$ to $-0.102$ (ParT_kin $-0.0547\\,[-0.0564,-0.0531]$) vs LR($N$) $-0.044$, i.e. 1.2–2.3 ×. Second control: c4 minus the same particles merged into one (c4m, same added four-momentum): JetClass W $-0.023$ to $-0.185$ per extra particle, QG $-0.022$ to $+0.026$.', None),
+ ('Checks',
+  'Unedited accuracies and AUCs reproduce known values (ParT_full 10-class 0.860 / 0.866, JEDI 0.811, Top ParT AUC 0.986 / 0.985, QG ParT_kin 0.905). e1 and $k\\le 2$ are on-manifold (C2ST $\\le 0.55$); c4 and the disc are not (C2ST $\\ge 0.91$). Verifier corrections: e1 adds the jet\'s softest $p_T$, which is about 0.13 GeV in QG and 0.99 GeV in JetClass jets, so the e1 contrast is not a matched edit (with $p_T$ fixed at 1 GeV, QG networks give $-0.063$ to $-0.096$); c4 adds 10–40 GeV of core $p_T$, so it does not hold IRC-safe content fixed; about 40 % of Top LorentzNet\'s c4 response comes from the added four-momentum. Under exact splits a permuted PFN responds $+0.012$ and a redrawn JetClass ParT $-0.016$ per particle. Holm: 490 / 512 (H18), 291 / 336 (H18v) tests below 0.05.', None),
+ ('Physical significance',
+  'All taggers respond to soft particles that add energy flow at soft radii; for quark–gluon networks this is about what an IRC-safe network does. Responding to the count itself, at fixed IRC-safe content, depends on the model and dataset: present in JetClass networks, absent in quark–gluon networks. D7 and D10 are therefore not in conflict once D7 is scoped to count at fixed IRC-safe content.', None),
+]
+
+H19_EXPLAINER = [
+ ('Question', 'Top taggers trained on Top Landscape respond to the mass of the W-candidate subjet pair inside a top jet (D6); an earlier test found no such response in JetClass-trained ParT (H3v). Is that difference due to training, to the jet sample, or to how the test was built?', None),
+ ('Physics background',
+  'A hadronic top decays $t\\to bW\\to bq\\bar q\'$: three prongs with total mass $\\approx m_t$ and one pair at $m_W\\approx 80$ GeV. With three subjets $m^2=m_{12}^2+m_{13}^2+m_{23}^2-\\sum_k m_k^2$, so one pair mass can change at fixed $m$ if the others compensate. An edit that moves only the W pair can still change other substructure (subjet masses, $\\tau_{21}$); a classifier on those side effects only (MLPx) sets the level a network reaches without reading the pair mass, and MLPx plus $m_W$ (MLPxW) the level with it.', None),
+ ('Method',
+  'H4 edit: three exclusive-$k_T$ subjets; the pair closest to 80.4 GeV is moved rigidly to $m_W=60$ (T60) or 100 GeV (T100) at $|\\Delta m|<0.5$ GeV and $|\\Delta\\tau_{32}|<0.02$; control N gives the (b, harder W daughter) pair the same relative change with the W pair fixed; R is a rotation of matched displacement. Samples: JetClass tops and QCD with $p_T$ 550–650 GeV (5,000 + 5,000) and Top Landscape test jets. Models: JetClass ParT_full/kin, PN_full/kin; Top ParT, PN, LorentzNet, PFN, EFN; references retrained per dataset. '
+  'Metric $\\Delta_{W}-\\Delta_{N}$ in top log-odds, paired bootstrap, ratio to MLPx, Holm. Verifier: the same edits with every edited jet\'s inputs computed about its own constituent-sum axis (recentred), and a translation-only control TN (the unedited jet shifted by the N edit\'s axis shift).', None),
+ ('Result',
+  'As built in H19 (edited jets fed to the JetClass networks about the unedited jet\'s axis): Top-trained ParT, PN, LorentzNet 2.4–4.7 × MLPx on both samples; JetClass networks 0.43–1.34 × at T60, 3.1–4.3 × at T100. The N edit moves the axis by 0.13–0.15 (the W edit by about 0.02), and a pure translation of that size moves the JetClass networks by $-1.6$ to $-2.1$ and the Top networks by $|\\Delta|\\le0.1$. Recentred: JetClass ParT_full T60 $-1.80\\,[-2.03,-1.59]$ = 4.06 × $[3.48, 4.76]$ MLPx, ParT_kin 4.21 ×, PN_full 3.01 ×, PN_kin 3.25 × (Holm 0.0195); T100 4.1–5.7 ×; on fresh Top Landscape tops JetClass ParT_kin 3.76 ×, PN_kin 3.11 × at T60; T80 (pair moved onto 80.4) $\\approx0$, like MLPxW.', 'results/physics/h19_wpair.png'),
+ ('Checks',
+  'Unedited AUC: JetClass ParT_full 0.9987 on the JetClass sample, JetClass ParT_kin 0.981 and Top ParT 0.986 on the Top sample. H19\'s fixed-axis numbers reproduce on fresh rows, so the difference is in the input build. The figure shows the fixed-axis values (redraw pending). Remaining: after recentring the JetClass full models still lose $-1.1$ to $-1.4$ under the N control; only 4,360 fresh Top QCD rows remained; the QCD onto-80 test has $n=20/17$ jets.', None),
+ ('Physical significance',
+  'When the edited jets are built consistently, JetClass- and Top-trained ParT and ParticleNet all use the W-pair mass inside top at several times the side-effect level, on both samples, so the earlier JetClass-vs-Top contrast is not a training difference. JetClass networks respond strongly to a shift of the jet axis alone, which made a fixed-axis test read as a null. Whether H3v\'s ParT null had the same build is the next check.', None),
+]
+
+H16_EXPLAINER = [
+ ('Question', 'Taggers trained on hls4ml jets change many calls under a boost along the jet axis that keeps the invariant mass fixed, JetClass and Top taggers few (D9). Is the training sample the cause, or the architecture and inputs?', None),
+ ('Physics background',
+  'A boost along the jet axis with $|\\vec P|\\to\\lambda|\\vec P|$ keeps $m$ exactly and shrinks the opening angles by about $1/\\lambda$. To first order it is a $p_T$-only scaling P ($m\\to\\lambda m$) times an angle-only scaling A ($m\\to m/\\lambda$). A tagger reading only the invariant mass and boost-invariant shapes would not change; one reading $m/p_T$ or angles at the training $p_T$ would. With inputs $p_{T,i}/\\sum p_T$, P does nothing, so B and A coincide.', None),
+ ('Method',
+  'The same three small binary top taggers (JEDI-style d64, two-block transformer d32, PFN), with $p_T$-fraction or absolute-$p_T$ inputs and 2 seeds, trained on hls4ml (full $p_T$), hls4ml within $\\pm8\\%$ of the median $p_T$, and Top Landscape (89,473 jets per class each; 30 nets). Edits at $\\lambda=0.9$–1.1: B, P, A and a matched rotation R; M holds $m$ and $p_{T,J}$ and moves $m_A$ by $1/\\lambda$. Metric: % binary calls changed, 95 % bootstrap, exact McNemar, Holm. Verifier: fresh seed, independent boost, direction of the changes, TC (holds $m_A$, moves the centroid as M does).', None),
+ ('Result',
+  'At $\\lambda=0.9$ B changes 3.7–7.5 % of calls on every training sample, R 0.3–0.9 % (Holm $\\le3\\times10^{-18}$). With $p_T$-fraction inputs B equals A within 0.3 points and the training sample changes the rate by at most 1.2 points, inside the seed spread (0.85). With absolute-$p_T$ inputs the direction depends on the sample: hls4ml-trained nets move 4.0–6.6 % of jets to top and 0.3–0.9 % away; Top-trained nets 1.0–1.5 % to top and 2.5–4.0 % away. TC changes 4.4–13.8 % vs 1.3–2.8 % for its rotation. Of H12\'s five-class changes, 67–77 % are on W/Z jets.', 'results/physics/h16_boost_dataset.png'),
+ ('Checks',
+  'Unedited accuracies within 0.44 points of the training-time values on two samples; independent boost agrees to $8\\times10^{-13}$. Limits: two seeds; the narrow-window sample is a weak test because 65 % of the full hls4ml sample already lies in the window; dataset contrasts use binomial errors that ignore seed variance; binary task only; large models trained on hls4ml not tested.', None),
+ ('Physical significance',
+  'In small taggers the boost sensitivity is a property of the architecture, inputs and task, not of the hls4ml sample; the large hls4ml numbers of D9 come mostly from the W/Z vs top boundary. The networks are not invariant under translations at fixed $m$, $p_{T,J}$ and $m_A$, so which axis-relative quantity they read is not determined.', None),
+]
 
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
@@ -1331,5 +1376,8 @@ PAPER_EXPLAINERS = {
           ('Result explained: a boost along the jet axis at fixed invariant mass vs pT-only and angle-only scaling (claims D9, D1; H12, H12v)', H12_EXPLAINER, False),
           ('Result explained: pileup-like soft contamination vs ungroomed and soft-drop mass; mass or particle count (claims D10, D5, D4; H13, H13v)', H13_EXPLAINER, False),
           ('Result explained: quark–gluon taggers on Herwig jets and the hard-particle function under a split (claims D7, D5; H14)', H14_EXPLAINER, False),
+          ('Result explained: soft-particle count response, edit vs model, across four datasets (claims D7, D10, D5; H18, H18v)', H18_EXPLAINER, False),
+          ('Result explained: the W-pair mass inside top for JetClass- and Top-trained taggers on both samples, and the axis-build correction (claims D6, D11, D1; H19, H19v)', H19_EXPLAINER, False),
+          ('Result explained: boost sensitivity of identical small taggers trained on hls4ml or Top Landscape (claims D12, D9, D4m; H16, H16v)', H16_EXPLAINER, False),
           ('Earlier results in brief (claims D1, D2)', EARLIER_D, False)],
 }
