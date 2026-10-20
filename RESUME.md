@@ -36,3 +36,4 @@ Auto-resume cron prompt (session cron, 23,53 * * * *, 7-day expiry → re-create
 - 2026-10-19 19:29: A/B r6, C r2, D r3 resumed after the 7 pm reset. A/B r6 done (commit 89b3b13); A/B r7 wf_e675b403-7ee (main JEDI script, first_round 7, seed = round-6 review).
 - 2026-10-19: C r2 done (content in 5780469, message commit 63e64c5); C r3 wf_9459e25c-05d (main bigmodels script, first_round 3, seed = C2 review). P10 ParT retrains ETA 2026-10-20 05-06 UTC.
 - 2026-10-19: D r3 done (commit 2fd1e98); D r4 wf_9d42d1b6-f6e (main physics script, first_round 4, seed = open questions after D3).
+- 2026-10-20 00:29: resumed after the 00:20 reset. A/B r7 with science-loop-jedi-cluster-r7.js (pre-edit copy) wf_e675b403-7ee; C r3 with science-loop-bigmodels-cluster-c3.js (pre-edit copy) wf_9459e25c-05d; D r4 main physics script wf_9d42d1b6-f6e. Next rounds use the main scripts.
