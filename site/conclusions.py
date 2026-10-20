@@ -296,7 +296,9 @@ CLAIM = {
         "times the statistics on two fresh samples (W call 87 % → 27 %, rotation control unchanged). With a control that "
         "holds the W pair fixed, neither JEDI-linear nor ParT responds to the W-pair mass inside top, though ParT's top "
         "call drops when the subjet-pair masses are rearranged in general. This holds for models trained on the multi-class "
-        "hls4ml and JetClass data; top taggers trained on the Top Tagging Landscape do use the W-pair mass (claim D6)."
+        "hls4ml and JetClass data; top taggers trained on the Top Tagging Landscape do use the W-pair mass (claim D6). "
+        "The momentum edit used here kept the jet mass fixed (it is a boost along the jet axis); scaling only the momenta "
+        "lowers the W call to 48 % instead, and most calls changed by the boost are W or Z jets becoming top (claim D9)."
     ),
     'D2': (
         "In earlier physics edits on ParT_full (400 jets per class), making all tracks prompt removes most H → bb̄ calls "
@@ -345,7 +347,9 @@ CLAIM = {
         "particle also changes decisions, but that particle is softer than any in the data and its effect depends on where "
         "it is placed, so that test alone does not show counting. Quark–gluon taggers trained on Pythia jets are also not "
         "collinear safe, but they do not count particles (claim D7), so the multiplicity part holds only for the hls4ml "
-        "and JetClass models tested."
+        "and JetClass models tested. Pileup-like soft particles placed near the jet centre, where they add almost no "
+        "mass, also lower the JetClass ParT and ParticleNet and the Top Landscape ParT, LorentzNet and PFN efficiencies, "
+        "which supports the counting part for those models (claim D10)."
     ),
     'D6': (
         "We changed the mass of the W-candidate subjet pair inside top jets while holding the total jet mass and the "
@@ -360,7 +364,10 @@ CLAIM = {
         "particle or removing the softest one changes their output by at most about 0.03 in logit, while a count-only "
         "likelihood ratio moves 0.1. Splitting the hardest particle into two collinear pieces moves them toward gluon "
         "whether or not the particle count changes, so their collinear unsafety comes from how the hard particles share "
-        "energy. Which function of that energy sharing they use is not identified, and the split jets are unrealistic."
+        "energy. Which function of that energy sharing they use is not identified, and the split jets are unrealistic. "
+        "The same holds when the Pythia-trained taggers are tested on Herwig jets (added soft particle about −0.01 vs +0.09 "
+        "for counting), and the leading particle's momentum fraction alone is not what they use; this newer test has not "
+        "yet been checked by a verifier, and models trained on Herwig are still training."
     ),
     'D8': (
         "For each tagger, the closest stand-in built from standard IRC-safe jet shapes (mass, N-subjettiness, energy-flow "
@@ -370,9 +377,45 @@ CLAIM = {
         "response (37.7 vs 37.6 % of Z vs W calls changed). The networks' response to collinear splits and to the total "
         "pT, and ParT's Z vs W ranking, are not described by either stand-in."
     ),
+    'D9': (
+        "We boosted each jet along its own axis, which lowers its pT by 10 % and keeps its invariant mass exactly "
+        "fixed. Every tagger trained on the hls4ml jets changed a quarter to a third of its calls "
+        "(JEDI-linear 33 %, against 2.4 % for a rotation of the same size), so these taggers do not treat the jet mass as "
+        "a boost-invariant quantity; for JEDI-linear most changed calls are W or Z jets called top, the known total-pT "
+        "shortcut. JetClass and Top Landscape taggers changed several times fewer calls under the boost than under "
+        "pT-only or angle-only scaling. Why the two groups differ is unknown, since both were trained in narrow pT windows "
+        "on equivalent inputs."
+    ),
+    'D10': (
+        "Adding pileup-like soft particles over the jet lowers every network tagger's signal efficiency faster than it "
+        "lowers a groomed (soft-drop) mass tagger. JEDI-linear reacts to the mass the particles add, like a plain mass "
+        "window (W efficiency 87 % → 43 % at the lowest density). The JetClass ParT and ParticleNet and the Top Landscape "
+        "ParT, LorentzNet and PFN react mainly to how many soft particles are added, even when they sit at the jet centre "
+        "and add almost no mass. The jet-axis shift they cause is too small to matter; the pileup model is simplified and "
+        "none of the networks was trained with pileup."
+    ),
 }
 
 EXPLAINER = {
+    'H12_EXPLAINER': (
+        "A boost along the jet axis that keeps the invariant mass fixed changes about a third of the calls of every "
+        "hls4ml-trained tagger (JEDI-linear 33 % vs 2.4 % for a rotation) and several times fewer than pT-only or "
+        "angle-only scaling in the JetClass and Top taggers. For JEDI-linear most changed calls are W or Z jets called top, "
+        "the total-pT shortcut. The test cannot tell the invariant mass from the axis-moment mass, and why the two groups "
+        "of taggers differ is not known."
+    ),
+    'H13_EXPLAINER': (
+        "Pileup-like soft particles lower every network's signal efficiency faster than a soft-drop mass tagger's; the "
+        "few-milliradian axis shift they cause explains almost none of it. JEDI-linear reacts to the mass they add, "
+        "while the particle-ID JetClass networks and the Top ParT, LorentzNet and PFN react mainly to how many are added. "
+        "The pileup model is a simplified one and no network was trained with pileup."
+    ),
+    'H14_EXPLAINER': (
+        "Quark–gluon taggers trained on Pythia ignore one added soft particle on Herwig jets as they do on Pythia jets "
+        "(about −0.01 in logit vs +0.09 for a count-only classifier), so the no-counting result does not depend on the "
+        "test generator. Their split response comes from how momentum is shared among the hardest particles, not from "
+        "the leading fraction alone. Not yet verified; Herwig-trained models are still training."
+    ),
     'H4_EXPLAINER': (
         "At fixed jet mass and τ32, moving the W-candidate pair mass off 80 GeV lowers the top score of ParT, ParticleNet "
         "and LorentzNet as much as a classifier that uses the W-pair mass, and 2 to 4 times more than a classifier of the "

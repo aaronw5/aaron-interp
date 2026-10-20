@@ -1090,6 +1090,67 @@ X12_EXPLAINER = [
 ]
 
 
+H12_EXPLAINER = [
+ ('Question', 'Does a tagger read the jet mass as the Lorentz-invariant $m$, or as a combination of $p_T$ and opening angles tied to the $p_T$ range it was trained on? A boost along the jet axis separates the two: it changes $p_T$ and the angles but keeps $m$ fixed.', None),
+ ('Physics background',
+  'For a boosted jet $m^2\\simeq\\sum_{i<j}p_{T,i}\\,p_{T,j}\\,\\Delta R_{ij}^2$. A boost $B_\\lambda$ along the jet 3-momentum with rapidity $\\zeta=\\operatorname{arsinh}(\\lambda|\\vec P|/m)-\\operatorname{arsinh}(|\\vec P|/m)$ sends $|\\vec P|\\to\\lambda|\\vec P|$, keeps $m$ exactly and scales the opening angles by about $1/\\lambda$. '
+  'Two comparison edits: a $p_T$-only scaling $P_\\lambda$ (all four-vectors $\\times\\lambda$, so $m\\to\\lambda m$) and an angle-only scaling $A_\\lambda$ ($\\Delta\\eta,\\Delta\\phi\\to/\\lambda$ at fixed $p_T$, so $m\\to m/\\lambda$). To first order $B_\\lambda=A_\\lambda\\circ P_\\lambda$. '
+  'An invariant-mass reader does not respond to $B$; a reader of $p_T$ at fixed angles responds like $P$; a reader of angles at fixed $p_T$ responds like $A$. The axis-moment mass $m_A=\\sqrt{M_0M_2}$ (claim A4) is also unchanged by $B$ (mean change $\\le10^{-4}$).', None),
+ ('Method',
+  'Samples (seed 301): 20,000 hls4ml jets, 40,000 JetClass jets (random rows), 40,000 Top Landscape and 40,000 quark–gluon test jets. More than 20 models: JEDI-linear and 10 other hls4ml-trained networks (including JEDI-style retrains on $p_T$-normalised inputs and with flat-$p_T$ weights), ParT and ParticleNet on JetClass, ParT, ParticleNet, LorentzNet, PFN and EFN on Top, ParT, ParticleNet and EFN on quark–gluon. '
+  '$\\lambda\\in\\{0.8,0.9,1.1,1.25\\}$ (Top and QG also 0.95, 1.05). Controls: a rotation about the jet axis and a random translation, each with the same per-jet displacement as $B$; a weight-permuted JEDI-linear. '
+  'Metrics: % calls changed with 95 % bootstrap intervals, exact McNemar tests of $B$ against the rotation with Holm correction, class flows, $\\Delta$log-odds and the fit $\\Delta_B=a\\Delta_P+b\\Delta_A$.', None),
+ ('Result',
+  'At $\\lambda=0.9$ the hls4ml-trained models change 21–38 % of calls under $B$, against 0.3–4.2 % under the rotation (JEDI-linear 32.5 % [31.8, 33.1] vs 2.6 %; Holm $p\\le3\\times10^{-3}$ for every model and $\\lambda$). '
+  'JetClass ParT_full changes 4.5 % under $B$, 6.9 % under $P$ and 14.4 % under $A$; ParticleNet_full 4.3 / 8.1 / 14.5 %. Top ParT at $\\lambda=0.95$: 0.6 / 1.8 / 1.9 %. '
+  'JEDI-linear\'s W call falls from 87.3 % to 26.8 % under $B$, to 47.9 % under $P$, to 14.4 % under $A$; 62 % of the calls $B$ changes are W or Z jets becoming top. The classical mass windows and $\\tau_{32}$ cut do not change under $B$.', 'results/physics/h12_boost.png'),
+ ('Checks',
+  'Unedited accuracies reproduce the references within 0.6 points. An independent implementation of the boost (verifier) gives identical calls. A fresh sample (seed 917) gives JEDI-linear 32.9 % [32.2, 33.7] vs rotation 2.4 %, ParT_full 4.36 / 6.89 / 14.5 %, Top ParT at $\\lambda=0.9$ 0.94 / 3.34 / 4.05 %. '
+  'Limits: boosted Top and QG jets are mostly outside the training $p_T$ window (in-window fraction 0.32 and 0 at $\\lambda=0.9$); a classifier separates boosted from natural jets (C2ST AUC 0.69–0.93); absolute rates are not comparable across datasets (the same EFN changes 36.8 % of hls4ml calls and 4.4 % of Top calls).', None),
+ ('Verification (H12v) and corrections',
+  'Because $B$ keeps $m_A$ fixed as well as $m$, the test cannot tell an invariant-mass reading from an $m_A$ reading. JEDI-linear\'s W/Z → t flow also appears under the $p_T$-only edit (the $\\Sigma p_T$ shortcut of claim D1); at the W/Z boundary its response adds up, $\\Delta_B\\approx\\Delta_P+\\Delta_A$ (+1.45 = −1.36 + 2.81). '
+  'The $p_T$-normalised and EFN models can only form $m/p_T$-like quantities, so their $B=A$ follows from the inputs. The Top models were trained in a 550–650 GeV window, as narrow as hls4ml, so the training $p_T$ width does not explain why they respond less.', None),
+ ('Physical significance',
+  'The hls4ml-trained taggers, JEDI-linear included, call the same jet differently when it is seen at a different $p_T$ with its mass unchanged; for JEDI-linear most of this is the known total-$p_T$ shortcut toward top. The JetClass and Top taggers are much closer to boost invariant. What makes the two groups differ is not yet known.', None),
+]
+
+H13_EXPLAINER = [
+ ('Question', 'How do jet taggers respond to diffuse, pileup-like soft contamination, compared with ungroomed and groomed (soft-drop) mass taggers? Does the small jet-axis shift it causes matter? Do the networks react to the mass the soft particles add or to how many there are?', None),
+ ('Physics background',
+  'Pileup adds soft particles roughly uniformly in $\\eta$–$\\phi$ with transverse-momentum density $\\rho$ per unit area. For a jet of transverse momentum $p_{T,J}$ and radius $R$ the small-angle mass shift is $\\Delta m^2\\approx p_{T,J}\\sum_i q_i\\Delta R_i^2=p_{T,J}\\,\\rho\\,\\pi R^4/2$, so the ungroomed mass rises quickly with $\\rho$. '
+  'Soft drop (C/A declustering, $z_{\\rm cut}=0.1$, $\\beta=0$) removes soft wide-angle branches, so $m_{SD}$ changes little. A soft particle near the axis ($r\\to0$) adds almost no mass but still adds one constituent. The E-scheme axis moves by about $\\sum_i q_i\\vec r_i/p_{T,J}$.', None),
+ ('Method',
+  'Edit: add $\\mathrm{Poisson}(\\rho\\pi R^2/\\langle q\\rangle)$ massless particles uniformly in the $R=0.8$ disc, $\\rho\\in\\{5,10,20,40\\}$ GeV per unit area, with $q$ drawn from the softest-quartile constituents; recompute the axis and all inputs. Samples: 10,000 jets each from hls4ml, JetClass and Top Landscape (+100k QCD for rejection). '
+  'Controls: a SoftKiller-style cut; the same $\\sum q$ on the axis; the original jet translated by the induced axis offset; the edit about the stored axis; nulls; LorentzNet and an IRC-safe EFN. Verifier content controls: (c4) the same particles at $r/20$ (same count and $\\sum p_T$, $\\Delta m\\approx0$); (c5) one particle with the same kept $\\sum p_T$ and invariant mass; (c2k) that particle on the axis. '
+  'Metrics: signal efficiency, % calls changed, $1/\\varepsilon_B$ at $\\varepsilon_S=0.3,0.5$; McNemar tests with Holm correction (64 tests in H13, 240 in H13v).', None),
+ ('Result',
+  'hls4ml true-W efficiency at $\\rho=5$: JEDI-linear 87 → 42 %, ungroomed window $W(m)$ 93 → 36 %, soft-drop window $W(m_{SD})$ 77 → 78 %. JetClass at $\\rho=40$: ParT_full 80 → 26 %, $W(m)$ 75 → 0 %, $W(m_{SD})$ 72 → 61 %. Top ParT $1/\\varepsilon_B$ at $\\varepsilon_S=0.3$ falls by ×0.41 [0.31, 0.52] at $\\rho=40$. '
+  'The induced axis offset is 2.5–13 mrad (median), against 40–95 mrad between WTA and E-scheme axes; translating the jet by it changes 0–3.3 % of calls. '
+  'Content controls at $\\rho=5$ (edit / c4 / c5): JEDI-linear W efficiency 43.3 / 87.5 / 39.0 %; ParT_full 72.0 / 64.2 / 76.8 %; Top ParT retention 0.71 / 0.71 / 0.92.', 'results/physics/h13_panel.png'),
+ ('Checks',
+  'Unedited accuracies reproduce earlier values (JEDI-linear 0.808 / 0.811, ParT_full 0.858 / 0.856, Top ParT AUC 0.987) on two samples. Nulls change ≤ 0.3 % of calls. Recomputing vs freezing the axis changes the call rate by ≤ 0.8 points. The c5 mass match is exact to $10^{-12}$ GeV. '
+  'Limits: toy pileup (uniform disc, massless particles), no network trained with pileup; the $r/20$ control also moves soft particles relative to the hard prongs; at a matched Top working point ParT and EFN keep more tags than $\\mathrm{top}(m,\\tau_{32})$ at $\\rho=40$.', None),
+ ('Physical significance',
+  'No network tested behaves like a groomed observable under soft contamination. JEDI-linear loses efficiency through the mass the soft particles add, like an ungroomed mass window. The particle-ID JetClass networks and the Top Landscape ParT, LorentzNet and PFN lose it mainly through the number of added particles, which no mass-based tagger does. The axis-convention dependence of claim D4 involves offsets about ten times larger than pileup produces.', None),
+]
+
+H14_EXPLAINER = [
+ ('Question', 'Do quark–gluon taggers trained on one event generator (Pythia) count particles when tested on jets from another (Herwig 7.1)? Which property of the hardest particles makes them respond to a collinear split?', None),
+ ('Physics background',
+  'Gluons radiate more than quarks (colour factors $C_A=3$ vs $C_F=4/3$), so gluon jets have more particles and share momentum more evenly. Multiplicity $N$ is IRC unsafe and its modelling differs between generators ($\\langle N\\rangle_g$ 53.1 in Pythia vs 48.7 in Herwig). '
+  '$p_T^D=\\sqrt{\\sum_i z_i^2}$ with $z_i=p_{T,i}/\\sum_j p_{T,j}$ is also IRC unsafe and large for quark jets; $z_1$ is the leading-particle fraction.', None),
+ ('Method',
+  '40,000 Pythia and 40,000 Herwig test jets (seed 9311). Logit $\\ell=\\log p(g)-\\log p(q)$. Count-only reference $\\mathrm{LR}(N)=\\log\\mathrm{NB}_g(N)-\\log\\mathrm{NB}_q(N)$ from negative-binomial fits per generator; an IRC-safe-plus-count reference (gradient-boosted trees on EFPs with $d\\le5$ and $N$). '
+  'Edits: add one soft particle at a realistic position (C2ST 0.52), remove the softest, split the hardest collinearly, the same split with a merge that keeps $N$ ($\\Delta N=0$), $k$ random splits. Hard-core arm: change $p_T^D$ at fixed $z_1$, $z_1$ at fixed $p_T^D$, local $p_T^D$ (particles 3–4 only), and the leading-pair $\\Delta R$, all at fixed $N$ and positions; coefficient $\\beta=\\sum_j(\\Delta\\ell^{\\uparrow}_j-\\Delta\\ell^{\\downarrow}_j)/\\sum_j(\\Delta x^{\\uparrow}_j-\\Delta x^{\\downarrow}_j)$. Holm over 766 tests.', None),
+ ('Result',
+  'AUC Pythia → Herwig: ParT_kin 0.901 → 0.808, LorentzNet 0.918 → 0.800, $\\mathrm{LR}(N)$ 0.840 → 0.786. Adding one soft particle: networks −0.016 to −0.002 on Herwig (−0.024 to −0.004 on Pythia), $\\mathrm{LR}(N)$ +0.089 (+0.107). '
+  'Hardest split minus $\\Delta N=0$ control: networks −0.019 to +0.011, EFP+$N$ trees +0.058 to +0.084. $z_1$ at fixed $p_T^D$: ≤ 0.006 per +0.01. Local $p_T^D$ predicts a split response of +0.04 to +0.15 against a measured +0.08 to +0.22, but the IRC-safe EFN responds to the same edit (−0.082 per +0.01).', 'results/physics/h14_generator.png'),
+ ('Checks',
+  'Each unedited model reproduces its test accuracy (ParT_kin 0.827). The ported EFN matches its own test metrics. A permuted-weight ParT is the null. The split and pair-$\\Delta R\\to0$ edits are off-manifold (C2ST 1.0); the local $p_T^D$ arm has 262 jets. Not yet checked by a verifier; Herwig-trained ParT and ParticleNet are still training.', 'results/physics/h14_hardcore.png'),
+ ('Physical significance',
+  'The networks\' insensitivity to an extra soft particle does not depend on the test generator, so a generator-dependent multiplicity is not what they use. Their response to a collinear split comes from how momentum is shared among the hardest particles; the leading fraction alone is not it, and $p_T^D$ is not separated from the angular energy flow. Whether a model trained on Herwig counts particles is not yet measured.', None),
+]
+
 PAPER_EXPLAINERS = {
     'a': [('How to read this paper: JEDI-linear and what the letters (a, P, g, s, u, S, h4, h5, z) mean', ARCH_EXPLAINER, True),
           ('Result 1 explained: the first layer is 13 cuts, and summing them gives objects (claim A1)', A1_EXPLAINER, False),
@@ -1134,5 +1195,8 @@ PAPER_EXPLAINERS = {
           ('Result explained: EFP/ADO-chosen IRC-safe surrogates vs the networks under axis, translation, boost and split edits (claims D8, D4, D4m, D5; H8, H8v)', H8_EXPLAINER, False),
           ('Result explained: top taggers and the W-pair mass inside top, with positive and side-effect controls (claims D6, D1; H4, H4v)', H4_EXPLAINER, False),
           ('Result explained: quark–gluon taggers do not count particles (claims D7, D5; H5, H5v)', H5_EXPLAINER, False),
+          ('Result explained: a boost along the jet axis at fixed invariant mass vs pT-only and angle-only scaling (claims D9, D1; H12, H12v)', H12_EXPLAINER, False),
+          ('Result explained: pileup-like soft contamination vs ungroomed and soft-drop mass; mass or particle count (claims D10, D5, D4; H13, H13v)', H13_EXPLAINER, False),
+          ('Result explained: quark–gluon taggers on Herwig jets and the hard-particle function under a split (claims D7, D5; H14)', H14_EXPLAINER, False),
           ('Earlier results in brief (claims D1, D2)', EARLIER_D, False)],
 }
