@@ -38,7 +38,7 @@ spec:
             - matchExpressions:
               - key: kubernetes.io/hostname
                 operator: NotIn
-                values: [k8s-haosu-24.sdsc.optiputer.net, ry-gpu-01.sdsc.optiputer.net, nautilus-it-gpu05.fullerton.edu, fiona-prg1.cesnet.cz, k8s-chase-ci-07.calit2.optiputer.net, dtn-gpu2.kreonet.net, k8s-haosu-06.sdsc.optiputer.net, fiona8.ucsc.edu, k8s-haosu-22.sdsc.optiputer.net, k8s-haosu-09.sdsc.optiputer.net]
+                values: [k8s-haosu-24.sdsc.optiputer.net, ry-gpu-01.sdsc.optiputer.net, nautilus-it-gpu05.fullerton.edu, fiona-prg1.cesnet.cz, k8s-chase-ci-07.calit2.optiputer.net, dtn-gpu2.kreonet.net, k8s-haosu-06.sdsc.optiputer.net, fiona8.ucsc.edu, k8s-haosu-22.sdsc.optiputer.net, k8s-haosu-09.sdsc.optiputer.net, k8s-chase-ci-01.calit2.optiputer.net]
       containers:
       - name: gpu
         image: gitlab-registry.nrp-nautilus.io/jmduarte/weaver:latest
