@@ -52,3 +52,4 @@ Auto-resume cron prompt (session cron, 23,53 * * * *, 7-day expiry → re-create
 - 2026-10-20: describe-everything-well rule added to RULES of all three scripts. To resume the rounds running at that time use the pre-edit copies: A/B r11 science-loop-jedi-cluster-r11.js (wf_1d8d2ad4-fae), C r7 science-loop-bigmodels-cluster-c7.js (wf_7f21c30f-d84), D r8 science-loop-physics-cluster-d8.js (wf_0c1e4d3c-169).
 - 2026-10-20: C r7 done (commit af4d385); C r8 wf_53ea4ce7-261 (main bigmodels script, first_round 8, with the describe-everything-well rule). k8s-haosu-22 excluded.
 - 2026-10-20: D r8 done (commit de85544); D r9 wf_0d7cef81-b5e (main physics script, first_round 9). k8s-haosu-09 excluded.
+- 2026-10-20: C r8 done (commit 3df4d46); C r9 wf_498e7b84-c32 (main bigmodels script, first_round 9).
