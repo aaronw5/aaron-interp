@@ -73,3 +73,4 @@ Auto-resume cron prompt (session cron, 23,53 * * * *, 7-day expiry → re-create
 - 2026-10-22: A/B r18 done (commit 52184d4); A/B r19 wf_8acc4321-c62 (main JEDI script, first_round 19).
 - 2026-10-22: C r12 done (commit aaef71a); C r13 wf_8d87874b-dd0 (main bigmodels script, first_round 13).
 - 2026-10-22: D r16 done (commit 22289bc); D r17 wf_9e928ae5-ed8 (main physics script, first_round 17).
+- 2026-10-22 user question: do later layers compute the true invariant mass? Add to the next A/B and C seeds: layer-by-layer probes for true m vs m_A trained on jets where they differ (shift/turn-augmented, C2ST-checked), at every JEDI stage (a/P/g/S/h4/h5/z) and every ParT block incl. the pair-feature path; is true m decodable but unused (then a causal swap of that direction), or absent?
