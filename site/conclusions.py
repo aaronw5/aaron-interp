@@ -1012,7 +1012,30 @@ CLAIM = {
         "distinguishable from Top Landscape jets, and the JetClass ParT_kin network barely moves under the hadronisation "
         "change although it responds to the count edit. (Version 1, particle level: a 9 % rise moved ParT by 0.45.)"
     ),
+    'D27': (
+        "Multiplying every particle's energy in a jet by the same factor changes the jet mass and momentum but no "
+        "dimensionless shape. It changed the output of every tagger that sees absolute momenta, by about 0.2–1.1 times "
+        "the effect of the same mass change at fixed momentum, while classifiers given only shapes did not move, also on "
+        "jets that stay inside the training momentum range. So these taggers read the absolute energy scale, and a "
+        "jet-energy-scale error acts on them partly like a mass shift; the dependence is on mass and momentum together. "
+        "Still open: how the mass and momentum parts combine, and whether a tracker-only versus calorimeter-only scale "
+        "difference reflects particle-type inputs (it appears in kinematics-only models too)."
+    ),
+    'D28': (
+        "When the particles beyond about half the jet radius are removed from top jets and the jet's mass and momentum "
+        "are then restored, the large top taggers still lose most of their top calls, while a mass or groomed-mass cut "
+        "does not. Putting the lost number of particles back without changing any energy-flow observable does not "
+        "recover the loss, so the taggers are not counting particles here; the loss comes with weaker three-prong "
+        "structure (τ32, a measure of how three-pronged the jet looks, rises from 0.52 to 0.64). Still open: the "
+        "mass-restoring step stretches the jet's angles, so which shape feature the taggers lose is not identified."
+    ),
     'D25': (
+        "Version 3 (H69/H69v): with jet mass and momentum held fixed, the full-input JetClass ParT and ParticleNet "
+        "respond to a change in how radiation is spread inside the prongs (the energy-correlation ratio D2) 2–4.6 times "
+        "more than to a random reshuffling of particle momenta of the same size; their response to how momentum is "
+        "shared between prongs, and to τ21, is weaker and less certain. The kinematics-only ParT and the Top Landscape "
+        "taggers show no response beyond that reshuffling or beyond their weight-scrambled copies. On signal jets the "
+        "jet width cannot be changed without changing D2, so width and D2 cannot be told apart. "
         "Version 2 (H67/H67v): with the jet's mass and momentum held exactly fixed, the JetClass and Top Landscape "
         "taggers still change their output when the jet's momentum is shared less evenly between its two or three "
         "prongs (sub-jets), clearly more than when the prongs are only rotated by the same distance, and they also "
@@ -2139,6 +2162,37 @@ EXPLAINER = {
         "Relabelling particles between charged hadron, photon and neutral hadron while keeping their momenta fixed "
         "lowers the signal scores of the JetClass taggers that see particle types, roughly in proportion to the "
         "relabelled energy; taggers without type inputs do not move."
+    ),
+    'H69_EXPLAINER': (
+        "Edits that move one shape variable at a time at fixed jet mass and momentum change the JetClass and Top "
+        "Landscape tagger outputs more than a prong rotation of the same particle displacement, for prong sharing, D2 "
+        "and τ21 alike; the jet width could almost never be changed alone on signal jets."
+    ),
+    'H69V_EXPLAINER': (
+        "Against a random reshuffling of particle momenta of the same size, and with ratios taken over the same jets, "
+        "about half of the response disappears: the full-input JetClass taggers still respond to D2, less clearly to "
+        "prong sharing and τ21, while kinematics-only ParT and the Top taggers do not exceed the floor or their "
+        "scrambled copies. Width can be changed on some signal jets, but only together with D2."
+    ),
+    'H71_EXPLAINER': (
+        "Scaling all particle energies by a common factor, which leaves every dimensionless shape unchanged, moves the "
+        "output of every tagger that sees absolute momenta, by 0.2–1.1 times the response to the same mass change at "
+        "fixed momentum; shape-only classifiers do not move."
+    ),
+    'H71V_EXPLAINER': (
+        "The response is the same on jets that stay inside the training momentum range, so it is not caused by leaving "
+        "that range. A momentum change at fixed mass also moves the outputs, by about a quarter of the mass effect, and "
+        "the effects do not add, so the taggers use mass and momentum together; the tracker-versus-calorimeter "
+        "difference appears in kinematics-only models too."
+    ),
+    'H72_EXPLAINER': (
+        "Removing the outer particles of top jets moves top taggers from about the same radius as a mass cut, and "
+        "restoring the mass and momentum afterwards leaves most of their loss, unlike a mass or groomed-mass cut."
+    ),
+    'H72V_EXPLAINER': (
+        "Putting the removed number of particles back, by splitting particles into exactly collinear halves, does not "
+        "recover the loss, so it is not particle counting; it comes with weaker three-prong structure. The small net "
+        "responses of the Top PFN and quark–gluon taggers are a count effect and a shape effect cancelling."
     ),
     'H68V_EXPLAINER': (
         "Swapping labels between charged and neutral particles of equal total energy, which leaves the jet's "
