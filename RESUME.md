@@ -71,3 +71,4 @@ Auto-resume cron prompt (session cron, 23,53 * * * *, 7-day expiry → re-create
 - 2026-10-22: A/B r17 done (commit db012d2); A/B r18 wf_36780dad-f18 (main JEDI script, first_round 18). job.sh now tracked.
 - 2026-10-22: D r15 done (commit f065651); main session launched anrunw-ai-d-h66-score3; D r16 wf_aa725f8c-e1a (main physics script, first_round 16; finish H66 + H59).
 - 2026-10-22: A/B r18 done (commit 52184d4); A/B r19 wf_8acc4321-c62 (main JEDI script, first_round 19).
+- 2026-10-22: C r12 done (commit aaef71a); C r13 wf_8d87874b-dd0 (main bigmodels script, first_round 13).
