@@ -513,7 +513,9 @@ CLAIM = {
         "overturned the ParT null: JEDI-linear's response then lies within the range of retrained classifiers that never "
         "see the pair mass, and below every classifier given the pair mass at 100 GeV, on two samples. Still uncertain: "
         "at 90 GeV JEDI-linear raises its top score while every reference lowers it, and on hls4ml jets the classifiers "
-        "with and without the pair mass are equally accurate, so the test for pair-mass use is weak."
+        "with and without the pair mass are equally accurate, so the test for pair-mass use is weak. On W and Z jets "
+        "JEDI-linear also responds to how momentum is shared between the two prongs while its mass variable and total "
+        "pT stay fixed (claim D18), so it uses more than mass windows plus total pT there."
     ),
     'D2': (
         "In earlier physics edits on ParT_full (400 jets per class), making all tracks prompt removes most H → bb̄ calls "
@@ -522,7 +524,9 @@ CLAIM = {
         "leptonic-top calls, and edits of π⁰ → γγ pairing and of the heavy-quark dead cone have no measurable effect. At 10 "
         "times the statistics the same signs return; a sharper test caps every track's displacement significance just "
         "above threshold, which keeps the number of displaced tracks and costs 3 points, while keeping only two displaced "
-        "tracks costs 61. Small new effects (lepton charge in H → ℓνqq′, charm dead cone) were not rerun."
+        "tracks costs 61. Small new effects (lepton charge in H → ℓνqq′, charm dead cone) were not rerun. The count "
+        "statement holds for H → bb̄ against QCD; for H → bb̄ against H → cc̄ the networks also respond to the "
+        "displacement values at fixed counts (claim D19), without evidence that this is a lifetime reading."
     ),
     'D4': (
         "Measuring particle positions from another standard jet axis (the winner-take-all axis, which follows the harder "
@@ -680,9 +684,30 @@ CLAIM = {
         "of particle charges): swapping every particle for its antiparticle, with all momenta unchanged, moves their quark "
         "score by about 0.24 log-odds against the charge sign, about 85 % of what a fit on jet charge alone does, while "
         "random-weight networks barely move. This is consistent with the quark jets of this Z+jet sample being mostly "
-        "u-quark jets, a property of the sample rather than of quark versus gluon radiation, though that origin was not "
-        "tested. They also score soft photons toward quark and soft neutral hadrons toward gluon, but random-weight "
-        "networks move by similar amounts, and a null trained on shuffled labels is still missing."
+        "u-quark jets, a property of the sample rather than of quark versus gluon radiation. That sample property is now "
+        "measured: quark jets carry net positive jet charge in both Pythia and Herwig, gluon jets none, and the networks "
+        "keep their Pythia charge rule on Herwig jets, where the sample supports a weaker one. They also score soft "
+        "photons toward quark and soft neutral hadrons toward gluon, but random-weight networks move by similar amounts "
+        "and those relabelled jets are easy to tell from real ones. Nulls trained with a second seed and on shuffled "
+        "labels are still running."
+    ),
+    'D18': (
+        "When momentum is moved between the two prongs of a jet while the jet's total four-momentum stays exactly "
+        "fixed, every tagger tested on JetClass and hls4ml changes its W/Z score: balanced prongs look more W/Z-like, "
+        "as in boson decays, and asymmetric prongs less, as in QCD splittings (about −2.5 log-odds for ParT on W jets). "
+        "A rotation of the same angle that keeps both prongs fixed barely moves the scores, so the response follows the "
+        "prong configuration. A classifier that never sees the momentum fraction z predicts the median response, "
+        "because at fixed mass z, the prong separation and the prong masses change together, so whether the networks "
+        "read z itself is not known."
+    ),
+    'D19': (
+        "When the number of displaced tracks (tracks well separated from the collision point) above every "
+        "significance threshold is held fixed, ParT and ParticleNet still respond to how displaced the tracks are when "
+        "telling H→bb from H→cc. About half of that response also appears when the displacements are changed in random "
+        "directions by the same amount, and changing non-displaced tracks moves every class, so part of it is a "
+        "reaction to any change of the impact-parameter pattern. In JetClass at equal track counts b-jet tracks are "
+        "less displaced than c-jet tracks, opposite to the networks' direction, so use of the longer B-hadron lifetime "
+        "is not shown; whether they use the mass of the displaced tracks is open."
     ),
     'D17': (
         "JetClass ParT and ParticleNet, including the versions that see only four-momenta, lower their W, Z and H→bb "
@@ -954,6 +979,37 @@ EXPLAINER = {
         "outside 12 random-weight networks. ParticleNet does respond to flipping the hardest charged particle once the "
         "flip is signed by that particle's charge. The neutral-species response reproduces in direction, but random "
         "PN networks move by similar amounts, so only its direction separates it from the null."
+    ),
+    'H42_EXPLAINER': (
+        "Quark jets in the quark–gluon Z+jet samples carry net positive jet charge (+0.097 in Pythia, +0.067 in Herwig) "
+        "and gluon jets none, so a tagger can learn 'positive charge means quark' from the sample's u-quark excess. "
+        "Swapping all charges in gluon jets gives jets a classifier cannot tell from real ones, so that edit stays "
+        "realistic. The Pythia-trained networks keep the same charge rule on Herwig jets; second-seed and "
+        "shuffled-label trainings are still running."
+    ),
+    'H44_EXPLAINER': (
+        "Shrinking track displacements inside each significance bin, so that the number of displaced tracks above "
+        "every threshold is unchanged, moves H→bb jets toward H→cc in ParT and ParticleNet, while random-weight "
+        "networks do not move. The H→bb-versus-QCD score barely changes under the same edit. The edit of the "
+        "displaced-track mass gave signs that differ between networks and jet types, so the vertex-mass question is open."
+    ),
+    'H44V_EXPLAINER': (
+        "On fresh jets the count-preserving shrink reproduces, but changing each displacement in a random direction "
+        "by the same amount moves H→bb jets toward H→cc just as far, and the same shrink on non-displaced tracks moves "
+        "every class. In the data at equal counts b-jet tracks are less displaced than c-jet tracks, so the networks' "
+        "direction is not the lifetime difference; they use impact-parameter values, not shown to be lifetime."
+    ),
+    'H45_EXPLAINER': (
+        "Moving momentum between the two prongs at exactly fixed jet four-momentum changes the W/Z score of every "
+        "tagger: balanced prongs look more W/Z-like, asymmetric ones less. A classifier that never sees the momentum "
+        "fraction predicts a similar median response, because prong separation and prong masses change with it, so "
+        "whether the taggers read the momentum fraction itself is open."
+    ),
+    'H45V_EXPLAINER': (
+        "On fresh jets every number reproduces within 0.24 log-odds. Rotating by the same angle while keeping both "
+        "prongs fixed barely moves the JetClass and JEDI-linear scores, so the response follows the prong configuration. "
+        "Cell by cell the full JetClass models respond up to twice as strongly as the reference on asymmetric jets and "
+        "less on balanced ones, and the edit also changes the reclustered prong masses, so the variable read is open."
     ),
     'H41_EXPLAINER': (
         "Moving soft radiation from between the two prongs to outside them, at fixed mass and τ21, lowers the W, Z and "
