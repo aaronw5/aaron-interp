@@ -633,26 +633,12 @@ CLAIM = {
         "changes none."
     ),
     'D4m': (
-        "When the axis convention changes, the W and Z decisions move in the direction each model's own axis-relative mass "
-        "predicts: models trained on the centred axis turn W into Z, and models trained about the hardest particle, "
-        "evaluated on the centred axis, turn Z into W. A control translation of the same size that keeps the formula's "
-        "value fixed still changes about a third as many decisions in centred-trained models, but with no W-to-Z flow; so "
-        "the direction and most of the number of changes follow the formula, and the rest is general sensitivity to moved "
-        "inputs. For hardest-trained models the same control moves many decisions toward Z, so they also read a second "
-        "spread that does not change under a shift. A stand-in classifier that uses the mass about the given axis "
-        "reproduces JEDI-linear's axis response (37.7 vs 37.6 % of Z vs W calls), but only partly ParT's. Confidence is "
-        "limited, and a rotation about the axis turned out not to be a valid control for these near-radial models. "
-        "Small top taggers also change many decisions under a shift that keeps that axis-relative mass fixed, and JetClass "
-        "ParT and ParticleNet react strongly to an axis shift alone, so the general-sensitivity part is larger than first "
-        "measured. A first, unverified measurement shows the same strong response to a shift alone in the Top Landscape "
-        "ParT and ParticleNet when they are fed jets on a fixed axis. On Top Landscape and quark–gluon taggers the axis "
-        "change is exactly a shift of all particle angles, the share of changed decisions follows each model's response "
-        "to a random shift of the same size, and the part that depends on the shift's direction is no larger than in "
-        "untrained networks with shuffled weights; on these datasets general sensitivity to moved inputs accounts for "
-        "the response. A first, unverified comparison with six untrained networks of each architecture (rather than "
-        "shuffled weights) gives the same picture: the trained top and quark–gluon taggers' direction effect is never "
-        "outside the untrained range, and its sign depends on the decision threshold. Second-seed and shuffled-label "
-        "trainings, which test whether the sign is stable across trainings, are still running."
+        "On hls4ml and JetClass, when the axis convention changes, W and Z decisions move in the direction each model's "
+        "own axis-relative mass predicts, but part of the change is general sensitivity to shifted inputs. On Top "
+        "Landscape and quark–gluon taggers, the part of the response that depends on where the new axis points is no "
+        "larger than in 12–20 untrained networks of the same type, and it changes between two training seeds by about as "
+        "much as it differs from zero. So on those datasets the axis response is accounted for by generic sensitivity to "
+        "translated inputs; a small learned direction effect hidden inside the untrained range is not excluded."
     ),
     'D3': (
         "With 10 times more jets, random JetClass rows, the corrected η build and a matched control for each edit, the "
@@ -688,20 +674,12 @@ CLAIM = {
         "radiation pattern inside the prongs (claim D13)."
     ),
     'D7': (
-        "Trained quark–gluon taggers (ParT, ParticleNet, LorentzNet) barely use the particle count itself: splitting soft "
-        "particles into exactly collinear halves, which adds particles and changes nothing infrared- and collinear-safe, "
-        "moves them by a tenth to a third of what a count-only likelihood ratio does, on Pythia and Herwig jets. Soft "
-        "particles that also add energy flow do move them toward gluon, about as much as a network that cannot count. "
-        "Splitting the hardest particle moves them toward gluon whether or not the count changes, so their collinear "
-        "unsafety comes from how the hard particles share energy; which function of that sharing is not identified. "
-        "The same holds for ParT and ParticleNet trained on Herwig jets instead of Pythia jets, so the absence of counting "
-        "is not a property of one generator; training on Herwig shifts the count response slightly toward quark, by an "
-        "amount not yet compared with the variation between independent trainings. Removing a jet's softest particles "
-        "while keeping the count moves all of them toward quark, so they do use the soft particles' momenta and positions. "
-        "Moving a single particle to a new angle at fixed momentum also changes their output, but which soft-emission "
-        "quantity they follow (the gluon/quark emission density in the Lund plane, pT^D or girth) is not established: "
-        "the Lund-plane test moved momentum out of the hardest particle at the same time, and that transfer carried "
-        "most of the effect attributed to the emission's position."
+        "When soft particles are split into exactly collinear halves, which adds particles and changes nothing "
+        "infrared- and collinear-safe, quark–gluon taggers move by only a few percent of what a pure particle counter "
+        "does, and a second training seed gives the same small response. This 'no response to the count beyond energy "
+        "flow' holds for such hand-made edits only: when Pythia's hadronisation settings are changed so that real jets "
+        "carry about 10 % more or fewer particles, the same networks do move toward the count (claim D22). How the "
+        "networks would respond to a real-data difference in multiplicity is therefore not settled by the hand-made edits."
     ),
     'D8': (
         "For each tagger, the closest stand-in built from standard IRC-safe jet shapes (mass, N-subjettiness, energy-flow "
@@ -814,6 +792,23 @@ CLAIM = {
         "kept particles, follow only about 0.4 of a groomed-mass classifier's response plus an extra penalty that does "
         "not depend on whether the groomed mass moves toward or away from the signal peak. What that penalty reads, "
         "possibly the shape of the prong the particles join, is not known."
+    ),
+    'D22': (
+        "When Pythia's hadronisation settings alone are changed so that quark and gluon jets carry about 10 % more or "
+        "fewer particles, with jet mass, girth and the output of an infrared- and collinear-safe network nearly "
+        "unchanged, Pythia-trained ParT, ParticleNet, LorentzNet and PFN taggers move their scores in the direction a "
+        "particle-count classifier predicts: the kinematic-only networks by a third to two-thirds of its response, those "
+        "with particle identity by most or all of it. So on realistic jets these networks use hadron-level information "
+        "that IRC-safe energy flow does not carry. Whether they read the number of particles or the softer momenta of "
+        "the extra hadrons is open, because every hadronisation setting tested changes both, and networks trained on "
+        "Herwig jets respond much less."
+    ),
+    'D23': (
+        "Given the same nine physics edits, networks trained on JetClass and the Top Tagging Landscape change their "
+        "decisions most like a groomed-mass-plus-substructure tagger, while networks trained on hls4ml jets change them "
+        "most like a plain jet-mass window. The panel has no groomed-mass-only tagger, so it cannot say whether the "
+        "networks use substructure variables such as τ21, D2 or τ32 beyond the groomed mass, and with the few random-weight "
+        "copies used the similarities do not pass an exact multiple-testing correction."
     ),
     'D19': (
         "When the number of displaced tracks (tracks well separated from the collision point) above every "
@@ -1699,6 +1694,41 @@ EXPLAINER = {
         "14-hardest-particle boundary appears in none of them, although the fixed-point ones form the same zero-bit masks. "
         "Pure pT-only or angle-only first-layer cuts follow from how few weights fixed-point training keeps; the retrained "
         "copies are less accurate and trained far fewer epochs than the official one."
+    ),
+    'H54_EXPLAINER': (
+        "Regenerating quark/gluon jets with only Pythia's hadronisation changed moves the particle count by about 11 % "
+        "while infrared- and collinear-safe shapes stay nearly fixed. The IRC-safe network does not move, a count "
+        "classifier moves strongly, and the Pythia-trained taggers move part of the way toward the count classifier. "
+        "Count and soft-hadron momentum change together, so which of them is read is open."
+    ),
+    'H54V_EXPLAINER': (
+        "A rerun with new seeds reproduces every shift, and changing only the string transverse-momentum width, where the "
+        "IRC-safe network moves the other way, gives the same beyond-energy-flow response. Over 30 hadronisation settings "
+        "each tagger's shift is a weighted mixture of the IRC-safe network's and the count classifier's, with a smaller "
+        "count part for networks trained on Herwig jets."
+    ),
+    'H55_EXPLAINER': (
+        "Infrared- and collinear-safe classical taggers ignore exact collinear splits, as expected, while trained networks "
+        "change a few percent of their calls. Under the full edit library, JetClass and Top networks respond most like "
+        "groomed-mass-plus-substructure taggers; the verifier showed that hls4ml networks respond most like a plain mass "
+        "window (see H55v)."
+    ),
+    'H55V_EXPLAINER': (
+        "The nearest-tagger result depends on the dataset: groomed-mass-plus-substructure for JetClass and Top, plain mass "
+        "window for hls4ml Z and top. The reported significances rested on an approximation to too few random-weight "
+        "copies, and a groomed-mass-only tagger is needed to tell groomed mass from substructure use."
+    ),
+    'H56_EXPLAINER': (
+        "A second training seed leaves the axis-direction effect inside the range of untrained networks and moves it by up "
+        "to 1–2 percentage points. The small response to particle number at fixed energy flow repeats across seeds. "
+        "Networks trained on unrelated labels learn a constant output and give no spread, and the jet-charge test waits "
+        "for its retrained networks."
+    ),
+    'H56V_EXPLAINER': (
+        "On new jets and against 12–20 untrained networks per architecture, no trained tagger shows an axis-direction "
+        "effect outside the untrained range. The count response at fixed energy flow reproduces, and the change between "
+        "Herwig- and Pythia-trained networks is several times the seed-to-seed difference. Error bars at a fixed decision "
+        "threshold understate how much such numbers move between jet samples."
     ),
 }
 
