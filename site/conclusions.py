@@ -609,6 +609,27 @@ CLAIM = {
         "image of a real jet, only about 3 % change, close to the kinematics-only models. The mirror sensitivity therefore "
         "comes from the sign pattern of charge and impact parameter, not from the jet axis."
     ),
+    'C18 v3': (
+        "The spread of a jet's particles about the stored jet axis has two parts: the spread about the jet's own "
+        "momentum-weighted centre, and how far that centre sits from the axis. ParT responds to a change of the first "
+        "part almost exactly as to a real mass change of the same size, and to the second at about three quarters of that, "
+        "for offsets from 0.005 to 0.06 rad. ParticleNet gives the offset less weight, by an amount that depends on its "
+        "direction and size; the spread edits were possible only in jets with two hard particles of similar momentum."
+    ),
+    'C21': (
+        "ParticleNet (a graph network) and ParT (a transformer) build compatible early particle features: ParticleNet's "
+        "features after its first or second layer, passed through one linear map, can replace ParT's own at ParT's first "
+        "blocks at a cost of about 1 to 2 points of accuracy, against about 9 for an untrained ParticleNet. How strongly the "
+        "combined network responds to a mass-preserving shift of the jet axis depends on both the features and the layers "
+        "that read them. Only the full-input models and one read-out were tested."
+    ),
+    'C22': (
+        "Our L-GATr, a tagger built to respect Lorentz symmetry, decides from its Lorentz-invariant channels, and two groups "
+        "of them hold overlapping copies of the same information, so removing either group alone hides how much it carries. "
+        "A boost along the beam changes about 3 % of its decisions, only through the inputs that tell it the lab frame (a "
+        "time reference vector and the particle energies). Results are from an interim checkpoint; whether it, unlike ParT, "
+        "ignores the jet axis at fixed invariant mass is still untested."
+    ),
     'C18': (
         "In real jets the momentum-weighted centre of the particles sits a few hundredths of a radian from the stored jet "
         "axis. Moving the particles so that this centre lands on the axis, without changing the jet's mass, changes ParT's "
@@ -1552,6 +1573,25 @@ EXPLAINER = {
         "random direction does, usually by a negligible amount. A small minority have reproducible causal roles; a few that "
         "follow the axis-based jet mass reproduce about a quarter of the W response to a real mass change. Which neurons "
         "count as mass neurons changes between samples."
+    ),
+    'P43_EXPLAINER': (
+        "When two hard particles are moved apart or together so that the jet's spread changes while its momentum-weighted "
+        "centre stays fixed, ParT responds almost exactly as to a real mass change of the same size. When the centre is "
+        "moved off the stored axis on unedited jets, it responds at about three quarters of that, independent of the shift "
+        "size. An earlier estimate of one third came from measuring on jets that had already been edited."
+    ),
+    'P44_EXPLAINER': (
+        "In our Lorentz-symmetric tagger the class decision runs through its Lorentz-invariant channels, two groups of which "
+        "back each other up. A boost along the beam changes about 3 % of calls, only through the time reference and the "
+        "particle energies; boosting those together with the particles leaves the calls unchanged, as the design requires. "
+        "Its response to the jet axis at fixed invariant mass waits for the final checkpoint."
+    ),
+    'P45_EXPLAINER': (
+        "ParticleNet's particle features after its first two graph layers can stand in for ParT's own at ParT's first "
+        "blocks through one linear map, at about 1 point of accuracy; after its third layer they cannot. Running the "
+        "stitch in both directions shows that the size of the response to a mass-preserving axis shift depends on both the "
+        "features and the layers that read them, not on ParticleNet's last layers alone. Which part of ParticleNet's first "
+        "two layers makes its response smaller is open."
     ),
     'P23_EXPLAINER': (
         "Shifting all of a jet's particles by a small angle changes ParT's W-versus-Z score mostly in the same way for a "
