@@ -636,11 +636,7 @@ CLAIM = {
         "networks learned a similar solution, has not been tested."
     ),
     'C6': (
-        "No trained L-GATr, a tagger built to respect the symmetries of special relativity, is published for JetClass, so "
-        "one was trained with the authors' code and settings; the training has finished. The planned test did not run, "
-        "because the cluster placed it on a machine with a failed GPU and the relaunch was blocked. The network's code "
-        "shows that rotating the jet about the beam or moving the stored axis cannot change what it sees, so only a boost "
-        "along the beam and rearrangements at fixed invariant mass can test the claim; it remains untested."
+        "A boost of every particle along the beam keeps a jet's invariant mass but moves its particles relative to ParT's stored jet axis. Our L-GATr, a tagger built to respect the symmetries of special relativity, does not change its W-versus-Z score under this boost, while ParT responds at about 0.8 of a real mass change. So the axis-dependent mass reading found in ParT is absent in L-GATr. Whether L-GATr reads the invariant mass itself or the spread of particles about its own momentum direction is not yet separated, because the fixed-mass rearrangements tested keep both unchanged."
     ),
     'C23': (
         "ParT's attention is mostly a fixed formula of particle-pair quantities; our Lorentz-symmetric tagger L-GATr's "
@@ -657,6 +653,12 @@ CLAIM = {
         "mass change in the kinematics-only model, so it moves further from ParT, not closer; about half of that drop "
         "also appears with an equally poor fit that keeps the information. A training control for the kinematics-only "
         "model is still missing."
+    ),
+    'C25': (
+        'In L-GATr each hidden channel of the feed-forward layers is switched on and off by its own scalar part. Read one at a time, these channels track a class or jet quantity more often than mixed directions of the same layer (about 19 % against 13 %), and this appears only after the switch. Acting on single channels does not move the network more specifically than acting on mixed directions, so they are a preferred basis for reading information but not separately controllable parts. Whether a few channels alone can carry the decision is untested, because the test used could not exceed 36 % accuracy even with all channels kept.'
+    ),
+    'C26': (
+        "No set of 16 or fewer of L-GATr's 96 attention heads, kept alone, reproduces 80 % of its W-versus-Z or top-versus-QCD decision, whichever of three rules is used to switch the other heads off. When switched-off heads are replaced with outputs from jets pointing the same way, only six heads in the first three blocks matter individually and 32 heads recover about 0.7 of the top-versus-QCD decision. How small a faithful circuit can be, and whether the chosen heads beat random ones, remain open."
     ),
     'C3': (
         "ParT, which also receives shift-invariant pair features from which the invariant mass could be computed, still "
@@ -1916,6 +1918,15 @@ EXPLAINER = {
         "failed GPU node and a blocked relaunch. From the network's code, a rotation about the beam and a move of the "
         "stored axis cannot change its input, so only a boost along the beam and rearrangements at fixed mass can test "
         "the claim when it is relaunched."
+    ),
+    'P51_EXPLAINER': (
+        "Boosting every particle along the beam keeps the jet mass but moves particles relative to ParT's stored axis; ParT reads this as a mass change (about 0.8 of a real one) and our L-GATr does not respond at all, on two samples. The rearrangement edits that hold the mass fixed also hold the particles' spread fixed, so they cannot tell whether L-GATr reads the invariant mass or the spread about its own momentum direction; a wide-angle test is needed."
+    ),
+    'P54_EXPLAINER': (
+        "L-GATr's gated hidden channels track a class or physics quantity more often than mixed directions of the same layer (19 % against 13 % on two samples), and only after the gate. Steering or removing single channels gives no consistent advantage over mixed directions, so the channels are a preferred read-out basis but not separately controllable units. The small-circuit test could not reach the full tagger even with every channel kept, so it does not decide whether small channel circuits exist."
+    ),
+    'P55_EXPLAINER': (
+        'No set of 16 or fewer attention heads in L-GATr reproduces 80 % of its W/Z or top/QCD decision under any of three replacement rules. Replacing switched-off heads with outputs from jets that point elsewhere made most heads look necessary; with direction-matched replacements only six early heads are individually needed and 32 heads recover about 0.7 of the top/QCD decision. Whether the chosen heads beat random ones was not testable with 100 random sets.'
     ),
     'P23_EXPLAINER': (
         "Shifting all of a jet's particles by a small angle changes ParT's W-versus-Z score mostly in the same way for a "

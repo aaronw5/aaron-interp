@@ -52,8 +52,10 @@ The time spurion is held at its unedited value (1, 0, 0, 0) in A, D, F; in C it 
 Statistics: NB bootstrap resamples over jets (shared count matrix, paired across edits and models); sign-flip permutation of the
 per-jet Delta d (H0: no mean response); exact McNemar on per-jet correctness; Holm over the edit x dose grid per model.
 
-  ./sync.sh && ./part_job.sh c-p46-run '/j-jepa-vol/aaron-interp/env-lgatr/bin/python -m interp.p46_lgatr_c6 --stage lgatr --ckpts it174999,it154999,untrained && python -m interp.p46_lgatr_c6 --stage part && python -m interp.p46_lgatr_c6 --stage analyze'
--> $AI_RESULTS/lgatr/p46_lg_<tags>.npz, $AI_RESULTS/part/p46_part.npz, $AI_RESULTS/lgatr/p46_lgatr_c6.json, p46_lgatr_c6.png
+P51 (round C12): relaunch on the final checkpoint (tag 'final' -> model_run0.pt); outputs are prefixed with $P46_NODE (default p51);
+the sample cache keeps the name p46_sample.npz (same sample).
+  ./sync.sh && ./part_job.sh c-p51-run '/j-jepa-vol/aaron-interp/env-lgatr/bin/python -m interp.p46_lgatr_c6 --stage lgatr --ckpts final,it174999,untrained && python -m interp.p46_lgatr_c6 --stage part && python -m interp.p46_lgatr_c6 --stage analyze'
+-> $AI_RESULTS/lgatr/p51_lg_<tags>.npz, $AI_RESULTS/part/p51_part.npz, $AI_RESULTS/lgatr/p51_lgatr_c6.json, p51_lgatr_c6.png
 """
 import argparse, glob, json, os, sys, time
 from pathlib import Path
@@ -85,8 +87,10 @@ SEEDS = '/j-jepa-vol/aaron-interp/models/part_seeds'
 DPHI, DY = 0.06, 0.06
 DL6 = [0.005, 0.01, 0.02, 0.04, 0.06]
 FS = [-0.10, -0.05, -0.02, 0.02, 0.05, 0.10]
-TITLE = os.environ.get('P46_TITLE', 'W-vs-Z response to mass-fixed edits, relative to a real mass change (grey band: |R| < 0.1)')
+TITLE = os.environ.get('P46_TITLE', 'L-GATr: R near 0 for every mass-fixed edit; ParT: R 0.75-0.81 under the boost')
 T0 = time.time()
+NODE = os.environ.get('P46_NODE', 'p51')           # P51 (round C12) = P46 relaunched on the final checkpoint; outputs p51_*
+CKFILE = {'final': 'model_run0.pt'}                # tag -> file; other tags -> model_run0_<tag>.pt
 
 
 def log(*a):
@@ -267,7 +271,7 @@ def stage_lgatr():
             try: models['LGATr_untrained'] = P.LG(None, dev)
             finally: torch.manual_seed = ms
         else:
-            pth = f'{LGRUN}/model_run0_{t}.pt'; assert os.path.exists(pth), pth; models[f'LGATr_{t}'] = P.LG(pth, dev)
+            pth = f'{LGRUN}/{CKFILE.get(t, f"model_run0_{t}.pt")}'; assert os.path.exists(pth), pth; models[f'LGATr_{t}'] = P.LG(pth, dev)
         log('loaded', t, dev)
     N = len(WZ['label']); S, M = {}, {}; out = dict(ckpts=tags, acc={})
     ACb = build(AC, *kin(AC)); ya = AC['label'].astype(int); yw = WZ['label'].astype(int)
@@ -289,7 +293,7 @@ def stage_lgatr():
                 store_put(S, mn, name, 'C', rows, lg.logits(Je, Jbr, spur_y=float(name[5:])), N)
         log(name, I['geo'], {mn: round(float(np.nanmean(S[f'{mn}|{name}|A|d'] - S[f'{mn}|base|A|d'])), 4) for mn in models})
     out['meta'] = M; out['N_WZ'] = int(N); out['N_acc'] = int(len(ya))
-    S['meta|y'] = yw; f = ROOT / 'lgatr' / f'p46_lg_{"_".join(tags)}{TAG}'
+    S['meta|y'] = yw; f = ROOT / 'lgatr' / f'{NODE}_lg_{"_".join(tags)}{TAG}'
     np.savez(f.with_suffix('.npz'), **S); f.with_suffix('.json').write_text(json.dumps(out, indent=1, default=float)); log('wrote', f)
 
 
@@ -315,7 +319,7 @@ def stage_part():
         for k in names: store_put(S, k, name, 'A', rows, L[k], N)
         if name == 'base': out['acc_WZ'] = {k: float((L[k].argmax(1) == WZ['label']).mean()) for k in names}
         log(name, {k: round(float(np.nanmean(S[f'{k}|{name}|A|d'] - S[f'{k}|base|A|d'])), 4) for k in names})
-    out['meta'] = M; S['meta|y'] = WZ['label'].astype(int); f = ROOT / 'part' / f'p46_part{TAG}'
+    out['meta'] = M; S['meta|y'] = WZ['label'].astype(int); f = ROOT / 'part' / f'{NODE}_part{TAG}'
     np.savez(f.with_suffix('.npz'), **S); f.with_suffix('.json').write_text(json.dumps(out, indent=1, default=float)); log('wrote', f)
 
 
@@ -353,7 +357,7 @@ def mcnemar(a, b):
 
 def stage_analyze():
     S, J = {}, {}
-    files = sorted(glob.glob(str(ROOT / 'lgatr' / f'p46_lg_*{TAG}.npz'))) + [str(ROOT / 'part' / f'p46_part{TAG}.npz')]
+    files = sorted(glob.glob(str(ROOT / 'lgatr' / f'{NODE}_lg_*{TAG}.npz'))) + [str(ROOT / 'part' / f'{NODE}_part{TAG}.npz')]
     if not SMOKE: files = [f for f in files if '_smoke' not in f]
     for f in files:
         if not os.path.exists(f): continue
@@ -366,8 +370,8 @@ def stage_analyze():
     rb = np.random.default_rng(SEED + 3); C = np.zeros((NB, N), np.float32)
     for b in range(NB): C[b] = np.bincount(rb.integers(0, N, N), minlength=N)
     prng = np.random.default_rng(SEED + 4)
-    main_lg = 'LGATr_it199999' if 'LGATr_it199999' in models else ('LGATr_it174999' if 'LGATr_it174999' in models else None)
-    res = dict(node='P46', sample=f'val_5M {{WToQQ,ZToQQ}}_{FIDX}.root, {PER_WZ}/class, default_rng({SEED}); 10-class: {PER_ACC}/class files {AFILE}',
+    main_lg = 'LGATr_final' if 'LGATr_final' in models else 'LGATr_it199999' if 'LGATr_it199999' in models else ('LGATr_it174999' if 'LGATr_it174999' in models else None)
+    res = dict(node=NODE.upper(), sample=f'val_5M {{WToQQ,ZToQQ}}_{FIDX}.root, {PER_WZ}/class, default_rng({SEED}); 10-class: {PER_ACC}/class files {AFILE}',
                N_WZ=int(N), NB=NB, NPERM=NPERM, main_lgatr=main_lg, models=models, readout='d = logit_W - logit_Z',
                R_def='sum_jets Delta d(edit) / sum_jets Delta d(matched dilation E4)', geometry={e: meta[e]['geo'] for e in meta},
                accuracy={}, per_model={}, pooled={}, compare={})
@@ -394,6 +398,8 @@ def stage_analyze():
                 v = num.sum() / den.sum(); b = (C @ num) / (C @ den); BOOTS[(m, e, route)] = b
                 r = dict(R=float(v), R_ci=ci(b), mean_dd=float(num[rows].mean()), mean_dd_E4=float(den[rows].mean()),
                          abs_ratio=float(np.abs(num[rows]).mean() / max(np.abs(den[rows]).mean(), 1e-12)))
+                p0r, p1r = S[f'{m}|base|A|p'][rows], S[f'{m}|{e}|{route}|p'][rows]
+                r.update(calls_changed_route=float((p0r != p1r).mean()), mcnemar_route=mcnemar(p0r == y[rows], p1r == y[rows]))
                 if route == 'A':
                     p0, p1 = S[f'{m}|base|A|p'][rows], S[f'{m}|{e}|A|p'][rows]; yr = y[rows]; w, z = yr == iW, yr == iZ
                     pE = S[f'{m}|{den_of(e)}|A|p'][rows]
@@ -406,6 +412,11 @@ def stage_analyze():
             if f'{m}|{e}|D|d' in S:
                 a_, d_ = delta(m, e, 'A'), delta(m, e, 'D')
                 o[f'{e}|feature_share'] = float((a_ - d_).sum() / a_.sum()) if a_.sum() != 0 else None
+                if f'{m}|{e}|C|d' in S:   # BOOST: A - D = scalar-feature route, D - C = time-spurion route, C = residual (exact symmetry -> 0)
+                    c_ = delta(m, e, 'C'); o[f'{e}|route_split'] = dict(
+                        mean_dd_A=float(a_.mean()), feature_route=float((a_ - d_).mean()), spurion_route=float((d_ - c_).mean()),
+                        residual_C=float(c_.mean()), mean_abs_A=float(np.abs(a_).mean()), mean_abs_D=float(np.abs(d_).mean()),
+                        mean_abs_C=float(np.abs(c_).mean()), share_feature_absd=float(np.abs(a_ - d_).sum() / max(np.abs(a_ - d_).sum() + np.abs(d_ - c_).sum(), 1e-12)))
         for e, h in zip(pk, holm(pv)): o[f'{e}|A']['p_holm'] = h
         res['per_model'][m] = o
         # pooled families
@@ -420,6 +431,24 @@ def stage_analyze():
                 nu, de_ = sum(x.sum() for x in nums), sum(x.sum() for x in dens)
                 b = sum(C @ x for x in nums) / sum(C @ x for x in dens); BOOTS[(m, fn, route)] = b
                 po[f'{fn}|{route}'] = dict(R=float(nu / de_), R_ci=ci(b), within_pm01=bool(ci(b)[0] is not None and ci(b)[0] >= -0.1 and ci(b)[1] <= 0.1))
+        # added in P51 (after the smoke run showed opposite-sign R for E1m raise / lower): E1m pooled over all six doses.
+        # antisym = linear part, (sum raise - sum lower) / (E4 raise - E4 lower); sym = even part, (sum raise + sum lower) / same.
+        for route in ('A',):
+            up, dn = [f'E1m_{f:+.2f}' for f in FS if f > 0], [f'E1m_{f:+.2f}' for f in FS if f < 0]
+            nu_u, nu_d = sum(delta(m, e, route) for e in up), sum(delta(m, e, route) for e in dn)
+            de_u = sum(delta(m, den_of(e), 'A') * S[f'meta|{e}|rows'] for e in up); de_d = sum(delta(m, den_of(e), 'A') * S[f'meta|{e}|rows'] for e in dn)
+            den = de_u - de_d; bd = C @ den
+            for nm_, nu in (('E1m_antisym', nu_u - nu_d), ('E1m_sym', nu_u + nu_d)):
+                b = (C @ nu) / bd; BOOTS[(m, nm_, route)] = b; po[f'{nm_}|{route}'] = dict(R=float(nu.sum() / den.sum()), R_ci=ci(b))
+        # pooled call flow per informative family (route A): share of calls changed, W->Z before/after, McNemar on correctness
+        for fn, es in (('BOOST', ['BOOST+0.06', 'BOOST-0.06']), ('E1m_raise', [f'E1m_{f:+.2f}' for f in FS if f > 0]),
+                       ('E1m_lower', [f'E1m_{f:+.2f}' for f in FS if f < 0]), ('E5', ['E5+', 'E5-']), ('PHI', ['PHI+0.06', 'PHI-0.06'])):
+            p0s, p1s, ys = [], [], []
+            for e in es:
+                rows = S[f'meta|{e}|rows']; p0s.append(S[f'{m}|base|A|p'][rows]); p1s.append(S[f'{m}|{e}|A|p'][rows]); ys.append(y[rows])
+            p0, p1, yy = np.concatenate(p0s), np.concatenate(p1s), np.concatenate(ys); w = yy == iW
+            po[f'{fn}|calls'] = dict(n_pairs=int(len(yy)), calls_changed=float((p0 != p1).mean()), WtoZ=[float((p0[w] == iZ).mean()), float((p1[w] == iZ).mean())],
+                                    mcnemar=mcnemar(p0 == yy, p1 == yy))
         n5 = delta(m, 'E5+', 'A') + delta(m, 'E5-', 'A'); rows5 = S['meta|E5+|rows']
         d5 = (delta(m, 'E4|E1_+0.10', 'A') - delta(m, 'E4|E1_-0.10', 'A')) * rows5
         b = (C @ n5) / (C @ d5); BOOTS[(m, 'E5', 'A')] = b; po['E5|A'] = dict(R=float(n5.sum() / d5.sum()), R_ci=ci(b))
@@ -429,56 +458,72 @@ def stage_analyze():
     if main_lg:
         for ref in [x for x in models if x != main_lg]:
             cmp = {}
-            for fn in ('PHI', 'BOOST', 'E6_0.01-0.06', 'E1_raise', 'E1_lower', 'E1m_raise', 'E1m_lower', 'E5'):
+            for fn in ('PHI', 'BOOST', 'E6_0.01-0.06', 'E1_raise', 'E1_lower', 'E1m_raise', 'E1m_lower', 'E1m_antisym', 'E1m_sym', 'E5'):
                 b1, b2 = BOOTS.get((main_lg, fn, 'A')), BOOTS.get((ref, fn, 'A'))
                 if b1 is None or b2 is None: continue
-                k1 = 'E5|A' if fn == 'E5' else f'{fn}|A'
+                k1 = f'{fn}|A'
                 cmp[fn] = dict(diff=res['pooled'][main_lg][k1]['R'] - res['pooled'][ref][k1]['R'], ci=ci(b1 - b2), p=boot_p(b1 - b2))
             ks = list(cmp)
             for k, h in zip(ks, holm([cmp[k]['p'] for k in ks])): cmp[k]['p_holm'] = h
             res['compare'][f'{main_lg}_minus_{ref}'] = cmp
-    out = ROOT / 'lgatr' / f'p46_lgatr_c6{TAG}.json'; out.write_text(json.dumps(res, indent=1, default=float)); log('wrote', out)
+    out = ROOT / 'lgatr' / f'{NODE}_lgatr_c6{TAG}.json'; out.write_text(json.dumps(res, indent=1, default=float)); log('wrote', out)
     try: plot(res, S)
     except Exception:
         import traceback; traceback.print_exc()
 
 
 def plot(res, S):
+    """left: one real W jet, the E1m +10 % edit (spread pair moved apart, second pair moved together until the invariant mass is
+    restored); right: R per informative edit family and model (PHI / E6 are symmetry / plumbing checks, listed in the json)."""
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
-    from interp.part_core import kin, build
+    from interp.part_core import kin, build, jmass, sub
+    from interp import p43_spread_vs_centroid as P43
     WZ, _ = get_sample(); K = kin(WZ); pt, de, dp, ms = K
-    j = int(np.where((WZ['label'] == iW) & ((pt > 0).sum(1) >= 25))[0][0]); r = pt[j] > 0
-    k = np.sqrt(np.exp(S['meta|E4|PHI+0.06|dlogM2'][j]))
-    fig, ax = plt.subplots(1, 2, figsize=(15, 6.2), gridspec_kw=dict(width_ratios=[1, 1.5]))
-    a = ax[0]; s = 400 * pt[j][r] / pt[j][r].max()
-    a.scatter(de[j][r], dp[j][r], s=s, facecolors='none', edgecolors='0.45', label='unedited')
-    a.scatter(de[j][r], dp[j][r] + DPHI, s=s, color='#d95f02', alpha=0.6, label='PHI +0.06: every particle phi + 0.06 rad')
-    a.scatter(de[j][r] * k, dp[j][r] * k, s=s * 0.5, marker='x', color='#1b9e77', label=f'matched dilation: angles x {k:.3f}')
-    a.plot([0], [0], 'k+', ms=16, mew=2, label='stored jet axis')
-    a.set_xlabel('Δη to stored axis'); a.set_ylabel('Δφ to stored axis [rad]'); a.set_aspect('equal', 'datalim')
-    a.set_title(f'One W jet (pT {WZ["jet_pt"][j]:.0f} GeV): edit vs matched real mass change\n'
-                'L-GATr sees PHI +0.06 as a rotation about the beam (same jet)', fontsize=10)
-    a.legend(fontsize=8, loc='lower left')
+    Pall = P43.plan_edits(pt, de, dp, np.random.default_rng(SEED + 1)); kept = np.where(Pall['keep'])[0]
+    Jk = sub(WZ, kept); Kk = kin(Jk); Pk = P43.plan_edits(*Kk[:3], np.random.default_rng(SEED + 2))
+    de2, dp2, _, _ = P43.displaced(Kk, Pk, 'E1_+0.10'); de3, dp3, ok, _ = compensate(Jk, Kk, Pk, de2, dp2)
+    cand = np.where(ok & (Jk['label'] == iW) & ((Kk[0] > 0).sum(1) >= 20))[0]; j = int(cand[0]); r = Kk[0][j] > 0
+    m0 = float(jmass(build(Jk, *Kk))[j]); r_ = Kk[0] > 0
+    m1 = float(jmass(build(Jk, Kk[0], np.where(r_, de3, 0).astype(np.float32), np.where(r_, dp3, 0).astype(np.float32), Kk[3]))[j])
+    fig, ax = plt.subplots(1, 2, figsize=(15, 7.0), gridspec_kw=dict(width_ratios=[1, 1.45]))
+    a = ax[0]; s = 400 * Kk[0][j][r] / Kk[0][j][r].max()
+    a.scatter(Kk[1][j][r], Kk[2][j][r], s=s, facecolors='none', edgecolors='0.5', label='particles (area ∝ pT)')
+    mv = np.where(r & (np.hypot(de3[j] - Kk[1][j], dp3[j] - Kk[2][j]) > 1e-6))[0]
+    pa, pb = int(Pk['a'][j]), int(Pk['b'][j])
+    X5 = 5.0                                       # arrows drawn at 5x the displacement (stated in the legend)
+    for q in mv:
+        c = '#d95f02' if q in (pa, pb) else '#1b9e77'; x0, y0 = Kk[1][j][q], Kk[2][j][q]
+        a.annotate('', xy=(x0 + X5 * (de3[j, q] - x0), y0 + X5 * (dp3[j, q] - y0)), xytext=(x0, y0),
+                   arrowprops=dict(arrowstyle='->', color=c, lw=2.2))
+    a.plot([], [], color='#d95f02', lw=2, label='pair 1 moved apart (pT-weighted spread +10 %)')
+    a.plot([], [], color='#1b9e77', lw=2, label='pair 2 moved together until the invariant mass is restored')
+    a.plot([], [], color='w', label='(arrows drawn at 5x the actual displacement)')
+    a.set_xlabel('Δη to jet axis'); a.set_ylabel('Δφ to jet axis [rad]'); a.set_aspect('equal', 'datalim')
+    a.set_title(f'E1m on one W jet (pT {Jk["jet_pt"][j]:.0f} GeV): particles rearranged,\n'
+                f'invariant mass {m0:.1f} GeV before, {m1:.1f} GeV after', fontsize=10)
+    a.legend(fontsize=8, loc='upper center', bbox_to_anchor=(0.5, -0.12), ncol=1, frameon=False)
     a = ax[1]
-    fams = [('PHI', 'PHI ±0.06 rad\n(rotation about beam)'), ('BOOST', 'BOOST ±0.06\n(rapidity shift)'),
-            ('E6_0.01-0.06', 'E6 0.01–0.06 rad\n(stored axis moved)'), ('E1_raise', 'E1 spread +2–10 %\n(mass changes)'),
-            ('E1m_raise', 'E1m spread +2–10 %\n(mass restored)'), ('E5', 'E5 null\n(M2 fixed)')]
-    mods = [m for m in (res['main_lgatr'], 'LGATr_it154999', 'LGATr_untrained', 'ParT_kin_s0', 'ParT_full_s0', 'ParT_kin', 'ParT_full') if m in res['pooled']]
-    cols = {'LGATr_it199999': '#1f4e9c', 'LGATr_it174999': '#1f4e9c', 'LGATr_it154999': '#6b8fd6', 'LGATr_untrained': '0.6',
-            'ParT_kin_s0': '#c0392b', 'ParT_full_s0': '#e67e22', 'ParT_kin': '#8e44ad', 'ParT_full': '#d35400'}
+    fams = [('E1_raise', 'E1 spread +2–10 %\n(real mass increase, reference)'), ('BOOST', 'BOOST rapidity ±0.06\n(mass fixed)'),
+            ('E1m_raise', 'E1m, spread +2–10 %\n(mass restored)'), ('E1m_lower', 'E1m, spread −2–10 %\n(mass restored)'),
+            ('E1m_antisym', 'E1m pooled\n(raise − lower)'), ('E5', 'E5 null rearrangement\n(mass ~fixed)')]
+    mods = [m for m in (res['main_lgatr'], 'LGATr_it174999', 'ParT_kin', 'ParT_full') if m in res['pooled']]
+    cols = {'LGATr_final': '#1f4e9c', 'LGATr_it174999': '#6b8fd6', 'LGATr_untrained': '0.6', 'ParT_kin': '#8e44ad', 'ParT_full': '#d35400'}
+    labs = {'LGATr_final': 'L-GATr (final)', 'LGATr_it174999': 'L-GATr (iteration 174999)', 'LGATr_untrained': 'L-GATr untrained',
+            'ParT_kin': 'ParT_kin', 'ParT_full': 'ParT_full'}
     for i, (fn, lab) in enumerate(fams):
         for q, m in enumerate(mods):
-            key = 'E5|A' if fn == 'E5' else f'{fn}|A'; v = res['pooled'][m].get(key)
-            if v is None: continue
-            yy = i + (q - (len(mods) - 1) / 2) * 0.11; lo, hi = v['R_ci']
-            a.errorbar(v['R'], yy, xerr=[[v['R'] - lo], [hi - v['R']]], fmt='o', color=cols.get(m, 'k'), ms=5, capsize=2,
-                       label=m.replace('_', ' ') if i == 0 else None)
-    a.axvspan(-0.1, 0.1, color='0.85', zorder=0); a.axvline(0, color='k', lw=0.6); a.axvline(1, color='k', lw=0.6, ls=':')
+            v = res['pooled'][m].get(f'{fn}|A')
+            if v is None or v['R_ci'][0] is None: continue
+            yy = i + (q - (len(mods) - 1) / 2) * 0.15; lo, hi = v['R_ci']; x = float(np.clip(v['R'], -2.4, 2.4))
+            a.errorbar(x, yy, xerr=[[max(x - max(lo, -2.5), 0)], [max(min(hi, 2.5) - x, 0)]], fmt='o', color=cols.get(m, 'k'), ms=5, capsize=2,
+                       label=labs.get(m, m) if i == 0 else None)
+    a.axvspan(-0.1, 0.1, color='0.88', zorder=0); a.axvline(0, color='k', lw=0.6); a.axvline(1, color='k', lw=0.6, ls=':')
+    a.set_xlim(-2.5, 2.5)
     a.set_yticks(range(len(fams))); a.set_yticklabels([f[1] for f in fams], fontsize=9); a.invert_yaxis()
-    a.set_xlabel('R = W-vs-Z logit response to the edit / response to a real mass change of the same predicted size')
-    a.set_title(TITLE, fontsize=10)
+    a.set_xlabel('R = change of (logit W − logit Z) under the edit\n÷ change under a real mass change (matched angular dilation) of the same predicted size')
+    a.set_title(TITLE + '\n(95 % bootstrap intervals; grey band |R| < 0.1)', fontsize=10)
     a.legend(fontsize=8, loc='lower right')
-    fig.tight_layout(); f = ROOT / 'lgatr' / f'p46_lgatr_c6{TAG}.png'; fig.savefig(f, dpi=110); log('wrote', f)
+    fig.tight_layout(); f = ROOT / 'lgatr' / f'{NODE}_lgatr_c6{TAG}.png'; fig.savefig(f, dpi=110); log('wrote', f)
 
 
 if __name__ == '__main__':
