@@ -57,7 +57,10 @@ CLAIM = {
         "calls, and stretching only the particle distances to give the same change of the pT-weighted spread produces the "
         "same number of W-to-Z changes, while stretches matched on other radial sums do not (round 10, E25w). Tested "
         "against a family of 15 angular spreads (round 12, E27), the pT weighting of the spread is confirmed, but the "
-        "power of the distance is not pinned to the square."
+        "power of the distance is not pinned to the square. In round 13 (E27w) the hardest particles were turned around "
+        "the axis so that the true jet mass fell while every particle kept its pT and distance from the axis; the "
+        "network's mass read-out did not move, so it does not read the jet mass, only each particle's pT and distance "
+        "from the axis."
     ),
     'A4n': (
         "On real, unedited jets whose axis is slightly off the pT-weighted centre, moving the particles so that the jet is "
@@ -207,8 +210,31 @@ CLAIM = {
         "Splitting one particle into two particles moving in exactly the same direction leaves the jet's mass and every "
         "pT-weighted shape unchanged, yet it changes 2–4 % of JEDI-linear's decisions, more than moving the same particle "
         "without splitting it, and pushes quark calls toward gluon. So the trained network is neither collinear- nor "
-        "soft-safe: part of its decision follows the number of particles. Which internal sums carry this is not "
-        "identified, because holding the named count and rank-window sums removes no more than holding random sums."
+        "soft-safe: part of its decision follows the number of particles. The effect reproduces on two further samples "
+        "and in gluon-rich and high-multiplicity jets, and undoing a real near-collinear pair in data moves calls the "
+        "other way. Its internal route is only partly known (claim A15r)."
+    ),
+    'A15r': (
+        "We tested four ways a collinear split could reach JEDI-linear's decision. Two are excluded: the cut that "
+        "switches on for particles below 11 GeV, and the softest particle being pushed out of the 64 input slots. Two "
+        "carry part of it: the softer particles moving down one pT-rank position (up to about a third of the changed "
+        "decisions), and the two internal sums that count empty input slots, which also carry 40 % of the effect of "
+        "adding one soft particle. The rest is spread over many internal sums and is not yet assigned."
+    ),
+    'A4w v2': (
+        "With the pT-weighted squared spread of the particles held fixed, smoothly reshaping how far particles sit from "
+        "the jet axis still moves JEDI-linear's W-versus-Z decision. That response is predicted well by a single sum of "
+        "pT times distance to a power slightly above 2, better than random smooth radial weightings. So the network's "
+        "radial weight is close to, but measurably not exactly, the square in the mass formula; whether it is one power "
+        "or a smooth weight near r² is open."
+    ),
+    'A10w': (
+        "A Linformer, a transformer variant, weights particles by their pT rank through a learned table. Sharp jumps in "
+        "that table sit where its random starting values put them and do not recur between training runs, so it does "
+        "not form JEDI-linear's hard-edged rank windows. All four trained networks do give the five hardest particles "
+        "more than twice the typical weight, which random tables never do, and removing that emphasis costs much "
+        "accuracy. Open: whether that cost reflects the learned emphasis or simply that hard particles carry most of the "
+        "jet's momentum."
     ),
     'A1f': (
         "The more accurate official JEDI-linear with 16 input features does not build its angular information from "
@@ -881,6 +907,26 @@ EXPLAINER = {
         "changes 2–4 % of JEDI-linear's decisions and pushes quark calls toward gluon, more than moving the same particle "
         "without splitting it. So the network is neither collinear- nor soft-safe. Holding the named count and "
         "rank-window sums removes no more of the effect than holding random sums, so the internal route is not identified."
+    ),
+    'E27W_EXPLAINER': (
+        "We turned the hardest particles of each jet around the jet axis so that the true jet mass fell by up to 10 % "
+        "while every particle kept its pT and distance from the axis. JEDI-linear's mass read-out did not move and Z jets "
+        "were relabelled W at about the rate of a mass-neutral control, against 94 % for a real 10 % mass drop. So the "
+        "network reads a function of each particle's pT and distance from the axis, not the jet mass; a separate fit puts "
+        "that radial weight at a power of distance slightly above 2."
+    ),
+    'E28W_EXPLAINER': (
+        "Splitting one particle into two collinear ones changes a few per cent of JEDI-linear's decisions. The soft-pT "
+        "cut and the 64-slot input limit do not carry this. Moving the softer particles back to their original input "
+        "positions removes up to about a third of it, and holding the two sums that count empty input slots removes "
+        "about a sixth; the rest is spread over many internal sums."
+    ),
+    'X15_EXPLAINER': (
+        "Linformers weight particles by pT rank through a learned table. Its sharp rank-to-rank jumps come from the "
+        "random starting values and act no more strongly than in untrained networks, so these networks do not form "
+        "hard-edged rank windows at fixed positions. They do learn, in every trained copy, a graded extra weight on the "
+        "five hardest particles, which matters for their accuracy; whether that weight is learned for its own sake or "
+        "follows the hard particles' share of the momentum is open."
     ),
     'E26W_EXPLAINER': (
         "When a jet's pT is lowered by 10 % at fixed mass, holding the network's total-pT sum at its old value undoes "
@@ -1682,7 +1728,9 @@ KEY_RESULT = {
         "also reads total pT as a class feature, so boosting a jet along its axis changes about a third of its decisions "
         "while its mass estimate stays the same on average. The spread it reads is weighted by particle pT, as in the "
         "mass formula, but its decision is not a function of the squared-distance sum alone; and splitting one particle "
-        "into two collinear ones, which keeps the mass, still changes a few per cent of its decisions."
+        "into two collinear ones, which keeps the mass, still changes a few per cent of its decisions. Lowering the true "
+        "jet mass by turning particles around the axis, with each particle's pT and distance from the axis fixed, leaves "
+        "JEDI-linear's mass estimate unchanged, and its radial weight is a power of distance slightly above 2."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "
