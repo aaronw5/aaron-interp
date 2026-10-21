@@ -294,7 +294,18 @@ CLAIM = {
         "log-odds), while rotations of the same size that keep the split change almost nothing. Holding the network's "
         "internal mass direction fixed removes most of its response to a real mass change but almost none of this one, "
         "so the network uses the momentum sharing through a second route besides its mass variable. Which internal "
-        "objects carry that route is not identified; it is spread over several of them."
+        "objects carry that route is not identified; it is spread over several of them. Round 17 adds that the response "
+        "appears in 9 of 10 independently trained copies of the network, and that in the fourth layer one direction "
+        "carries most of the average W-jet and Z-jet response when copied in, while the Z-jet part is also carried by "
+        "the mass subspace (see A4s v2)."
+    ),
+    'A4s v2': (
+        "Inside JEDI-linear's fourth layer there is one direction that acts like a signed 'momentum sharing' setting: "
+        "copying it from a jet whose two prongs share momentum more unevenly reproduces about 85 % of the average change "
+        "in the W-versus-Z score, and pushing an ordinary jet along it moves W jets toward Z and Z jets toward W. It is "
+        "separate from the direction that carries a real mass change, and the response it belongs to appears in nearly "
+        "every trained copy of the network. Removing it takes away about half of the W-jet response but none of the Z-jet "
+        "response, which other parts of the network also carry, and which jet-shape quantity it computes is still open."
     ),
     'A18': (
         "We let a search find, for each jet, the smallest change of its particles that flips JEDI-linear's call while "
@@ -302,7 +313,18 @@ CLAIM = {
         "about 2 % for random changes of the same size. Over all jet types they mostly move momentum among the hardest "
         "particles, but the changes that turn W into Z mostly move particles toward or away from the axis, and moving "
         "momentum into the hardest particle alone flips few calls. The changed jets often look unlike real jets, so this "
-        "maps the network's sensitivity rather than how it treats natural jets."
+        "maps the network's sensitivity rather than how it treats natural jets. A follow-up (round 17) found that the "
+        "internal objects tied to the hardest particles carry about half of the gluon-to-quark flips and none of the W/Z "
+        "flips, which run mostly through the radial (mass-like) objects (see A18h)."
+    ),
+    'A18h': (
+        "We moved part of the momentum of one of a jet's hardest particles to another, keeping the jet's mass, momentum "
+        "and axis fixed, to see whether JEDI-linear has a separate 'hardness' channel. The W-versus-Z score changes less "
+        "than under a random reshuffle of the same momentum among soft particles, and even its sign depends on what else "
+        "is adjusted to keep the mass fixed; with particle directions left alone the effect is signed and about 1 % of the "
+        "score spread. The internal objects tied to the hardest particles carry about half of the gluon-to-quark minimal "
+        "flips and none of the W/Z flips, so for W versus Z there is no separate hardness channel; the gluon-to-quark "
+        "share is not significant after correcting for the four flip groups tested."
     ),
     'A1x v3': (
         "Ten separately trained JEDI-linear networks were compared with hundreds of random formulas that fit the "
@@ -402,7 +424,17 @@ CLAIM = {
         "floating-point copy of the network with its zero-bit masks changes the same calls as the network in about 85 % "
         "of cases, while the hinge-formula program gets the average shift right but changes many extra calls. On the "
         "smallest call-flipping edits found by a search, the programs predict which jets flip only slightly better than "
-        "a rule that always says \"no change\", so faithfulness off ordinary jets depends strongly on the edit."
+        "a rule that always says \"no change\", so faithfulness off ordinary jets depends strongly on the edit. Adding "
+        "such edited jets, labelled by the network, to the program's training data does not change this (round 17, B2c)."
+    ),
+    'B2c': (
+        "We refitted the extracted programs and standard surrogates with edited jets added to their training data, each "
+        "labelled with the network's own output, to see whether this teaches them the network's response to edits. On the "
+        "network's own smallest call-flipping edits they still do little better than a rule that always says \"no change\" "
+        "(agreement score κ about 0.2, where 0 is that rule and 1 a perfect match), even when those edits are in the fit. "
+        "An improvement on the prong-sharing edit appears just as much when ordinary jets in rotated form are added, so "
+        "it comes from adding data, not from the network's labels; refitting on another sample shifts the scores by about "
+        "as much as these effects."
     ),
     'B2m': (
         "The question is whether the program's variables are variables inside the network: if a variable's value is "
@@ -434,6 +466,8 @@ CLAIM = {
         "is open."
     ),
     'B4': (
+        "Round 17 (B7v): with network-labelled edited jets in the fit, the program again gains no more than a boosted-tree "
+        "model of the same size. "
         "This was not supported as a compactness claim. Standard surrogates fitted on the same jets, MARS (forward-selected "
         "hinge terms) fitted directly from physics inputs to the class scores and gradient-boosted trees, reach the "
         "agreement of the small nested programs with many fewer fitted pieces, and the largest nested programs are within "
@@ -1141,6 +1175,24 @@ EXPLAINER = {
         "size. They mostly move momentum among the hardest particles, except for W-to-Z flips, which move particles "
         "radially. Moving momentum into the leading particle alone flips few calls, and the extracted programs predict "
         "these flips only slightly better than always predicting no flip."
+    ),
+    'E37_EXPLAINER': (
+        "One direction in JEDI-linear's fourth layer acts as a signed momentum-sharing setting: copied from a jet with a "
+        "more lopsided prong split it reproduces about 85 % of the average W-versus-Z change, it carries almost none of a "
+        "real mass change, and pushing jets along it moves W toward Z and Z toward W. It is needed for about half of the "
+        "W-jet response and none of the Z-jet response, the response recurs in 9 of 10 trained networks, and the "
+        "jet-shape quantity it computes is open."
+    ),
+    'E38_EXPLAINER': (
+        "Moving momentum between a jet's hardest particles at fixed mass changes JEDI-linear's W-versus-Z score less than "
+        "reshuffling the same momentum among soft particles, and the sign of the change depends on how the mass is kept "
+        "fixed. The internal objects tied to the hardest particles carry about half of the gluon-to-quark minimal flips "
+        "and none of the W/Z flips, so there is no separate hardness channel for W versus Z."
+    ),
+    'B7_EXPLAINER': (
+        "Training the extracted programs on edited jets labelled by the network does not teach them the network's own "
+        "smallest call-flipping edits (agreement κ about 0.2 beyond 'never changes'). An improvement on the prong-sharing "
+        "edit comes back when plain rotated jets are added instead, so it reflects added data, not the network's labels."
     ),
     'E33X_EXPLAINER': (
         "The unit that sums each particle's momentum times its squared distance from the axis reappears in 8 of 9 other "
@@ -2173,6 +2225,7 @@ KEY_RESULT = {
         "regression on standard jet variables, which copies decisions on ordinary jets but not under the jet shift. "
         "Off ordinary jets (round 16) the floating-point copy with masks follows about 85 % of the network's changed "
         "decisions under a prong-sharing edit at fixed mass, the hinge program over-reacts, and on search-found minimal "
-        "edits the programs predict little about which jets flip."
+        "edits the programs predict little about which jets flip; training them on such edited jets labelled by the "
+        "network does not change that (round 17)."
     ),
 }
