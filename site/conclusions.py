@@ -27,7 +27,9 @@ CLAIM = {
         "of the decisions, and almost all of that effect passes through four second-round sums (one is the summed pT of "
         "the hardest particles), while random sets of other sums of the same size carry almost none. So the second-round "
         "cuts depend on the jet as a whole, mainly through its total pT. The set is not unique: one of its members can be "
-        "replaced by any of several other sums with the same effect."
+        "replaced by any of several other sums with the same effect. An automated circuit search (round 14, E29) keeps "
+        "only one or two of the eleven jet-level units and loses little accuracy, while dropping the summed-pT and core "
+        "sums costs much more, so most of the context effect runs through very few units."
     ),
     'A3': (
         "Each second-round sum adds up, over a fixed range of pT ranks, a function of a particle's pT and its distance r "
@@ -60,7 +62,10 @@ CLAIM = {
         "power of the distance is not pinned to the square. In round 13 (E27w) the hardest particles were turned around "
         "the axis so that the true jet mass fell while every particle kept its pT and distance from the axis; the "
         "network's mass read-out did not move, so it does not read the jet mass, only each particle's pT and distance "
-        "from the axis."
+        "from the axis. Round 14 (E31) adds a limit to this: the shifted and turned jets differ from real jets in "
+        "quantities measured about the axis, and in real jets the centre is never far enough off the axis to change the "
+        "mass by more than 0.7 %, so the difference between the two masses describes how the network handles "
+        "axis-displaced inputs, not something that can be seen on natural jets (claim A4o)."
     ),
     'A4n': (
         "On real, unedited jets whose axis is slightly off the pT-weighted centre, moving the particles so that the jet is "
@@ -81,7 +86,10 @@ CLAIM = {
         "network's neurons but by roughly half as much. In interchange interventions (setting one internal value to its "
         "value on another jet, in both the network and the formulas) the formulas give the network's new decision in most "
         "cases, but do better than a guess that ignores the swap only at the class neurons. So the class neurons are "
-        "approximately, not exactly, functions of the second-round sums."
+        "approximately, not exactly, functions of the second-round sums. In round 14 (E30) the formulas failed a direct "
+        "test: changing one second-round sum by half its spread moves the class neurons in ways the formulas do not "
+        "predict, even on the jets where the neurons are strongest, so the formulas reproduce the neurons' values but not "
+        "how they respond to each input (confidence lowered to 0.4)."
     ),
     'A6': (
         "For each class, a rule of a few conditions on the class neurons (for W: the W-mass neuron on, plus conditions on "
@@ -108,7 +116,11 @@ CLAIM = {
         "naming most units with physical formulas. Steering (setting a unit to a high value on jets where it is off) changes "
         "as many decisions for a random unit as for the described one, except for the class neurons, so for most units the "
         "description is not causally tested. The tally depends on chosen thresholds and has not been rerun independently; "
-        "a later preregistered, blind test of the object layer (claim A11b) supports the naming part."
+        "a later preregistered, blind test of the object layer (claim A11b) supports the naming part. A round-14 check of "
+        "the weakest activations (E30) found no second job there: moving one particle changes two of the sums by the "
+        "amount their formula predicts in every tenth of their range, and the third sum keeps the same quantity with a "
+        "smaller gain in its strongest tenth; one sum responds at about 0.8 of the prediction in its weakest tenth, for a "
+        "reason not yet found."
     ),
     'A11b': (
         "Most of JEDI-linear's pooled object units (15 of 19) can each be written as a short formula of particle pT and "
@@ -212,7 +224,33 @@ CLAIM = {
         "without splitting it, and pushes quark calls toward gluon. So the trained network is neither collinear- nor "
         "soft-safe: part of its decision follows the number of particles. The effect reproduces on two further samples "
         "and in gluon-rich and high-multiplicity jets, and undoing a real near-collinear pair in data moves calls the "
-        "other way. Its internal route is only partly known (claim A15r)."
+        "other way. Its internal route is only partly known (claim A15r). A classifier cannot tell split jets or jets with "
+        "one added soft particle from real jets, and the effect holds on those jets (round 14, E31), so it is not caused "
+        "by unnatural inputs."
+    ),
+    'A16': (
+        "We let an algorithm find the smallest part of JEDI-linear that still classifies jets, by removing internal "
+        "connections whenever the output barely changes. It keeps every hand-named first-layer particle cut and nearly all "
+        "of the hand-named jet quantities, and with about 115 of 186 active units it recovers about 95 % of the accuracy "
+        "above chance; replacing its jet quantities by other active ones of the same number does worse. Because the hand "
+        "names already cover almost every active unit in those layers, this shows agreement, not that the names are the "
+        "only good description; and the hand-built program matches the algorithm's circuit only under one of the two "
+        "standard ways of switching units off."
+    ),
+    'A5n': (
+        "A class neuron with a ReLU passes on only its positive side. For the two neurons that pick out jet masses near "
+        "75 and 94 GeV, the hidden negative side keeps measuring the mass beyond the window: making a jet 5 % heavier or "
+        "lighter moves it by about the amount the mass dependence predicts, while rotating the jet does not. The network "
+        "throws this information away. Passing it on would cost accuracy, but mostly because of the size of the added "
+        "values rather than what they say about each jet."
+    ),
+    'A4o': (
+        "We checked whether the edited jets behind the mass result look like real jets. The shifted and turned jets "
+        "differ from real jets only in quantities measured relative to the stored jet axis, and real jets never have "
+        "their centre far enough off that axis to change the mass by more than 0.7 %. So in real data the jet mass and "
+        "the spread-based mass the network uses are the same number, and the finding that the network reads the spread "
+        "describes how it handles axis-displaced inputs. The boosted, split and soft-particle jets stay among real jets, "
+        "and their effects hold there."
     ),
     'A15r': (
         "We tested four ways a collinear split could reach JEDI-linear's decision. Two are excluded: the cut that "
@@ -915,6 +953,28 @@ EXPLAINER = {
         "cut and the 64-slot input limit do not carry this. Moving the softer particles back to their original input "
         "positions removes up to about a third of it, and holding the two sums that count empty input slots removes "
         "about a sixth; the rest is spread over many internal sums."
+    ),
+    'E29_EXPLAINER': (
+        "An algorithm that keeps only the internal connections JEDI-linear's output depends on picks out all the "
+        "hand-named particle cuts and nearly all hand-named jet quantities, and recovers about 95 % of the accuracy above "
+        "chance with about 115 of 186 active units, far above random unit sets. The hand-built program is as faithful at "
+        "equal size when removed units are set to their average, and somewhat less faithful when they take values from a "
+        "jet of the confusable class. Because the names cover nearly every active unit in those layers, the agreement "
+        "does not single out the names over other descriptions."
+    ),
+    'E30_EXPLAINER': (
+        "Moving one particle changes the network's second-round sums by the amount their formulas predict in their "
+        "weakest jets as in their strongest, so each behaves like one jet observable over its whole range; the "
+        "exceptions are one sum's weakest tenth (about 0.8 of the prediction, cause unknown) and another's strongest "
+        "tenth (a smaller gain). The hidden negative side of two mass-window neurons keeps measuring the mass beyond the "
+        "window and is discarded by the network. Whether those neurons' weak positive range follows one formula is open."
+    ),
+    'E31_EXPLAINER': (
+        "The shifted and turned jets used to show that the network reads a spread about the axis rather than the jet "
+        "mass differ from real jets only in quantities measured about that axis, and real jets never have their centre "
+        "far enough off the axis to tell the two masses apart. So that result describes the network's response to "
+        "axis-displaced inputs. The split, soft-particle and boost edits produce jets that lie among real jets, and "
+        "their effects on the network hold on those jets."
     ),
     'X15_EXPLAINER': (
         "Linformers weight particles by pT rank through a learned table. Its sharp rank-to-rank jumps come from the "
@@ -1760,7 +1820,10 @@ KEY_RESULT = {
         "mass formula, but its decision is not a function of the squared-distance sum alone; and splitting one particle "
         "into two collinear ones, which keeps the mass, still changes a few per cent of its decisions. Lowering the true "
         "jet mass by turning particles around the axis, with each particle's pT and distance from the axis fixed, leaves "
-        "JEDI-linear's mass estimate unchanged, and its radial weight is a power of distance slightly above 2."
+        "JEDI-linear's mass estimate unchanged, and its radial weight is a power of distance slightly above 2. In real "
+        "jets the centre is never far enough from the axis to change the mass by more than 0.7 %, so the difference "
+        "between the two masses shows only for axis-displaced inputs, such as jets measured about another axis; the "
+        "edited jets differ from real jets only in quantities measured about the axis (round 14, E31)."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "
