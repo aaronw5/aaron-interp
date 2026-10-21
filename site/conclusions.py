@@ -990,8 +990,9 @@ CLAIM = {
         "measured: quark jets carry net positive jet charge in both Pythia and Herwig, gluon jets none, and the networks "
         "keep their Pythia charge rule on Herwig jets, where the sample supports a weaker one. They also score soft "
         "photons toward quark and soft neutral hadrons toward gluon, but random-weight networks move by similar amounts "
-        "and those relabelled jets are easy to tell from real ones. Nulls trained with a second seed and on shuffled "
-        "labels are still running."
+        "and those relabelled jets are easy to tell from real ones. Round D16 (H59/H59v): networks trained with a "
+        "second random seed reproduce the charge response within 7 %; the shuffled-label networks learned a constant "
+        "output and give no test, and networks trained with 30 % random labels are still training as the replacement null."
     ),
     'D18': (
         "When momentum is moved between the two prongs of a jet while the jet's total four-momentum stays exactly "
@@ -1047,7 +1048,13 @@ CLAIM = {
         "particles are split, and moving the same particles without adding any does nothing, so the taggers read the "
         "number of objects at fixed safe substructure as a sign of QCD. Uncertain: the generated jets are still "
         "distinguishable from Top Landscape jets, and the JetClass ParT_kin network barely moves under the hadronisation "
-        "change although it responds to the count edit. (Version 1, particle level: a 9 % rise moved ParT by 0.45.)"
+        "change although it responds to the count edit. (Version 1, particle level: a 9 % rise moved ParT by 0.45.) "
+        "Version 3 (H66/H66v): on real Top Landscape top jets the four Top Landscape taggers lower their top score when "
+        "objects are added and raise it when objects are removed, however the objects are added, while the energy-only "
+        "EFN stays flat, and the Top Landscape training data show the same direction at fixed mass and shape (about "
+        "−0.025 top log-odds per object). After reweighting the generated jets toward Top Landscape, ParT's hadronisation "
+        "shift stays near −0.25 with pair-symmetric weights, but its size depends on which jet of each pair sets the "
+        "weight; the networks also respond more per object than the data slope, and QCD-jet responses differ in sign."
     ),
     'D27': (
         "Multiplying every particle's energy in a jet by the same factor changes the jet mass and momentum but no "
@@ -1065,6 +1072,23 @@ CLAIM = {
         "recover the loss, so the taggers are not counting particles here; the loss comes with weaker three-prong "
         "structure (τ32, a measure of how three-pronged the jet looks, rises from 0.52 to 0.64). Still open: the "
         "mass-restoring step stretches the jet's angles, so which shape feature the taggers lose is not identified."
+    ),
+    'D29': (
+        "With all momenta fixed, flipping the electric charge of one particle at a time shows that the quark–gluon "
+        "ParT and ParticleNet that see particle types weight each particle's charge by roughly its momentum fraction "
+        "to the power 0.3–0.4 on quark jets, the weighting used in measured jet-charge observables; a plain count of "
+        "charges and the leading particle alone do not describe them. ParticleNet adds several flipped charges almost "
+        "linearly, while ParT's response saturates (two flips give about half the sum of the single ones). Still "
+        "uncertain: the power is higher on gluon jets (up to about 0.5), and the label-noise null is not yet scored."
+    ),
+    'D30': (
+        "When one classical quark/gluon angularity is moved with the others held fixed, the quark–gluon taggers respond "
+        "mostly to edits of how the jet's energy is spread in angle (narrower spread reads as quark), much more when the "
+        "energy is pulled toward a common radius than for the opposite move, and a random rearrangement of the same size "
+        "does not reproduce it. Moving the particle count or the momentum sharing at fixed angularities gives no "
+        "direction-dependent response, so this is not counting. Still uncertain: the energy-flow network, a tree on "
+        "angularities and the leading particle's radius all give the same pattern, so the radial variable is not "
+        "identified, and the dominant edits produce jets a classifier separates from real ones."
     ),
     'D25': (
         "Version 3 (H69/H69v): with jet mass and momentum held fixed, the full-input JetClass ParT and ParticleNet "
@@ -2260,6 +2284,45 @@ EXPLAINER = {
         "Putting the removed number of particles back, by splitting particles into exactly collinear halves, does not "
         "recover the loss, so it is not particle counting; it comes with weaker three-prong structure. The small net "
         "responses of the Top PFN and quark–gluon taggers are a count effect and a shape effect cancelling."
+    ),
+    'H66_EXPLAINER': (
+        "After reweighting our simulated top jets until a classifier can barely tell them from Top Landscape jets "
+        "(AUC 0.61), a hadronisation change that adds about 4 objects at fixed mass and three-prong shape still lowers "
+        "ParT's top score (−0.25 log-odds), while the energy-only EFN does not move. In the Top Landscape data, jets with "
+        "more objects at fixed mass and shape are more often QCD. Uncertain: the size depends on the weighting convention "
+        "(see H66v), and QCD-jet responses differ between networks."
+    ),
+    'H66V_EXPLAINER': (
+        "Weighting each event pair by one of its two jets biases the comparison in opposite directions, so the size of "
+        "the reweighted hadronisation shift is not fixed (ParT −0.47 to −0.05 depending on the convention), while the "
+        "response per added object is stable. On real Top Landscape top jets, adding objects in three different ways "
+        "lowers the top score and removing them raises it for all four taggers, and the data slope (about −0.025 per "
+        "object at fixed shape) reproduces on fresh rows."
+    ),
+    'H59_EXPLAINER': (
+        "A second training seed reproduces the quark–gluon networks' jet-charge response within 7 %. Flipping the "
+        "charges of hard and soft particles shows that the score follows the jet charge with each particle weighted by "
+        "its momentum fraction to a power of about 0.33, not a plain charge count or the leading particle alone. "
+        "Uncertain: one such charge explains 80 % of ParticleNet's response but only 40 % of ParT's."
+    ),
+    'H59V_EXPLAINER': (
+        "Flipping one particle's charge at a time gives a weighting power of 0.32–0.41 on quark jets and up to 0.48 on "
+        "gluon jets. ParticleNet adds several flips almost linearly; ParT's response to two flips is about half the sum "
+        "of the single ones and depends on the flip direction, so for ParT the per-particle weighting is measured but a "
+        "linear jet-charge read-out is not."
+    ),
+    'H76_EXPLAINER': (
+        "Moving one classical quark/gluon angularity at a time with the others fixed, the trained networks respond "
+        "almost only to the angular-spread edits (LHA and width), with a pattern matching the energy-flow network "
+        "(cosine about 0.99), and barely to the particle count or pT^D. Uncertain: these edits make jets a classifier "
+        "separates from real ones (AUC about 0.9)."
+    ),
+    'H76V_EXPLAINER': (
+        "The angular-spread response is lopsided: pulling energy toward a common radius moves ParT toward quark four to "
+        "six times more than the opposite edit moves it toward gluon, and a random edit of the same size does not. A tree "
+        "on angularities and the leading particle's radius give the same pattern as the energy-flow network, so the "
+        "radial variable the networks read is not identified; the count edits give the same response whether particles "
+        "are added or removed."
     ),
     'H68V_EXPLAINER': (
         "Swapping labels between charged and neutral particles of equal total energy, which leaves the jet's "

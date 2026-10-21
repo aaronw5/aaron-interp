@@ -243,7 +243,7 @@ def wmean_boot(D, w, idx):
 
 
 def wquant(x, w, q):
-    o = np.argsort(x); c = np.cumsum(w[o]) / w.sum(); return float(x[o][np.searchsorted(c, q)])
+    o = np.argsort(x); c = np.cumsum(w[o]) / w.sum(); return float(x[o][min(np.searchsorted(c, q), len(x) - 1)])
 
 
 def step_stats(a):
@@ -338,6 +338,12 @@ def step_stats(a):
                     rr['minus_EFN'] = dict(d=float(dd), ci=np.percentile(bdd, [2.5, 97.5]).tolist(), p=zp(dd, bdd.std()))
                     if m in TESTNETS: R['tests'].append(dict(arm=f'matched {v}', cls=cn, model=m, d=float(dd), p=rr['minus_EFN']['p']))
                 r['models'][m] = rr
+            if v == 'rest':     # H0: dS(Hz+) = dS(cnt), i.e. weighted mean of (Hz+ - cnt) = 0; sign-flip permutation p (2000)
+                prng = np.random.default_rng(6619); eps = prng.choice([-1.0, 1.0], (2000, J)); R.setdefault('hzp_vs_cnt', [])
+                for m in NETS:
+                    x = w * D[:, mi[m]]; t0 = abs(x.sum()); tp = np.abs(eps @ x)
+                    pp = float((1 + (tp >= t0).sum()) / 2001); r['models'][m]['p_perm'] = pp
+                    R['hzp_vs_cnt'].append(dict(cls=cn, model=m, d=float(d[mi[m]]), ci=r['models'][m]['ci'], p_perm=pp))
             pv = [r['models'][p]['d'] for p in PERMS if p in r['models']]
             r['perm_summary'] = dict(mean=float(np.mean(pv)), min=float(np.min(pv)), max=float(np.max(pv))) if pv else None
             R['paired'][cn][v] = r
@@ -406,6 +412,10 @@ def step_stats(a):
     for t, hh in zip(R['tests'], adj): t['holm'] = float(hh)
     R['holm'] = dict(family='network minus EFN shift, bootstrap-z p; matched Hz+/cnt/rest x 2 classes and TL split_rand k=2,4,8 / split_soft k=8 x 2 classes, x 6 networks',
                      n_tests=len(adj), n_pass_005=int((adj < 0.05).sum()))
+    if R.get('hzp_vs_cnt'):
+        adj2 = H60._holm([t['p_perm'] for t in R['hzp_vs_cnt']])
+        for t, hh in zip(R['hzp_vs_cnt'], adj2): t['holm'] = float(hh)
+        log('Hz+ vs cnt (rest) permutation tests', [(t['cls'], t['model'], round(t['d'], 3), t['holm']) for t in R['hzp_vs_cnt']])
     # ---- the data's conditional count ratio on Top Landscape train jets
     R['data_lr'] = data_lr(B=a.boot_lr)
     (RES / 'h66_run.json').write_text(json.dumps(R, indent=1, default=float)); log('wrote h66_run.json')
@@ -463,6 +473,89 @@ def data_lr(B=100):
     return out
 
 
+def step_sym(a):
+    """Pair-symmetric weights and per-half consistency.
+    The stats step weights each pair by w(V0 jet).  Because V0 and Hz+ are two noisy hadronisations of one parton event, selecting
+    on the V0 member's N, m, tau32, mW selects V0 fluctuations, and Hz+ - V0 then contains a regression-to-the-mean shift (the weighted
+    Hz+ - V0 has dN 7.6 instead of 4.5 and dm -1.2 GeV).  Here each pair gets w_sym = sqrt(w(V0 features) * w(Hz+ features)) (same
+    cross-fitted ratio model, fitted on V0 vs T1), which depends on the pair symmetrically.  Reported: C2ST of V0 and of Hz+ under
+    w_sym vs T2, paired shifts (Hz+, cnt, rest) under unweighted / w(V0) / w_sym, per half and pooled, per object, sign-flip p."""
+    from interp import h60_top_hadronisation as H60
+    Z = np.load(RES / 'h66_scores.npz'); names = sorted({k.split('|')[1] for k in Z.files if k.startswith('y|')})
+    S = {s: {m: Z[f'{s}|{m}'].astype(np.float64) for m in NETS if f'{s}|{m}' in Z.files} for s in names}
+    O = {s: {k.split('|')[2]: Z[k].astype(np.float64) for k in Z.files if k.startswith(f'obs|{s}|')} for s in names}
+    Y = {s: Z[f'y|{s}'].astype(int) for s in names}; K = {s: Z[f'key|{s}'] for s in names}
+    F = lambda s, rows: np.stack([O[s][k][rows] for k in WF], 1)
+    rng = np.random.default_rng(6620); B = a.boot; other = {'A': 'B', 'B': 'A'}; cn_ = {0: 'qcd', 1: 'top'}
+    obsk = ['N', 'm', 'tau32', 'mW', 'pTD']
+    out = dict(node='H66 sym', c2st={}, shifts={}, ess={})
+    for cls in (0, 1):
+        cn = cn_[cls]; pool = {}
+        for h in 'AB':
+            ho = other[h]; r0 = np.flatnonzero(Y[f'{ho}_V0'] == cls)
+            wf = fit_ratio(F(f'{ho}_V0', r0), F('T1', np.flatnonzero(Y['T1'] == cls)), seed=cls)      # same fit as step_stats (fit half = ho)
+            p1 = {int(k): j for j, k in enumerate(K[f'{h}_Hzp'])}; pc = {int(k): j for j, k in enumerate(K[f'{h}_cnt'])}
+            pr = np.array([(j, p1[int(k)], pc[int(k)]) for j, k in enumerate(K[f'{h}_V0'])
+                           if int(k) in p1 and int(k) in pc and Y[f'{h}_V0'][j] == cls])
+            w0 = wf(F(f'{h}_V0', pr[:, 0])); w1 = wf(F(f'{h}_Hzp', pr[:, 1])); ws = np.sqrt(w0 * w1); ws /= ws.mean()
+            Xt = F('T2', np.flatnonzero(Y['T2'] == cls))
+            out['c2st'][f'{h}|{cn}'] = dict(V0_w0=c2st(F(f'{h}_V0', pr[:, 0]), Xt, w0, seed=cls), V0_wsym=c2st(F(f'{h}_V0', pr[:, 0]), Xt, ws, seed=cls),
+                                           Hzp_wsym=c2st(F(f'{h}_Hzp', pr[:, 1]), Xt, ws, seed=cls), Hzp_unw=c2st(F(f'{h}_Hzp', pr[:, 1]), Xt, None, seed=cls),
+                                           cnt_wsym=c2st(F(f'{h}_cnt', pr[:, 2]), Xt, ws, seed=cls))
+            log('C2ST', h, cn, {k: round(v, 3) for k, v in out['c2st'][f'{h}|{cn}'].items()})
+            s0 = np.stack([S[f'{h}_V0'][m][pr[:, 0]] for m in NETS], 1); s1 = np.stack([S[f'{h}_Hzp'][m][pr[:, 1]] for m in NETS], 1)
+            s2 = np.stack([S[f'{h}_cnt'][m][pr[:, 2]] for m in NETS], 1)
+            o0 = np.stack([O[f'{h}_V0'][k][pr[:, 0]] for k in obsk], 1); o1 = np.stack([O[f'{h}_Hzp'][k][pr[:, 1]] for k in obsk], 1)
+            o2 = np.stack([O[f'{h}_cnt'][k][pr[:, 2]] for k in obsk], 1)
+            pool[h] = dict(W={'unw': np.ones(len(pr)), 'w_v0': w0, 'w_sym': ws}, D={'Hzp': s1 - s0, 'cnt': s2 - s0, 'rest': s1 - s2},
+                           Do={'Hzp': o1 - o0, 'cnt': o2 - o0, 'rest': o1 - o2})
+        pool['pooled'] = {k: {kk: np.concatenate([pool[h][k][kk] for h in 'AB']) for kk in pool['A'][k]} for k in ('W', 'D', 'Do')}
+        out['shifts'][cn] = {}
+        for h in ('A', 'B', 'pooled'):
+            P = pool[h]; J = len(P['W']['unw']); idx = rng.integers(0, J, (B, J)); out['shifts'][cn][h] = {}
+            for wn, w in P['W'].items():
+                out['ess'][f'{h}|{cn}|{wn}'] = ess(w); rr = {}
+                for v in ('Hzp', 'cnt', 'rest'):
+                    d, bs = wmean_boot(P['D'][v], w, idx); dob, bob = wmean_boot(P['Do'][v], w, idx[:300])
+                    e = dict(n=J, obs={k: dict(d=float(dob[i]), ci=np.percentile(bob[:, i], [2.5, 97.5]).tolist()) for i, k in enumerate(obsk)}, models={})
+                    for i, m in enumerate(NETS):
+                        e['models'][m] = dict(d=float(d[i]), ci=np.percentile(bs[:, i], [2.5, 97.5]).tolist(),
+                                              per_object=float(d[i] / dob[0]) if abs(dob[0]) > 0.3 else None,
+                                              per_object_ci=np.percentile(bs[:, i] / bob[:, 0].mean(), [2.5, 97.5]).tolist() if abs(dob[0]) > 0.3 else None)
+                        if v == 'rest' and h == 'pooled':
+                            x = w * P['D'][v][:, i]; eps = np.random.default_rng(6621).choice([-1.0, 1.0], (2000, J))
+                            e['models'][m]['p_perm'] = float((1 + (np.abs(eps @ x) >= abs(x.sum())).sum()) / 2001)
+                    rr[v] = e
+                out['shifts'][cn][h][wn] = rr
+                log(f'{cn} {h} {wn}: ESS {ess(w):.0f} | ' + ' | '.join(
+                    f"{v} dN {rr[v]['obs']['N']['d']:+.2f} dm {rr[v]['obs']['m']['d']:+.2f} dt32 {rr[v]['obs']['tau32']['d']:+.4f} "
+                    + ' '.join(f"{m} {rr[v]['models'][m]['d']:+.3f}" for m in NETS) for v in ('Hzp', 'cnt', 'rest')))
+    tests = [(cn, m) for cn in ('top', 'qcd') for m in NETS]
+    adj = H60._holm([out['shifts'][cn]['pooled']['w_sym']['rest']['models'][m]['p_perm'] for cn, m in tests])
+    out['holm_rest_wsym'] = [dict(cls=cn, model=m, holm=float(x)) for (cn, m), x in zip(tests, adj)]
+    (RES / 'h66_sym.json').write_text(json.dumps(out, indent=1, default=float)); log('wrote h66_sym.json')
+    fig_sym(out)
+
+
+def fig_sym(out):
+    import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+    show = [('ParT_top', 'ParT'), ('PN_top', 'ParticleNet'), ('LNet_top', 'LorentzNet'), ('PFN_top', 'PFN'), ('ParT_kin', 'ParT_kin\n(JetClass)'),
+            ('PN_kin', 'PN_kin\n(JetClass)'), ('EFN_top', 'EFN\n(IRC-safe)')]
+    W = [('unw', 'unweighted (C2ST ≈ 0.80)', '#9e9e9e'), ('w_v0', 'weights from the V0 jet', '#ff7f0e'), ('w_sym', 'pair-symmetric weights', '#1f77b4')]
+    fig, axs = plt.subplots(1, 2, figsize=(13, 5.0), sharey=False)
+    for ax, v, title in ((axs[0], 'Hzp', 'Hz+ minus V0 (hadronisation change)'), (axs[1], 'cnt', 'count arm minus V0 (exact collinear splits)')):
+        x = np.arange(len(show))
+        for j, (wn, lab, c) in enumerate(W):
+            e = out['shifts']['top']['pooled'][wn][v]
+            d = np.array([e['models'][m]['d'] for m, _ in show]); ci = np.array([e['models'][m]['ci'] for m, _ in show])
+            ax.errorbar(x + (j - 1) * 0.22, d, yerr=[d - ci[:, 0], ci[:, 1] - d], fmt='o', color=c, ms=5, capsize=2,
+                        label=f"{lab}; ΔN = {e['obs']['N']['d']:+.1f}")
+        ax.axhline(0, color='k', lw=0.8); ax.set_xticks(x); ax.set_xticklabels([s for _, s in show], fontsize=8.5)
+        ax.set_title(f'Top jets: {title}', fontsize=10); ax.legend(fontsize=8, loc='lower right')
+    axs[0].set_ylabel('mean change in top log-odds per jet pair')
+    fig.tight_layout(); fig.savefig(RES / 'h66_sym.png', dpi=130); log('wrote h66_sym.png')
+
+
 def fig(R):
     import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
     show = [('ParT_top', 'ParT (Top)', '#1f77b4'), ('PN_top', 'ParticleNet (Top)', '#ff7f0e'), ('LNet_top', 'LorentzNet (Top)', '#2ca02c'),
@@ -496,8 +589,8 @@ def fig(R):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--step', required=True, choices=['score', 'tltrain', 'stats', 'fig'])
+    ap.add_argument('--step', required=True, choices=['score', 'tltrain', 'stats', 'fig', 'sym'])
     ap.add_argument('--boot', type=int, default=2000); ap.add_argument('--boot_lr', type=int, default=100)
     ap.add_argument('--ntrain', type=int, default=60000)
     a = ap.parse_args()
-    dict(score=step_score, tltrain=step_tltrain, stats=step_stats, fig=lambda a: fig(json.loads((RES / 'h66_run.json').read_text())))[a.step](a)
+    dict(score=step_score, tltrain=step_tltrain, stats=step_stats, sym=step_sym, fig=lambda a: fig(json.loads((RES / 'h66_run.json').read_text())))[a.step](a)
