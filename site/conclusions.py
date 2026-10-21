@@ -590,7 +590,9 @@ CLAIM = {
         "above threshold, which keeps the number of displaced tracks and costs 3 points, while keeping only two displaced "
         "tracks costs 61. Small new effects (lepton charge in H → ℓνqq′, charm dead cone) were not rerun. The count "
         "statement holds for H → bb̄ against QCD; for H → bb̄ against H → cc̄ the networks also respond to the "
-        "displacement values at fixed counts (claim D19), without evidence that this is a lifetime reading."
+        "displacement values at fixed counts (claim D19), without evidence that this is a lifetime reading. In "
+        "H → ℓνqq′ jets the networks also use the lepton's angle to the quark particles, beyond lepton presence and "
+        "isolation (claim D20)."
     ),
     'D4': (
         "Measuring particle positions from another standard jet axis (the winner-take-all axis, which follows the harder "
@@ -701,7 +703,10 @@ CLAIM = {
         "and add almost no mass. A pure count change (soft particles split into collinear halves) confirms that the "
         "JetClass W-versus-QCD networks count particles while quark–gluon networks barely do, so the count response "
         "belongs to the models and their training data, not to the pileup edit. The pileup model is simplified, none of "
-        "the networks was trained with pileup, and part of the Top LorentzNet response comes from the added momentum."
+        "the networks was trained with pileup, and part of the Top LorentzNet response comes from the added momentum. "
+        "A later test with matched count, momentum and plain mass shows that for the JetClass W/Z networks where the "
+        "soft particles sit also matters: wide-angle particles that grooming would remove cost several times more "
+        "than the same number added at the jet centre (claim D21)."
     ),
     'D11': (
         "JetClass-trained ParT and ParticleNet lower their top score when the W-candidate subjet pair inside a top jet is "
@@ -762,7 +767,27 @@ CLAIM = {
         "A rotation of the same angle that keeps both prongs fixed barely moves the scores, so the response follows the "
         "prong configuration. A classifier that never sees the momentum fraction z predicts the median response, "
         "because at fixed mass z, the prong separation and the prong masses change together, so whether the networks "
-        "read z itself is not known."
+        "read z itself is not known. Putting the reclustered prong masses back after the edit leaves the response to "
+        "asymmetric prongs unchanged, so it is not a prong-mass effect; but a classifier given the jet mass, the prong "
+        "separation and the two prong masses, and not z, reproduces the response to a pure z change, so z is still "
+        "not separated from those quantities or from D2."
+    ),
+    'D20': (
+        "When the lepton in an H→ℓνqq′ jet is turned away from the other particles so that the visible mass rises "
+        "across the Higgs mass (125 GeV), ParT and ParticleNet lower their Higgs score about twice as much as a "
+        "classifier given only the jet mass predicts, with or without particle-ID inputs. Raising the visible mass by "
+        "the same amount by turning a hadron instead gives no extra drop, so the networks respond to the lepton's "
+        "angle to the quark system, not to the mass crossing 125 GeV. No network shows a two-way step at the "
+        "leptonic-top lepton+b endpoint (152.6 GeV). The edit also makes the lepton more isolated, and the exact "
+        "lepton–quark quantity read is not known."
+    ),
+    'D21': (
+        "Three soft particles were added to jets with the same count, momentum and plain-mass change, once where "
+        "soft-drop grooming removes them and once where it keeps them. The hls4ml W/Z taggers treat both alike, as a "
+        "plain-mass tagger does. The JetClass and top taggers react strongly to particles grooming removes and, to "
+        "kept particles, follow only about 0.4 of a groomed-mass classifier's response plus an extra penalty that does "
+        "not depend on whether the groomed mass moves toward or away from the signal peak. What that penalty reads, "
+        "possibly the shape of the prong the particles join, is not known."
     ),
     'D19': (
         "When the number of displaced tracks (tracks well separated from the collision point) above every "
@@ -1081,6 +1106,41 @@ EXPLAINER = {
         "by the same amount moves H→bb jets toward H→cc just as far, and the same shrink on non-displaced tracks moves "
         "every class. In the data at equal counts b-jet tracks are less displaced than c-jet tracks, so the networks' "
         "direction is not the lifetime difference; they use impact-parameter values, not shown to be lifetime."
+    ),
+    'H48_EXPLAINER': (
+        "Turning the lepton of an H→ℓνqq′ jet outward so the visible mass crosses 125 GeV lowers the Higgs score of "
+        "ParT and ParticleNet about twice as much as a mass-only classifier predicts. For leptonic top jets no network "
+        "shows a two-way step at the 152.6 GeV lepton+b endpoint. The verifier showed that the H effect follows the "
+        "moved lepton, not the mass crossing (see H48v)."
+    ),
+    'H48V_EXPLAINER': (
+        "On fresh jets the lepton-edit effect returns at the same size, largest where the mass crosses 125 GeV. Raising "
+        "the visible mass by the same amount by turning a hadron gives no extra drop, so the networks react to the "
+        "lepton's angle to the quark system rather than to the Higgs-mass edge. Which lepton–quark quantity they read, "
+        "and how much is lepton isolation, is open."
+    ),
+    'H49_EXPLAINER': (
+        "Soft particles added with equal count, momentum and plain-mass change, once where grooming removes them and "
+        "once where it keeps them, are treated alike by the hls4ml taggers, as a plain-mass tagger does. The JetClass "
+        "and top taggers react strongly to the removed particles and further to the kept ones; the verifier showed "
+        "that this further response is only partly groomed-mass-like (see H49v)."
+    ),
+    'H49V_EXPLAINER': (
+        "On fresh jets the responses reproduce. Jet by jet, the JetClass and top taggers follow about 0.4 of a "
+        "groomed-mass classifier's response and add a penalty that does not depend on the direction of the groomed-mass "
+        "change, and the response also depends on where the removed particles sit. What the penalty reads is not tested."
+    ),
+    'H50_EXPLAINER': (
+        "Restoring the reclustered prong masses after moving momentum toward one prong leaves every tagger's response "
+        "unchanged, so that response is not a prong-mass effect. Changing only z at fixed prong separation and prong "
+        "masses moves the JetClass scores toward W/Z for more balanced prongs, but the verifier showed that a classifier "
+        "without z predicts the same (see H50v)."
+    ),
+    'H50V_EXPLAINER': (
+        "A classifier that sees jet mass, prong separation and the two prong masses, but not z or D2, reproduces the "
+        "networks' response to a pure z change within about 0.15 log-odds, because those quantities fix z. So the test "
+        "cannot tell whether the networks read z, D2, or separation with masses. The prong-mass result holds only for "
+        "edits toward more asymmetric prongs."
     ),
     'H45_EXPLAINER': (
         "Moving momentum between the two prongs at exactly fixed jet four-momentum changes the W/Z score of every "
