@@ -418,7 +418,10 @@ CLAIM = {
         "part of the released training (10 classes, 100 million jets or a longer schedule) gives the larger response was "
         "untested after round C6. (Round C7.) Training on all 10 classes with the same 1.5 million jets and step count raises the "
         "ratio by about 0.1 (to about 0.3), so the 10-class objective contributes but explains only a small part of the "
-        "gap; runs with 5 million jets and with five times the training steps are still training, with one seed per run."
+        "gap; runs with 5 million jets and with five times the training steps are still training, with one seed per run. "
+        "(Round C9.) Those runs finished: neither 5 million jets with 10 classes nor five times the training steps brings "
+        "the ratio above about 0.4, against 0.72 to 0.87 for the released models, so what produces the released models' "
+        "larger axis response is still not identified; each run has one seed."
     ),
     'C5': (
         "ParticleNet, a graph network without attention trained on the same JetClass inputs, also calls more true W jets "
@@ -499,7 +502,48 @@ CLAIM = {
         "This is a planned test, not yet run: whether ParT's decision that a jet comes from a top quark decaying to three "
         "quarks is carried by a handful of attention heads, or spread over many heads as its W-versus-Z decision is. The "
         "test keeps only a few heads, averages out the rest of the network, and compares the result with random head sets "
-        "of the same size. The first attempt failed on a broken cluster machine, so nothing is known yet."
+        "of the same size. The first attempt failed on a broken cluster machine, so nothing is known yet. (Round C9.) "
+        "The test ran: a few attention heads carry most of the top-quark decision, but keeping only them and averaging "
+        "out everything else does not reproduce the top-quark call, and they do no better than random heads from the same "
+        "final stage of the network. The stand-alone circuit stated here is therefore not supported; see C17 v2 and C17s."
+    ),
+    'C17 v2': (
+        "Five attention heads in ParT's final class-token stage, where one summary token reads all particles, carry 59 % "
+        "of the drop in the top-quark score that removing every head causes, against about 21 % for five random heads from "
+        "the same stage. The same heads carry about two thirds of the response when the b-quark prong is merged into one "
+        "particle at fixed jet momentum. Kept alone, without the rest of the network, they do not give the top-quark "
+        "call, so they are a main route for the decision rather than a complete circuit; one network and two samples."
+    ),
+    'C17s': (
+        "It is unsettled whether each jet class has its own attention heads in ParT. Removing the heads ranked for the "
+        "top-quark call lowers mainly the top-quark score, about 3 standard deviations beyond random heads, which is only "
+        "marginally significant after correcting for ten classes. On the other hand, the heads each class depends on "
+        "one at a time come largely from the same small pool, so the classes may share most of their heads."
+    ),
+    'C18 v2': (
+        "When all particles of a W or Z jet are shifted together at fixed jet mass, ParT responds to how far the "
+        "particles spread about the stored jet axis, not to the jet's momentum direction moving off that axis: a shift "
+        "that moves the direction but keeps the spread gives at most 0.2 of the response. Such shifts cannot tell the "
+        "spread apart from the offset of the particles' momentum-weighted centre. In unedited jets that offset is set by "
+        "the jet's pseudorapidity and width, so its effect on real decisions is inferred from edits, not observed."
+    ),
+    'C19': (
+        "The 1,024 hidden neurons in ParT's final class-token layers are, as a set, no easier to read than random "
+        "combinations of them: about half respond selectively to one class or physics quantity either way, and nudging a "
+        "single neuron moves its labelled class the predicted way only about half the time, usually by a negligible "
+        "amount. The predicted neuron-by-neuron readability is therefore excluded on two samples."
+    ),
+    'C19r': (
+        "A small minority of the neurons in ParT's final class-token layers have clear causal roles that hold on fresh "
+        "jets. Among them, a few that follow the jet mass measured about the jet axis reproduce about a quarter of the "
+        "network's W-versus-other response to a real mass change, and a similar share under a sideways shift of the jet "
+        "that keeps the mass. Which neurons count as mass neurons changes between samples, and two neurons carry much of it."
+    ),
+    'C20': (
+        "The full-input ParT and ParticleNet change 8 to 12 % of their decisions when the jet is mirrored in azimuth. "
+        "When the particle charges and transverse impact parameters are flipped as well, so that the result is the mirror "
+        "image of a real jet, only about 3 % change, close to the kinematics-only models. The mirror sensitivity therefore "
+        "comes from the sign pattern of charge and impact parameter, not from the jet axis."
     ),
     'C18': (
         "In real jets the momentum-weighted centre of the particles sits a few hundredths of a radian from the stored jet "
@@ -1327,6 +1371,26 @@ EXPLAINER = {
         "of natural size, which here amount to about a 1 % mass shift and change a few percent of decisions on the most "
         "off-centre jets. The edit moves the jets' momentum direction off the stored axis, so unedited jets are still to "
         "be tested."
+    ),
+    'P37_EXPLAINER': (
+        "Five attention heads in ParT's final class-token stage, where one summary token reads all particles, carry 59 % "
+        "of the top-quark score drop, against about 21 % for five random heads from that stage, and about two thirds of "
+        "the response when the b-quark prong is merged into one particle. Removing them mainly affects the top-quark class, "
+        "but only marginally significantly. Kept alone, they do not give the top-quark call, so they are not a stand-alone circuit."
+    ),
+    'P39_EXPLAINER': (
+        "Comparing unedited off-centre jets with centred jets of equal mass cannot test ParT's axis dependence, because the "
+        "off-centre jets sit at larger pseudorapidity and every network, including one that cannot see the stored axis, "
+        "scores them differently for that reason. Edits show that ParT responds to the particles' spread about the stored "
+        "axis, not to the jet's momentum direction moving off it. The full models' sensitivity to a mirror image comes from "
+        "the signs of charge and impact parameter; how much the natural offset affects real decisions is still inferred."
+    ),
+    'P40_EXPLAINER': (
+        "As a set, the neurons in ParT's final class-token layers are about as readable as random rotated directions in "
+        "the same space, and nudging one neuron moves its labelled class the predicted way only slightly more often than a "
+        "random direction does, usually by a negligible amount. A small minority have reproducible causal roles; a few that "
+        "follow the axis-based jet mass reproduce about a quarter of the W response to a real mass change. Which neurons "
+        "count as mass neurons changes between samples."
     ),
     'P23_EXPLAINER': (
         "Shifting all of a jet's particles by a small angle changes ParT's W-versus-Z score mostly in the same way for a "
