@@ -55,7 +55,9 @@ CLAIM = {
         "internal quantity in any layer, and a direct test for a unit that multiplies them found none but can exclude only "
         "large effects. In the 16-feature network, shifting particles off the axis turns W jets into Z and then into top "
         "calls, and stretching only the particle distances to give the same change of the pT-weighted spread produces the "
-        "same number of W-to-Z changes, while stretches matched on other radial sums do not (round 10, E25w)."
+        "same number of W-to-Z changes, while stretches matched on other radial sums do not (round 10, E25w). Tested "
+        "against a family of 15 angular spreads (round 12, E27), the pT weighting of the spread is confirmed, but the "
+        "power of the distance is not pinned to the square."
     ),
     'A4n': (
         "On real, unedited jets whose axis is slightly off the pT-weighted centre, moving the particles so that the jet is "
@@ -187,8 +189,26 @@ CLAIM = {
         "JEDI-linear's decisions change. About half of those changes disappear when the network's internal sum of the "
         "hardest particles' pT is held at its pre-boost value, and most disappear when two learned directions for total pT "
         "and pT-weighted angular spread are held, while the network's mass estimate does not move on average. So the "
-        "network reads total pT as a class feature next to the mass. Uncertain: generic high-variance directions also "
-        "carry much of the effect, and at higher pT the response is spread over several later units."
+        "network reads total pT as a class feature next to the mass. Internal directions that avoid total pT but vary as "
+        "much in data undo far less, and most of the change in total pT reaches that sum through one context unit that "
+        "summarises the whole jet. Uncertain: the boost moves the network mostly along total pT, so whether total pT is "
+        "singled out or is simply where the boost acts cannot be separated at that layer, and at higher pT the response "
+        "is spread over several later units."
+    ),
+    'A4w': (
+        "When particles are moved toward or away from the jet axis with the total pT and the pT-weighted centre held, the "
+        "network's mass-related decisions follow spreads in which each particle is weighted by its pT, not spreads that "
+        "count particles equally or weight them by pT squared. Among pT-weighted spreads it does not respond to the "
+        "squared-distance sum (the one in the invariant-mass formula) alone. Still open: which pT-weighted combination it "
+        "uses, whether a girth-like spread enters, and whether it reads that sum or the mass itself, since the edits "
+        "always changed both together."
+    ),
+    'A15': (
+        "Splitting one particle into two particles moving in exactly the same direction leaves the jet's mass and every "
+        "pT-weighted shape unchanged, yet it changes 2–4 % of JEDI-linear's decisions, more than moving the same particle "
+        "without splitting it, and pushes quark calls toward gluon. So the trained network is neither collinear- nor "
+        "soft-safe: part of its decision follows the number of particles. Which internal sums carry this is not "
+        "identified, because holding the named count and rank-window sums removes no more than holding random sums."
     ),
     'A1f': (
         "The more accurate official JEDI-linear with 16 input features does not build its angular information from "
@@ -779,6 +799,25 @@ EXPLAINER = {
         "the layer where they were found earlier. A single direction in each particle's first-layer values can be swapped to "
         "reproduce a change of the spread, but networks with entirely random weights allow the same swap equally well, so "
         "this does not show that training placed the spread there. Where training first builds it remains open."
+    ),
+    'E27_EXPLAINER': (
+        "Moving particles toward or away from the jet axis, with total pT held, shows that JEDI-linear's mass response "
+        "depends on spreads weighted by particle pT, not on spreads that count particles or weight them by pT squared. "
+        "Among pT-weighted spreads the decision responds to more than the squared-distance sum that enters the jet mass: "
+        "holding that sum fixed, other pT-weighted spreads still move the W-versus-Z decision. The exact combination, and "
+        "whether the network reads that sum or the jet mass, is open."
+    ),
+    'E28_EXPLAINER': (
+        "Splitting one particle into two collinear particles, which keeps the jet's mass and every pT-weighted shape, "
+        "changes 2–4 % of JEDI-linear's decisions and pushes quark calls toward gluon, more than moving the same particle "
+        "without splitting it. So the network is neither collinear- nor soft-safe. Holding the named count and "
+        "rank-window sums removes no more of the effect than holding random sums, so the internal route is not identified."
+    ),
+    'E26W_EXPLAINER': (
+        "When a jet's pT is lowered by 10 % at fixed mass, holding the network's total-pT sum at its old value undoes "
+        "about 57 % of the changed decisions, far more than internal directions that avoid total pT but vary as much in "
+        "data. Most of the change in that sum arrives through one context unit. Because the boost moves the network almost "
+        "only along total pT, whether total pT is singled out or simply is where the boost acts cannot be separated there."
     ),
     'X13_EXPLAINER': (
         "All 56 trained networks tested react to a shift of the whole jet that keeps its true mass, so none of them "
@@ -1517,7 +1556,9 @@ KEY_RESULT = {
         "tied to the stored axis, which depends on the network type for set networks and on the training run for "
         "transformer-type networks (the whole training path, not the starting weights alone). At fixed mass, JEDI-linear "
         "also reads total pT as a class feature, so boosting a jet along its axis changes about a third of its decisions "
-        "while its mass estimate stays the same on average."
+        "while its mass estimate stays the same on average. The spread it reads is weighted by particle pT, as in the "
+        "mass formula, but its decision is not a function of the squared-distance sum alone; and splitting one particle "
+        "into two collinear ones, which keeps the mass, still changes a few per cent of its decisions."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "
