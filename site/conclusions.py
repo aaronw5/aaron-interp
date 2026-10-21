@@ -41,7 +41,10 @@ CLAIM = {
         "correlated approximation. So round two turns the first round's directional cuts into near-radial quantities, not "
         "exactly radial ones: their on-regions are polygons around the axis, not circles. A preregistered, blind fit "
         "confirms that most of these units (15 of 19) are each a short formula of pT and distance sums over rank windows, "
-        "more often than any random mixing of the same units."
+        "more often than any random mixing of the same units. Round 15 adds two limits: the sum named \"pT of the 14 "
+        "hardest particles\" responds as much to pT added to softer particles, because its context input carries the total "
+        "jet pT, so as a whole it tracks total pT (E33); and a pT-independent sum of how far particles lie beyond 0.2 from "
+        "the axis carries most of the quark/gluon response to wide-angle particles (E34)."
     ),
     'A4': (
         "JEDI-linear's internal mass behaves like the total pT times the pT-weighted squared spread of the particles about "
@@ -65,7 +68,10 @@ CLAIM = {
         "from the axis. Round 14 (E31) adds a limit to this: the shifted and turned jets differ from real jets in "
         "quantities measured about the axis, and in real jets the centre is never far enough off the axis to change the "
         "mass by more than 0.7 %, so the difference between the two masses describes how the network handles "
-        "axis-displaced inputs, not something that can be seen on natural jets (claim A4o)."
+        "axis-displaced inputs, not something that can be seen on natural jets (claim A4o). Round 15 (E32) tests a "
+        "realistic case: when the axis is computed from particles snapped to trigger-sized calorimeter towers, the network "
+        "changes its W/Z decision about 0.9 as much as for a real mass change of the predicted size, and the response "
+        "disappears when the spread about the new axis is restored (claim A4t)."
     ),
     'A4n': (
         "On real, unedited jets whose axis is slightly off the pT-weighted centre, moving the particles so that the jet is "
@@ -235,7 +241,9 @@ CLAIM = {
         "above chance; replacing its jet quantities by other active ones of the same number does worse. Because the hand "
         "names already cover almost every active unit in those layers, this shows agreement, not that the names are the "
         "only good description; and the hand-built program matches the algorithm's circuit only under one of the two "
-        "standard ways of switching units off."
+        "standard ways of switching units off. Applied to ten trained versions of the network (round 15, E33, not yet "
+        "rerun), the search needs about two thirds or more of the active units in the quantized networks and nearly all of "
+        "them in the two trained without quantization."
     ),
     'A5n': (
         "A class neuron with a ReLU passes on only its positive side. For the two neurons that pick out jet masses near "
@@ -250,14 +258,44 @@ CLAIM = {
         "their centre far enough off that axis to change the mass by more than 0.7 %. So in real data the jet mass and "
         "the spread-based mass the network uses are the same number, and the finding that the network reads the spread "
         "describes how it handles axis-displaced inputs. The boosted, split and soft-particle jets stay among real jets, "
-        "and their effects hold there."
+        "and their effects hold there. Jets measured about a realistic trigger-style axis (round 15, E32) also look real "
+        "on quantities that do not depend on the axis, but not on quantities measured about it, so a realistic axis error "
+        "still produces inputs unlike stored-axis jets."
+    ),
+    'A4t': (
+        "We measured the particles of each jet about an axis like a trigger would compute it: the momentum-weighted "
+        "direction after snapping every particle to a calorimeter tower of 0.087 in η and φ, which moves the axis by "
+        "about 18 mrad. JEDI-linear changes its W/Z decision about 0.9 as much as for a real mass change of the same "
+        "predicted size, and the effect disappears when the spread of the particles about the new axis is restored, so "
+        "the network reads the spread about whatever axis it is given. It also responds to which way the axis moved, "
+        "about half as strongly; the tower model has no threshold or pileup, so how close it is to a real trigger is "
+        "untested."
+    ),
+    'A1x v2': (
+        "We repeated the naming of JEDI-linear's internal jet quantities on ten separately trained versions of the "
+        "network. Two quantities come back in most of the quantized ones: the momentum-weighted squared distance of the "
+        "particles from the axis, and a count of soft particles. The \"sum of pT of the hardest particles\" of the "
+        "reference network turns out to track the total jet pT, and a true hardest-particles window appears in only "
+        "three networks with different sizes. Formulas picked at random and fitted to the reference also recur in about "
+        "a third of the other networks, so it is not yet shown that these quantities recur more than chance."
+    ),
+    'A17': (
+        "We asked how JEDI-linear tells gluon jets from quark jets by changing one jet property by 5 % while holding the "
+        "others: the number of soft particles, the jet width (girth), how concentrated the momentum is in a few "
+        "particles (pT^D), and how far particles sit from the axis. Each moves the network's score in the direction that "
+        "physics expects for gluons versus quarks, at about half to three quarters of the response of a classifier "
+        "trained on these four properties. The \"mass\" part is a response to the particles' distance from the axis, not "
+        "to the invariant mass, and an untrained network shows it too, so only the count, width and pT^D responses are "
+        "shown to be learned."
     ),
     'A15r': (
         "We tested four ways a collinear split could reach JEDI-linear's decision. Two are excluded: the cut that "
         "switches on for particles below 11 GeV, and the softest particle being pushed out of the 64 input slots. Two "
         "carry part of it: the softer particles moving down one pT-rank position (up to about a third of the changed "
         "decisions), and the two internal sums that count empty input slots, which also carry 40 % of the effect of "
-        "adding one soft particle. The rest is spread over many internal sums and is not yet assigned."
+        "adding one soft particle. The rest is spread over many internal sums and is not yet assigned. On the "
+        "quark/gluon score (round 15, E34v), extra particles near the jet core act through the same two empty-slot sums "
+        "(about 0.8 of the response), while extra wide-angle particles act through a different sum."
     ),
     'A4w v2': (
         "With the pT-weighted squared spread of the particles held fixed, smoothly reshaping how far particles sit from "
@@ -982,6 +1020,26 @@ EXPLAINER = {
         "cut and the 64-slot input limit do not carry this. Moving the softer particles back to their original input "
         "positions removes up to about a third of it, and holding the two sums that count empty input slots removes "
         "about a sixth; the rest is spread over many internal sums."
+    ),
+    'E32_EXPLAINER': (
+        "When JEDI-linear's inputs are measured about an axis computed from particles snapped to trigger-sized "
+        "calorimeter towers, its W/Z decision moves about 0.9 as far as for a real mass change of the predicted size, "
+        "and restoring the particles' spread about the new axis removes the effect. So the network reads the spread about "
+        "the axis it is given, also for realistic axis errors. A smaller part of the response depends on which way the "
+        "axis moved, and the tower model lacks threshold and pileup."
+    ),
+    'E33_EXPLAINER': (
+        "Across ten separately trained JEDI-linear networks, a unit computing the momentum-weighted squared distance "
+        "from the axis appears in nine and a soft-particle count in seven. The reference unit named \"pT of the hardest "
+        "particles\" tracks the total jet pT, and a true hardest-particles window appears in only three networks. Random "
+        "formulas fitted to the reference recur in about a third of the networks, so recurrence beyond chance is not yet "
+        "shown."
+    ),
+    'E34_EXPLAINER': (
+        "Changing one property of quark and gluon jets at a time shows that JEDI-linear's quark/gluon score follows the "
+        "number of soft particles, the jet width, how concentrated the momentum is (pT^D), and how far particles sit from "
+        "the axis, at about half to three quarters of the response of a classifier trained on those properties. The last "
+        "one is not the invariant mass, and an untrained network shows it too."
     ),
     'E29_EXPLAINER': (
         "An algorithm that keeps only the internal connections JEDI-linear's output depends on picks out all the "
@@ -1917,7 +1975,8 @@ KEY_RESULT = {
         "with the winner-take-all axis about 30 % for JEDI-linear and 12 % for ParT with all input features, mostly W jets "
         "called Z. The direction of the changes follows each model's own formula, but some changes also occur under a "
         "shift of equal size that keeps the formula fixed, so part of the effect is general sensitivity to inputs unlike "
-        "the training data."
+        "the training data. For JEDI-linear on a trigger-style axis built from calorimeter towers (round 15, E32), the "
+        "W/Z response is about 0.9 of the predicted mass change plus a smaller part that depends on the offset direction."
     ),
     'The whole trigger network as if-statements': (
         "JEDI-linear's active units, written as nested hinge if-statements ('if Q > t, add a(Q − t)') fitted layer by "
