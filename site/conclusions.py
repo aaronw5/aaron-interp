@@ -757,7 +757,10 @@ CLAIM = {
         "and JetClass models tested. Pileup-like soft particles placed near the jet centre, where they add almost no "
         "mass, also lower the JetClass ParT and ParticleNet and the Top Landscape ParT, LorentzNet and PFN efficiencies, "
         "which supports the counting part for those models (claim D10). Splitting soft particles into exactly collinear "
-        "halves, a pure count change, moves the JetClass W-versus-QCD taggers by 1.2–2.3 times a count-only classifier."
+        "halves, a pure count change, moves the JetClass W-versus-QCD taggers by 1.2–2.3 times a count-only classifier. "
+        "On detector-level top jets (H61v), the same split lowers the Top Landscape ParT top score by about 0.3 "
+        "log-odds while moving the same particles by the same small angle without splitting them changes nothing, so "
+        "the response is to the number of objects, not to the edit's geometry."
     ),
     'D6': (
         "We changed the mass of the W-candidate subjet pair inside top jets while holding the total jet mass and the "
@@ -794,7 +797,9 @@ CLAIM = {
         "shortcut. JetClass and Top Landscape taggers changed several times fewer calls under the boost than under "
         "pT-only or angle-only scaling. Most of the hls4ml decisions that change are W or Z jets; identical small taggers "
         "trained on hls4ml or on Top Landscape jets respond alike (claim D12), so the training sample is not the cause in "
-        "small networks, and large networks trained on hls4ml have not been tested."
+        "small networks, and large networks trained on hls4ml have not been tested. A later per-class measurement (H64) "
+        "finds the same contrast in log-odds, but simple classifiers on mass and pT trained on each dataset show it too, "
+        "so it does not show that the two groups of taggers read different quantities (claim D25)."
     ),
     'D10': (
         "Adding pileup-like soft particles over the jet lowers every network tagger's signal efficiency faster than it "
@@ -807,7 +812,12 @@ CLAIM = {
         "the networks was trained with pileup, and part of the Top LorentzNet response comes from the added momentum. "
         "A later test with matched count, momentum and plain mass shows that for the JetClass W/Z networks where the "
         "soft particles sit also matters: wide-angle particles that grooming would remove cost several times more "
-        "than the same number added at the jet centre (claim D21)."
+        "than the same number added at the jet centre (claim D21). "
+        "Version 2 (density scan on four datasets, H65/H65v): no network keeps signal like a groomed or area-subtracted "
+        "mass, which keep about 40 % W efficiency at 20 GeV per unit area while the networks keep almost none. The "
+        "hls4ml tagger follows the plain mass, the Top Landscape ParT counts particles added without mass, and for the "
+        "JetClass full-input ParT most of that count response comes from the particles being labelled neutral hadrons "
+        "(as photons, about a quarter). The uniform massless haze is a toy for real pileup."
     ),
     'D11': (
         "JetClass-trained ParT and ParticleNet lower their top score when the W-candidate subjet pair inside a top jet is "
@@ -908,12 +918,22 @@ CLAIM = {
         "how the edits are weighted."
     ),
     'D24': (
-        "When only Pythia's hadronisation changes so that top jets carry about 9 % more particles at the same mass and "
-        "three-prong structure, top taggers call them less top-like, while an infrared- and collinear-safe network does "
-        "not move. Adding only collinear copies of particles reproduces this and removing the extra particles undoes it, "
-        "so the networks treat extra soft particles at fixed substructure as a sign of QCD, the opposite of a count-only "
-        "classifier. This is measured on particle-level jets; under a crude detector-like merging ParT's shift falls to "
-        "about a quarter and one JetClass network shows none, so the size for real top tagging is open."
+        "On detector-level top jets made as the Top Landscape training sample was made (Delphes detector simulation, no "
+        "multi-parton interactions), a hadronisation change that adds about 7 % more reconstructed particles at the same "
+        "mass and three-prong shape lowers the Top Landscape ParT top score by about 0.3 log-odds in two event samples, "
+        "while an infrared- and collinear-safe network does not move. Splitting particles reproduces this whichever "
+        "particles are split, and moving the same particles without adding any does nothing, so the taggers read the "
+        "number of objects at fixed safe substructure as a sign of QCD. Uncertain: the generated jets are still "
+        "distinguishable from Top Landscape jets, and the JetClass ParT_kin network barely moves under the hadronisation "
+        "change although it responds to the count edit. (Version 1, particle level: a 9 % rise moved ParT by 0.45.)"
+    ),
+    'D25': (
+        "Boosting a jet along its own direction keeps its mass fixed while making it narrower and raising its momentum. "
+        "JetClass and Top Landscape ParT and ParticleNet change their output by about 0.1–0.4 of what an equal narrowing "
+        "at fixed momentum does, so they do not read the jet's angular size alone. The test cannot tell whether they "
+        "compute the invariant mass or combine an angular width with the jet momentum, because a small classifier given "
+        "only the width and momentum gives the same ratio; the larger response of the hls4ml and quark–gluon taggers "
+        "also appears in such reference classifiers trained on those datasets."
     ),
     'D19': (
         "When the number of displaced tracks (tracks well separated from the collision point) above every "
@@ -1920,6 +1940,41 @@ EXPLAINER = {
         "away removes it, so on top jets the cause is the particle count at fixed substructure. Under a crude "
         "calorimeter-like merging that brings the count into the training range, ParT's shift falls to about a quarter "
         "and one JetClass network shows none, so the size for real detector-level tagging is open."
+    ),
+    'H61_EXPLAINER': (
+        "On detector-level jets made with the Top Landscape detector simulation and no multi-parton interactions, a "
+        "hadronisation change that adds about 7 % more reconstructed particles to top jets at the same mass and "
+        "three-prong shape lowers the Top Landscape ParT top score by 0.31 log-odds, while an IRC-safe network does not "
+        "move. The generated jets remain distinguishable from the Top Landscape jets (classifier AUC 0.74)."
+    ),
+    'H61V_EXPLAINER': (
+        "On new events the shift repeats (ParT −0.29 log-odds). Moving the same particles by the same small angle "
+        "without adding any changes no score, and splitting randomly chosen particles moves the scores as much as "
+        "splitting the softest, so the taggers respond to the number of objects at fixed safe substructure, not to the "
+        "geometry of the edit or the softness of the added objects."
+    ),
+    'H64_EXPLAINER': (
+        "Under a boost along the jet axis that keeps the mass fixed, JetClass and Top Landscape ParT and ParticleNet "
+        "respond far less than to an equal narrowing at fixed momentum, while the hls4ml and quark–gluon taggers respond "
+        "more. A classifier given only mass and momentum also responds strongly on hls4ml, so a large response does not "
+        "by itself show that a network reads angles."
+    ),
+    'H64V_EXPLAINER': (
+        "Measured with class-summed magnitudes, JetClass and Top ParT and ParticleNet respond at 0.12–0.36 of the "
+        "narrowing response, also inside the training momentum range. A classifier given only the jet's angular width "
+        "and momentum, with no mass, gives the same ratio, so the test excludes a pure angular-size reader but cannot "
+        "tell an invariant-mass reader from a width-plus-momentum reader."
+    ),
+    'H65_EXPLAINER': (
+        "Under a uniform haze of soft particles, every network loses signal faster than groomed- or area-subtracted-mass "
+        "taggers. The hls4ml tagger follows the plain-mass increase, the larger JetClass and Top taggers respond to soft "
+        "particles even when they add no mass, and quark–gluon taggers respond mostly to wide-angle ones."
+    ),
+    'H65V_EXPLAINER': (
+        "On fresh seeds the numbers repeat. Top Landscape ParT responds the same whether the added particles are stacked "
+        "on the axis or spread over 0.1 rad, so it counts them. JetClass full-input ParT's response to particles that add "
+        "no mass falls to about a quarter when they are labelled photons instead of neutral hadrons, so the label "
+        "carries most of it."
     ),
     'H58_EXPLAINER': (
         "With every tagger set to keep half of the signal jets, top taggers' call changes under edits look more like a "
