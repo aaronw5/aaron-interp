@@ -305,7 +305,28 @@ CLAIM = {
         "in the W-versus-Z score, and pushing an ordinary jet along it moves W jets toward Z and Z jets toward W. It is "
         "separate from the direction that carries a real mass change, and the response it belongs to appears in nearly "
         "every trained copy of the network. Removing it takes away about half of the W-jet response but none of the Z-jet "
-        "response, which other parts of the network also carry, and which jet-shape quantity it computes is still open."
+        "response, which other parts of the network also carry, and which jet-shape quantity it computes is still open. "
+        "Round 18 identifies it in part: it follows how unevenly the momentum is split between the prongs, plus how wide "
+        "the prongs are (see A4s v3)."
+    ),
+    'A4s v3': (
+        "We changed only how unevenly a W or Z jet's momentum is split between its two prongs, keeping the prong "
+        "separation and the prong masses fixed, and compared with changing the separation or stretching the jet by the "
+        "same mass change. The fourth-layer sharing coordinate follows the split: the other two changes move it about "
+        "8 % as much, and shape variables that mix split and separation (D2, τ21) predict the wrong sign. It also "
+        "responds to how wide the prongs are, so it is not a clean read-out of the split alone. Pushing the coordinate "
+        "directly moves Z jets toward Z below about 85 GeV and toward W above, while W jets move toward Z up to about "
+        "95 GeV, so its effect depends on the jet's class as well as its mass; and the Z-jet response is also carried "
+        "by other directions in the same layer."
+    ),
+    'A1s': (
+        "We joined pairs of separately trained JEDI-linear networks: the first network's internal object layer (or the "
+        "next layer) is passed through one fitted linear map into the second network, which finishes the decision. The "
+        "joined network gives the second network's decision on 86–89 % of jets, about as often as the two networks "
+        "agree on their own (90 %), against 34 % with an untrained first half and 66–78 % when only the first network's "
+        "class scores are passed. So what these layers hold is shared between retrains up to a linear map and is more "
+        "than the final answer; whether the networks compute it the same way is not shown, and of the edit responses "
+        "only the Z-jet prong-sharing response can be assigned (to the receiving network)."
     ),
     'A18': (
         "We let a search find, for each jet, the smallest change of its particles that flips JEDI-linear's call while "
@@ -436,13 +457,23 @@ CLAIM = {
         "it comes from adding data, not from the network's labels; refitting on another sample shifts the scores by about "
         "as much as these effects."
     ),
+    'B4 v3': (
+        "We scored compact imitations of the network by how well they reproduce its decision changes when every particle "
+        "of a jet is shifted by 0.06 rad. The large staged program does this better than formulas or trees of the same "
+        "size on standard jet variables or energy-flow polynomials, but formulas and trees on the program's own input "
+        "quantities do as well with far fewer bits, and a rule that only checks whether the network called the jet W or "
+        "Z scores nearly as high. So the advantage comes from the choice of inputs, not from the staged structure, which "
+        "adds a small gain only at the largest program size."
+    ),
     'B2m': (
         "The question is whether the program's variables are variables inside the network: if a variable's value is "
         "swapped between two jets inside the network, does the decision change as an input edit of that variable predicts? "
         "Swapping the program's per-unit formulas works no better than swapping random directions, but learned "
         "one- or two-dimensional directions for the total pT and the pT-weighted spread do reproduce most such decision "
         "changes. So the physics quantities are present as internal variables, not in the basis of the fitted formulas, and "
-        "the log of their product is not found as one variable."
+        "the log of their product is not found as one variable. In round 18 the whole program's internal pieces, swapped "
+        "between jets at the network units they were fitted to, reproduced the network's new decision in about 0.6 of "
+        "decision-changing swaps against 0.25 for mismatched units; that match is partly built in by the fitting."
     ),
     'B3': (
         "Agreeing with the network on ordinary jets does not show that a surrogate computes the same thing. A formula "
@@ -466,6 +497,10 @@ CLAIM = {
         "is open."
     ),
     'B4': (
+        "Round 18 (B8, B8v): scored on how well it reproduces the network's decision changes under a small rigid shift of "
+        "the jet, the large staged program beats formulas and trees of the same size built on standard jet variables or "
+        "energy-flow polynomials, but formulas and trees built on the program's own input quantities do as well with "
+        "fewer bits, so the lead comes from the inputs, not from the staged structure. "
         "Round 17 (B7v): with network-labelled edited jets in the fit, the program again gains no more than a boosted-tree "
         "model of the same size. "
         "This was not supported as a compactness claim. Standard surrogates fitted on the same jets, MARS (forward-selected "
@@ -1216,6 +1251,27 @@ EXPLAINER = {
         "Training the extracted programs on edited jets labelled by the network does not teach them the network's own "
         "smallest call-flipping edits (agreement κ about 0.2 beyond 'never changes'). An improvement on the prong-sharing "
         "edit comes back when plain rotated jets are added instead, so it reflects added data, not the network's labels."
+    ),
+    'E37X_EXPLAINER': (
+        "The fourth-layer sharing coordinate follows how unevenly the momentum is split between a jet's two prongs, with "
+        "a part that follows how wide the prongs are; changing the prong separation or stretching the jet by the same "
+        "mass change moves it about 8 % as much. Its push on the W/Z decision changes sign near 85 GeV for Z jets but "
+        "only above about 95 GeV for W jets, so it depends on class as well as mass, and the Z-jet response is also "
+        "carried by other directions."
+    ),
+    'E39_EXPLAINER': (
+        "One fitted linear map joins any two trained JEDI-linear networks at the object layer or the next layer with "
+        "86–89 % of the receiving network's decisions kept, about their own agreement rate (90 %), against 34 % for an "
+        "untrained first half and 66–78 % when only class scores are passed. The layer content is shared between "
+        "retrains; whether they compute it the same way, and which network the edit responses follow (except the Z-jet "
+        "prong-sharing response, which follows the receiver), is not resolved with seven networks."
+    ),
+    'B8_EXPLAINER': (
+        "Scored on the network's decision changes under a small rigid shift, the large staged program beats same-size "
+        "formulas and trees on standard jet variables and energy-flow polynomials, but formulas and trees on the "
+        "program's own inputs do as well with fewer bits, so the lead comes from the inputs. Its pieces swapped at the "
+        "matching network units reproduce about 0.6 of the network's changed decisions against 0.25 for wrong units, "
+        "partly by construction."
     ),
     'E33X_EXPLAINER': (
         "The unit that sums each particle's momentum times its squared distance from the axis reappears in 8 of 9 other "
@@ -2280,6 +2336,8 @@ KEY_RESULT = {
         "Off ordinary jets (round 16) the floating-point copy with masks follows about 85 % of the network's changed "
         "decisions under a prong-sharing edit at fixed mass, the hinge program over-reacts, and on search-found minimal "
         "edits the programs predict little about which jets flip; training them on such edited jets labelled by the "
-        "network does not change that (round 17)."
+        "network does not change that (round 17). Scored on edit responses at equal size (round 18), the program's lead "
+        "over standard-variable and energy-flow-polynomial surrogates is matched by surrogates on its own inputs, so "
+        "it comes from the inputs rather than the staged structure."
     ),
 }
