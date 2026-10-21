@@ -232,7 +232,9 @@ CLAIM = {
         "and in gluon-rich and high-multiplicity jets, and undoing a real near-collinear pair in data moves calls the "
         "other way. Its internal route is only partly known (claim A15r). A classifier cannot tell split jets or jets with "
         "one added soft particle from real jets, and the effect holds on those jets (round 14, E31), so it is not caused "
-        "by unnatural inputs."
+        "by unnatural inputs. With the jet's total momentum held exactly fixed (round 19, E40), splits move the "
+        "quark/gluon score toward gluon at every distance from the axis, while very soft added particles matter only "
+        "away from the jet core (claim A19qg)."
     ),
     'A16': (
         "We let an algorithm find the smallest part of JEDI-linear that still classifies jets, by removing internal "
@@ -317,7 +319,16 @@ CLAIM = {
         "responds to how wide the prongs are, so it is not a clean read-out of the split alone. Pushing the coordinate "
         "directly moves Z jets toward Z below about 85 GeV and toward W above, while W jets move toward Z up to about "
         "95 GeV, so its effect depends on the jet's class as well as its mass; and the Z-jet response is also carried "
-        "by other directions in the same layer."
+        "by other directions in the same layer. Round 19 (E37y) qualifies two parts: the class dependence follows the "
+        "network's last-layer state rather than the true class, and the prong-width part is not identified (see A4s v4)."
+    ),
+    'A4s v4': (
+        "Pushing the network's prong-sharing coordinate moves W and Z jets of the same mass differently. W and Z jets of "
+        "the same mass also start in different states of the network's last hidden layer (which mass-window neurons are "
+        "on, how strongly W is already favoured), and once jets are matched on that state the difference disappears, so the "
+        "response follows the network's state, not the true class. Holding three mass-window neurons fixed removes about "
+        "0.6 of the difference, not clearly more than random holds of the same size. Two edits that both widen the prongs "
+        "at fixed prong mass move the coordinate in opposite directions, so what besides the momentum split it reads is open."
     ),
     'A1s': (
         "We joined pairs of separately trained JEDI-linear networks: the first network's internal object layer (or the "
@@ -326,7 +337,28 @@ CLAIM = {
         "agree on their own (90 %), against 34 % with an untrained first half and 66–78 % when only the first network's "
         "class scores are passed. So what these layers hold is shared between retrains up to a linear map and is more "
         "than the final answer; whether the networks compute it the same way is not shown, and of the edit responses "
-        "only the Z-jet prong-sharing response can be assigned (to the receiving network)."
+        "only the Z-jet prong-sharing response can be assigned (to the receiving network). Round 19 (E39x) qualifies "
+        "\"more than the final answer\": that holds only for maps built to copy the layer; maps trained on the receiving "
+        "network's own task get as much from the class scores (see A1s v2)."
+    ),
+    'A1s v2': (
+        "We joined two separately trained JEDI-linear networks with a linear map that passes only a few numbers from "
+        "the first network's internal object layer to the second, trained so the second network classifies well. Four "
+        "numbers give the second network's decision on 87 % of jets, close to how often the two agree on their own, but "
+        "passing the first network's class scores the same way gives the same 87 %, and passing the whole layer adds only "
+        "about 2 points. So these joins do not show that retrained networks share anything beyond their final class "
+        "scores; the hand-named object units carry a little more than random units but reproduce only a minority of "
+        "decisions on their own."
+    ),
+    'A19qg': (
+        "Keeping the jet's total momentum and mass exactly fixed, splitting any particle into two moves JEDI-linear's "
+        "quark/gluon score toward \"gluon\", and merging two particles moves it toward \"quark\", so the network counts "
+        "particles; such a count is not infrared- and collinear-safe (IRC-safe means unchanged by such splits and by adding "
+        "particles of vanishing momentum). Splits act at every distance from the jet axis, but a very soft added particle "
+        "still counts only away from the jet core (beyond about 0.15 in angle). Inside the network the count enters through "
+        "a wide-angle sum that ignores particle momentum, an empty-slot sum, and a soft-multiplicity sum where particles "
+        "cross a pT-rank window edge; no single sum passes the multiple-test correction, and why the effect weakens toward "
+        "the jet edge is open."
     ),
     'A18': (
         "We let a search find, for each jet, the smallest change of its particles that flips JEDI-linear's call while "
@@ -362,7 +394,11 @@ CLAIM = {
         "decisions), and the two internal sums that count empty input slots, which also carry 40 % of the effect of "
         "adding one soft particle. The rest is spread over many internal sums and is not yet assigned. On the "
         "quark/gluon score (round 15, E34v), extra particles near the jet core act through the same two empty-slot sums "
-        "(about 0.8 of the response), while extra wide-angle particles act through a different sum."
+        "(about 0.8 of the response), while extra wide-angle particles act through a different sum. Round 19 (E40) "
+        "separates two routes on the quark/gluon score: a split that pushes particles across the rank-13 window edge acts "
+        "through the soft-multiplicity sum (about 0.8 of it, and nothing when no particle changes rank), while splits of "
+        "soft particles act mainly through a wide-angle sum that ignores pT and an empty-slot sum; no single sum passes the "
+        "multiple-test correction."
     ),
     'A4w v2': (
         "With the pT-weighted squared spread of the particles held fixed, smoothly reshaping how far particles sit from "
@@ -1284,6 +1320,26 @@ EXPLAINER = {
         "mass change moves it about 8 % as much. Its push on the W/Z decision changes sign near 85 GeV for Z jets but "
         "only above about 95 GeV for W jets, so it depends on class as well as mass, and the Z-jet response is also "
         "carried by other directions."
+    ),
+    'E40_EXPLAINER': (
+        "With the jet's total momentum held exactly fixed, splitting a particle in two or adding a soft particle moves "
+        "JEDI-linear's quark/gluon score toward gluon, and merging two particles toward quark, so the decision counts "
+        "particles. Very soft added particles count only away from the jet core (beyond about 0.15 in angle); near the axis "
+        "their effect fades with their momentum, as an infrared-safe quantity's would. The count enters through a "
+        "wide-angle sum that ignores momentum, an empty-slot sum and the soft-multiplicity sum, with no single one "
+        "passing the multiple-test correction."
+    ),
+    'E39X_EXPLAINER': (
+        "Two retrained JEDI-linear networks joined at the object layer by a map passing 4 numbers, trained on the "
+        "receiving network's own task, reproduce its decisions on 87 % of jets. The sending network's class scores, passed "
+        "the same way, do equally well, so the join does not show shared content beyond the decision; the hand-named units "
+        "carry slightly more than random units but explain only a minority of decisions."
+    ),
+    'E37Y_EXPLAINER': (
+        "Pushing the fourth-layer sharing coordinate moves W and Z jets of the same mass differently, but the difference "
+        "disappears once W and Z jets are matched on the network's own last-layer state, so it follows that state, not the "
+        "true class. Holding three mass-window neurons removes about 0.6 of it, not clearly more than random holds; two "
+        "prong-widening edits at fixed prong mass move the coordinate in opposite directions, so its width part is open."
     ),
     'E39_EXPLAINER': (
         "One fitted linear map joins any two trained JEDI-linear networks at the object layer or the next layer with "

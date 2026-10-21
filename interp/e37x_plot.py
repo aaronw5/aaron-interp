@@ -1,8 +1,10 @@
-"""E37x figure: (a, b) one real W jet before / after Ez(+0.15) (harder-prong pT fraction z +0.15 at fixed prong separation and
-prong masses), constituents coloured by kT prong, marker area ~ pT; (c) mean change of the h4 sharing coordinate u by jet-mass
-bin under Ez, Edr (same jet-mass change, Delta R12 moved instead of z), Em (dilation, same mass change), Erot (rotation);
-(d) mean W-Z logit-margin change by bin for W and Z jets.  Reads results/jedi/e37x.json; writes results/jedi/e37x.png.
-Run locally: python interp/e37x_plot.py [path/to/e37x.json]"""
+"""E37x figure (redrawn in E37y): (a, b) one real W jet before / after Ez(+0.15) (harder-prong pT fraction z_h +0.15 at fixed
+prong separation and prong masses), constituents coloured by kT prong, marker area ~ pT, prong pT shares printed; (c) mean change
+of the h4 sharing coordinate u by jet-mass bin under Ez, Edr (same jet-mass change, Delta R12 moved instead of z), Em (dilation,
+same mass change), Erot (rotation), from E37x; (d) direct steering of u inside the network (E37y arm 1): mean W-Z margin change
+per unit u by 5-GeV jet-mass bin for W and Z jets, 95 % jet-bootstrap intervals.
+Reads results/jedi/e37x.json and results/jedi/e37y.json; writes results/jedi/e37x.png.
+Run locally: python interp/e37x_plot.py [e37x.json] [e37y.json]"""
 import json
 import sys
 from pathlib import Path
@@ -14,28 +16,33 @@ import numpy as np  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 P = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'results' / 'jedi' / 'e37x.json'
-R = json.loads(P.read_text())
+PY = Path(sys.argv[2]) if len(sys.argv) > 2 else P.parent / 'e37y.json'
+R = json.loads(P.read_text()); RY = json.loads(PY.read_text())
 BINS = ['65-75', '75-85', '85-95', '95-105']; DZ = '+0.15'
 COL = dict(Ez='#c2410c', Edr='#2563eb', Em='#6b7280', Erot='#a3a3a3')
-LAB = dict(Ez=r'$E_z$: $z$ +0.15 ($\Delta R_{12}$, prong masses fixed)', Edr=r'$E_{\Delta R}$: $\Delta R_{12}$ moved, same $\Delta m$',
+LAB = dict(Ez=r'$E_z$: $z_h$ +0.15 ($\Delta R_{12}$, prong masses fixed)', Edr=r'$E_{\Delta R}$: $\Delta R_{12}$ moved, same $\Delta m$',
            Em=r'$E_m$: all angles dilated, same $\Delta m$', Erot=r'$E_{rot}$: rotation (control)')
-fig = plt.figure(figsize=(13, 7.6)); gs = fig.add_gridspec(2, 3, width_ratios=[1, 1, 1.25], hspace=0.38, wspace=0.32)
-ex = R.get('example')
+fig = plt.figure(figsize=(13.5, 8)); gs = fig.add_gridspec(2, 3, width_ratios=[1, 1, 1.25], hspace=0.42, wspace=0.32)
+ex = RY.get('example')
+lim = None
+if ex:
+    allx = np.r_[ex['unedited']['deta'], ex['Ez+0.15']['deta']]; ally = np.r_[ex['unedited']['dphi'], ex['Ez+0.15']['dphi']]
+    lim = 1.15 * max(np.abs(allx).max(), np.abs(ally).max())
+    ptmax = max(max(ex['unedited']['pt']), max(ex['Ez+0.15']['pt']))
 for i, nm in enumerate(('unedited', 'Ez+0.15')):
     ax = fig.add_subplot(gs[0, i])
     if ex:
-        d = ex[nm]; pt = np.array(d['pt']); lab = np.array(ex['prong'])
+        d = ex[nm]; pt = np.array(d['pt']); lab = np.array(ex['prong']); sh = np.array(d['prong_pt']) / sum(d['prong_pt'])
         for k, c in ((0, '#7c3aed'), (1, '#059669')):
-            s = lab == k; ax.scatter(np.array(d['deta'])[s], np.array(d['dphi'])[s], s=4 + 600 * pt[s] / pt.max(), c=c, alpha=0.75, edgecolors='k', linewidths=0.3,
-                                     label=f'prong {k + 1}')
+            s = lab == k
+            ax.scatter(np.array(d['deta'])[s], np.array(d['dphi'])[s], s=4 + 700 * pt[s] / ptmax, c=c, alpha=0.75, edgecolors='k', linewidths=0.3,
+                       label=f'prong {k + 1}: {100 * sh[k]:.0f} % of prong pT')
         o = d['obs']
-        ax.set_title(f'{"unedited W jet" if i == 0 else "after $E_z$(+0.15)"}\n$z$ = {o["z"]:.2f}, $\\Delta R_{{12}}$ = {o["dR"]:.3f}, '
-                     f'$m$ = {o["m"]:.1f} GeV\nW−Z margin {ex["margin"][nm]:+.2f}, $u$ = {ex["u"][nm]:+.2f}', fontsize=9.5)
-        if i == 0: ax.legend(fontsize=8, loc='lower left')
+        ax.set_title(f'{"unedited W jet" if i == 0 else "after $E_z$(+0.15)"}: $z_h$ = {o["zh"]:.2f}\n$\\Delta R_{{12}}$ = {o["dR"]:.3f}, '
+                     f'$m$ = {o["m"]:.1f} GeV, call {d["call"]}\nW−Z margin {d["margin"]:+.2f}, $u$ = {d["u"]:+.2f}', fontsize=9.5)
+        ax.legend(fontsize=8, loc='lower left')
+        ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim)
     ax.set_xlabel(r'$\Delta\eta$ from jet axis'); ax.set_ylabel(r'$\Delta\phi$ from jet axis' if i == 0 else '')
-    if ex:
-        allx = np.r_[ex['unedited']['deta'], ex['Ez+0.15']['deta']]; ally = np.r_[ex['unedited']['dphi'], ex['Ez+0.15']['dphi']]
-        h = 1.15 * max(np.abs(allx).max(), np.abs(ally).max()); ax.set_xlim(-h, h); ax.set_ylim(-h, h)
     ax.set_aspect('equal', adjustable='box'); ax.grid(alpha=0.2)
 tab = R['table']; xb = np.arange(len(BINS))
 ax = fig.add_subplot(gs[1, 0:2])
@@ -51,16 +58,22 @@ for j, kd in enumerate(('Ez', 'Edr', 'Em', 'Erot')):
     ax.errorbar(xb + off, m, yerr=[m - lo, hi - m], fmt='o-', color=COL[kd], label=LAB[kd], capsize=3, lw=1.6)
 ax.axhline(0, color='k', lw=0.6); ax.set_xticks(xb); ax.set_xticklabels([f'{b} GeV' for b in BINS])
 ax.set_xlabel('unedited jet mass'); ax.set_ylabel(r'mean change of the h4 sharing coordinate $\Delta u$')
-ax.set_title('W+Z jets, edit size +0.15 (95 % jet-bootstrap CI; approx. W/Z-weighted)', fontsize=10); ax.legend(fontsize=8.5, loc='best')
+ax.set_title('(c) E37x: W+Z jets, edit size +0.15 (95 % jet-bootstrap CI)', fontsize=10); ax.legend(fontsize=8.5, loc='best')
 ax = fig.add_subplot(gs[:, 2])
+pb = RY['arm1_steering']['per_bin_5GeV']; fb = [f'{lo}-{lo + 5}' for lo in range(65, 105, 5)]; xc = np.array([lo + 2.5 for lo in range(65, 105, 5)])
 for c, col, mk in (('W', '#0f766e', 'o'), ('Z', '#b45309', 's')):
-    pb = R['interaction'][c]['per_bin']; m = np.array([pb.get(b, {}).get('a_du', np.nan) for b in BINS])
-    ci = np.array([pb.get(b, {}).get('a_ci', [np.nan, np.nan]) for b in BINS], float)
-    ax.errorbar(xb + (0.05 if c == 'Z' else -0.05), m, yerr=[m - ci[:, 0], ci[:, 1] - m], fmt=mk + '-', color=col, capsize=3, lw=1.6, label=f'{c} jets')
-ax.axhline(0, color='k', lw=0.6); ax.set_xticks(xb); ax.set_xticklabels(BINS); ax.set_xlabel('unedited jet mass [GeV]')
-ax.set_ylabel(r'W−Z margin change per unit $\Delta u$ (slope $a$, $\Delta\log m$ held in fit)')
-ax.set_title('effect of the coordinate on the W/Z call\n(> 0: toward W; < 0: toward Z; all edits pooled)', fontsize=10); ax.legend(fontsize=9)
-pz = R['readout']['das']['calibrated'].get('all|WZ', {}).get('pooled', {})
-fig.suptitle(f'E37x: the h4 sharing coordinate $u$ follows the prong momentum fraction $z$ at fixed $\\Delta R_{{12}}$ '
-             f'($R_z$ = {pz.get("R_z", float("nan")):.2f}, $\\Delta R_{{12}}$ edit {pz.get("R_Edr", float("nan")):.2f}); its effect on the call changes sign near 85 GeV', fontsize=11.5)
+    ok = [f'{b}|{c}' in pb for b in fb]
+    m = np.array([pb[f'{b}|{c}']['slope'] if o_ else np.nan for b, o_ in zip(fb, ok)])
+    ci = np.array([pb[f'{b}|{c}']['ci'] if o_ else [np.nan, np.nan] for b, o_ in zip(fb, ok)], float)
+    nn = [pb[f'{b}|{c}']['n'] if o_ else 0 for b, o_ in zip(fb, ok)]
+    ax.errorbar(xc + (0.4 if c == 'Z' else -0.4), m, yerr=[m - ci[:, 0], ci[:, 1] - m], fmt=mk + '-', color=col, capsize=3, lw=1.6, label=f'{c} jets')
+    for x_, y_, n_ in zip(xc, m, nn):
+        if n_: ax.annotate(str(n_), (x_ + (0.4 if c == 'Z' else -0.4), y_), textcoords='offset points', xytext=(0, 7 if c == 'Z' else -12), fontsize=6.5, color=col, ha='center')
+ax.axvspan(80, 100, color='#e5e7eb', alpha=0.5, lw=0, label='mass-matched window (E37y)')
+ax.axhline(0, color='k', lw=0.6); ax.set_xlabel('unedited jet mass [GeV]')
+ax.set_ylabel(r'W−Z logit-margin change per unit of $u$ pushed into h4')
+ax.set_title('(d) E37y: $u$ pushed directly inside the network\n(> 0: toward W; < 0: toward Z; numbers = jets per bin)', fontsize=10); ax.legend(fontsize=8.5, loc='lower right')
+A = RY['arm1_steering']['matched']
+fig.suptitle(f'Sharing coordinate $u$ in h4: follows the prong pT split; pushing it moves W and Z jets of the same mass differently '
+             f'(80–100 GeV: W {A["W_matched"]:+.2f}, Z {A["Z_matched"]:+.2f} per unit $u$)', fontsize=11.5)
 out = P.parent / 'e37x.png'; fig.savefig(out, dpi=130, bbox_inches='tight'); print('wrote', out)
