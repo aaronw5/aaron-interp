@@ -568,10 +568,26 @@ CLAIM = {
     ),
     'C6': (
         "No trained L-GATr, a tagger built to respect the symmetries of special relativity, is published for JetClass, so "
-        "one is being trained with the authors' code and settings. An early checkpoint ignores a rotation of all "
-        "particles about the beam, as it must by construction, while a real mass change still moves its W/Z calls. The "
-        "test that decides the claim, edits that keep the invariant mass but change the spread of particles about the "
-        "axis, will run on the final checkpoint; until then the claim is untested."
+        "one was trained with the authors' code and settings; the training has finished. The planned test did not run, "
+        "because the cluster placed it on a machine with a failed GPU and the relaunch was blocked. The network's code "
+        "shows that rotating the jet about the beam or moving the stored axis cannot change what it sees, so only a boost "
+        "along the beam and rearrangements at fixed invariant mass can test the claim; it remains untested."
+    ),
+    'C23': (
+        "ParT's attention is mostly a fixed formula of particle-pair quantities; our Lorentz-symmetric tagger L-GATr's "
+        "is not. A fixed pair formula describes about a fifth of a typical L-GATr attention head, about as much as in an "
+        "untrained copy. The heads the decision needs are in the first five blocks, and putting the formula there keeps "
+        "about half the accuracy (50 % against 85 %) only while the network's own attention to its reference tokens is "
+        "left in place, and none when that is fixed. Whether adding particle-identity information to the formula "
+        "changes this is untested."
+    ),
+    'C24': (
+        "ParticleNet's first graph layer does not compute a fixed formula of pair quantities that ignore orientation: it "
+        "also uses how far a neighbouring particle sits from the jet axis compared with the particle itself. Taking "
+        "that away lowers ParticleNet's response to a mass-preserving axis shift, from about 0.37 to 0.26 of a real "
+        "mass change in the kinematics-only model, so it moves further from ParT, not closer; about half of that drop "
+        "also appears with an equally poor fit that keeps the information. A training control for the kinematics-only "
+        "model is still missing."
     ),
     'C3': (
         "ParT, which also receives shift-invariant pair features from which the invariant mass could be computed, still "
@@ -1730,6 +1746,26 @@ EXPLAINER = {
         "stitch in both directions shows that the size of the response to a mass-preserving axis shift depends on both the "
         "features and the layers that read them, not on ParticleNet's last layers alone. Which part of ParticleNet's first "
         "two layers makes its response smaller is open."
+    ),
+    'P49_EXPLAINER': (
+        "In our L-GATr a fixed formula of particle-pair kinematics accounts for about a fifth of an attention head's "
+        "pattern, and the heads the decision needs are all in the first five blocks. Replacing the early attention with "
+        "the formula keeps about half the accuracy only while the network's own attention to its reference tokens stays "
+        "live; 17 of the recovered points come from the pair geometry. Unlike ParT's pair bias, L-GATr's early attention "
+        "does not work as a fixed geometric prior; particle identity was not included in the formula."
+    ),
+    'P50_EXPLAINER': (
+        "ParticleNet's first graph layer uses, beyond rotation-invariant pair quantities, how far each neighbour sits "
+        "from the jet axis, and its messages are not sums of one-variable functions. Restricting it to the invariant "
+        "quantities lowers the kinematics-only model's axis response from about 0.37 to 0.26 of a real mass change, "
+        "away from ParT's 0.8; about half of that drop is generic fit error. The full-input model could not be compared "
+        "at matched accuracy."
+    ),
+    'P46_EXPLAINER': (
+        "The pre-registered test of whether L-GATr ignores the jet axis at fixed invariant mass did not run, because of a "
+        "failed GPU node and a blocked relaunch. From the network's code, a rotation about the beam and a move of the "
+        "stored axis cannot change its input, so only a boost along the beam and rearrangements at fixed mass can test "
+        "the claim when it is relaunched."
     ),
     'P23_EXPLAINER': (
         "Shifting all of a jet's particles by a small angle changes ParT's W-versus-Z score mostly in the same way for a "
