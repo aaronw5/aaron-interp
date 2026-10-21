@@ -15,6 +15,8 @@ centroid c = sum_i pT_i (deta_i, dphi_i) / sum_i pT_i over the real particles of
 normalisation file unchanged (norm_stats.json).
 --aug A (X9w, opt-in, A > 0): training jets only: every real particle of a jet translated by the same c = |c| (cos t, sin t),
 |c| ~ U(0, A) rad, t ~ U(0, 2 pi), drawn per jet each time the jet is batched (after recentring when both are set).
+--data_seed S (X14, opt-in): the training-batch order uses torch.Generator().manual_seed(S) instead of --seed; --seed still
+sets the initialisation. Default None = previous behaviour (one seed for both).
 Held-out split for early stopping: splits.npz['dev'] (indices into the train archive) when present, else the last 5 %
 of the train archive. Training uses the rest of the train archive.
 
@@ -243,6 +245,9 @@ def main():
     ap.add_argument("--shuffle_labels", action="store_true",
                     help="X8 (opt-in null): the labels of the training jets are permuted once with np.random.default_rng(seed) "
                          "before training; held-out (dev) and test labels are not permuted")
+    ap.add_argument("--data_seed", type=int, default=None,
+                    help="X14 (opt-in): seed of the training-batch order generator; default None = --seed (previous behaviour). "
+                         "--seed then sets only the initialisation (torch.manual_seed)")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
 
@@ -341,7 +346,9 @@ def main():
         training=dict(l1_phi1=args.l1_phi1, zero_thr=args.zero_thr, optimizer="AdamW", lr=args.lr, weight_decay=args.wd, schedule="linear warmup then cosine to 0",
                       warmup_steps=args.warmup_steps, batch=args.batch, epochs=args.epochs, patience=args.patience,
                       label_smoothing=args.label_smoothing, selection="lowest val loss", steps_per_epoch=steps_per_epoch,
-                      checkpoints="ckpt/epoch_<k>.pt after epoch k; epoch_0.pt = initialisation"),
+                      checkpoints="ckpt/epoch_<k>.pt after epoch k; epoch_0.pt = initialisation",
+                      init_seed=args.seed, data_seed=args.seed if args.data_seed is None else args.data_seed,
+                      data_seed_flag=args.data_seed),
         activation_layers=act_widths,
         dead_unit_definition="pre-activation max <= 0 over the dead-unit jets (valid tokens only)",
         torch=torch.__version__, device=str(device),
@@ -367,7 +374,8 @@ def main():
 
     best = dict(val_loss=float("inf"), epoch=-1, val_acc=0.0)
     bad_epochs, step, epoch = 0, 0, 0
-    g = torch.Generator(device="cpu").manual_seed(args.seed)
+    data_seed = args.seed if args.data_seed is None else args.data_seed
+    g = torch.Generator(device="cpu").manual_seed(data_seed)  # batch order (X14: --data_seed)
     for epoch in range(1, args.epochs + 1):
         model.train()
         t0 = time.time()

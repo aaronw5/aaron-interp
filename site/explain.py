@@ -1621,6 +1621,60 @@ X13_EXPLAINER = [
  ('Why it matters',
   'The axis-relative mass response (claim A10m) is present in every trained network tested, and its size is a measured share (the part of the mass reading tied to the stored axis) rather than an unexplained constant (claim A10s): fixed by the family for set networks, set by the training run for attention models. Any quoted per-architecture ratio needs its seed spread.', None),
 ]
+E26_EXPLAINER = [
+ ('Question',
+  'A boost along the jet axis keeps the jet mass fixed but changes about a third of JEDI-linear\'s calls (loop D, H12). Which parts of the network carry that change, and does the network\'s mass value move?', None),
+ ('Background',
+  'For nearly massless constituents with transverse momenta $p_{T,i}$ and distances $r_i$ from the axis, $M_0=\\sum_i p_{T,i}$, $M_2=\\sum_i p_{T,i}r_i^2$ and $m^2\\approx M_0M_2$. A boost with $p_{T,i}\\to\\lambda p_{T,i}$ shrinks the angles by about $1/\\lambda$, so $M_0\\to\\lambda M_0$, $M_2\\to M_2/\\lambda$ and $m$ is unchanged. '
+  'A mass read-out $\\hat\\ell=a\\log M_0+b\\log M_2$ then moves by $(a-b)\\log\\lambda$; with $\\kappa=(a-b)/(a+b)$, $\\kappa=0$ means the read-out ignores the boost. '
+  'A "hold" lets the network see the boosted jet while one unit (or a set, or a learned subspace) is reset to its value on the unboosted jet. The removed share is $1-N_{\\rm changed}(\\text{hold})/N_{\\rm changed}(\\text{no hold})$, a net quantity: a hold can also create changes.', None),
+ ('Method',
+  'Sample(2000, 2601), 10,000 jets, official 3-feature n64. Edits at $\\lambda\\in\\{0.8,0.9,1.1,1.25\\}$: exact boost B, pT-only P, angle-only A, $M_0$-only and $M_2$-only edits, a boost with the particles that cross the 11 GeV threshold of cut a32 clamped (Bc); controls: a rotation about the axis with the same pT-weighted displacement (R) and a random-direction translation (T). '
+  'Holds of each of the 13 live first-layer cuts, of g and its units, of each S, h4 and h5 unit, of named sets, and of the learned (DAS) $M_0$/$M_2$ directions at S. Nulls: random live-S subsets, random directions, random cut subsets, untrained networks; Holm over 130 single units; 95 % bootstrap over jets; McNemar tests for paired call changes. Ridge read-outs of $\\log m$ on h4 and on the class layer z give the dose slopes and $\\kappa$.', None),
+ ('Result',
+  'At $\\lambda=0.9$ the boost changes 32.0 % of calls (rotation 2.4–3.2 %). Holding S0 ($\\Sigma p_T$ of the 14 hardest particles) removes 55.1 % [53.1, 57.2]; S0 + S29 78.2 %; the 2-dim $M_0$/$M_2$ subspace at S 83.2 % [81.9, 84.7]; the four pT-ramp cuts 12.5 %; a32 $-2.0$ %; the clamped boost Bc $-0.2$ % (McNemar $p$ 0.46). '
+  'At h4 the read-out slopes are $s_P=0.951$, $s_A=-0.971$, $s_B=0.003\\,[-0.007,0.012]$: $a=0.476$, $b=0.491$, $\\kappa\\approx0$. At $\\lambda=1.1$ the $M_0$ and $M_2$ directions act against each other ($M_2$ alone $-43$ %) and no single first-layer, g or S unit exceeds the null.', 'results/jedi/e26_boost_route.png'),
+ ('Checks',
+  'The boost keeps $m$ to $|\\Delta m|/m\\le10^{-11}$; the exact network tail reproduces the logits ($\\max|\\Delta\\text{logit}|=0$); holding all cuts removes 99 %, holding a whole stage 100 %; untrained networks: the thesis-set hold removes 0–21 %.', None),
+ ('Verification (E26v; confidence 0.72)',
+  'Fresh sample(2000, 2602): B changes 32.3 %; S0 removes 56.8 % [54.8, 58.7], S0 + S29 78.9 %, the $M_0$/$M_2$ subspace 85.0 % [83.7, 86.3]; pT ramps 14.5 %; a32 $-1.9$ %. '
+  'E26\'s random-direction null used all 64 S coordinates, but only 19 are live; 0.69 of each direction\'s energy fell on coordinates the next layer ignores. Restricted to the live coordinates the null maxima are 0.48, 0.45 and 0.56 for 1, 2 and 4 dimensions; the named holds exceed them. The best possible 2-dim hold (top singular vectors of $S(B)-S(0)$) removes 0.85, and the top-4 principal directions of S 0.77, so generic high-variance directions also carry much of the effect. The h4 read-out is unchanged on average (per-jet sd 0.05); holding its direction removes $-0.3$ % of the changes.', None),
+ ('Why it matters',
+  'The boost response does not come from a shifted mass value: JEDI-linear reads $\\Sigma p_T$ as a class feature next to its mass (new claim A14), which makes its calls depend on pT at fixed mass and bears on loop D\'s question of why hls4ml-trained taggers are boost-sensitive (D9). It also gives a read-out-free measurement of the $M_0$ vs $M_2$ weighting at h4: equal within about 2 %.', None),
+]
+X14_EXPLAINER = [
+ ('Question',
+  'Two training runs of the same transformer can depend on the stored jet axis by very different amounts (X13). Is that amount fixed by the random starting weights, by the order of training batches, or by something later in training?', None),
+ ('Background',
+  'A rigid shift $T_c$ of all particles by $c=0.06$ rad keeps the invariant mass but changes $M_2=\\sum_i p_{T,i}r_i^2$ about the stored axis. With $\\hat\\ell$ a ridge read-out of $\\log m$ on the last hidden layer and $D_s$ a dilation with the same change of $\\tfrac12\\log(M_0M_2)$, '
+  '$$R=\\frac{\\langle\\hat\\ell(T_cx)-\\hat\\ell(x)\\rangle}{\\langle\\hat\\ell(D_sx)-\\hat\\ell(x)\\rangle}.$$ A read-out of the true $\\log m$ gives $R=0$; one of $\\tfrac12\\log(M_0M_2)$ gives $R=1$.', None),
+ ('Method',
+  '(1) $R$ at every saved epoch for 35 existing runs on X13\'s jets (sample 1313, 2,500 fit / 2,500 test), read-out refitted per epoch. (2) tf-2b-d32 and linf-2b-d32-k8 at N 64 trained on a $3\\times3$ grid of initialisation seed × batch-order seed (30 epochs); final $R$ decomposed as $SS_{\\rm tot}=SS_{\\rm init}+SS_{\\rm order}+SS_{\\rm res}$, each share tested by 10,000 label permutations. With no factor effect the expected shares are $2/8$, $2/8$ and $4/8$. (3) Controls: same-seed reruns, rotation about the axis, epoch-0 networks.', None),
+ ('Result',
+  'Training is deterministic: same seeds give $|\\Delta R|\\le7\\times10^{-9}$. With identical start and batch order, a 100-epoch instead of a 30-epoch schedule moves final $R$ from 0.51 to 1.23 (seed 0) and from 0.65 to 0.46 (seed 1). $R$ settles at epochs 5–20 of 30 and moves by at most 0.14 after the validation loss levels off. Grid shares init / order / rest: 0.21 / 0.23 / 0.56 (tf), 0.34 / 0.31 / 0.35 (linf), $p\\ge0.25$.', 'results/jedi/x14_axis_training.png'),
+ ('Checks',
+  'Final-epoch values equal X13\'s to $2\\times10^{-7}$; rotation response $\\le0.04$ of the dilation response; jet-bootstrap intervals on every $R$.', None),
+ ('Verification (X14v; confidence 0.55)',
+  'Fresh sample(1000, 2029): ranks replicate (Spearman 0.99), $R$ moves by 0.04 (median) to 0.12 (max), more than the jet-bootstrap intervals. Grid shares 0.27 / 0.26 / 0.48 (tf) and 0.22 / 0.24 / 0.54 (linf), at the no-effect expectation, so the "rest" share is not evidence of an interaction. Changing only init or only order moves $R$ by at most 0.43; the 0.7 change comes from schedule length alone. The network\'s own Z−W logit share moved the other way in the seed-0 schedule pair (0.73 → 0.35), so $R$ describes the last-layer read-out, not necessarily the decision.', None),
+ ('Why it matters',
+  'For attention models the axis-tied share is a property of the individual training path (claim A10s, v2), not of the architecture or of the starting weights; cross-network statements quote it as a spread over runs.', None),
+]
+E25X_EXPLAINER = [
+ ('Question',
+  'JEDI-linear holds $M_0=\\sum_i p_{T,i}$ and $M_2=\\sum_i p_{T,i}r_i^2$ as causal directions at its object layer S (X10, E25w). Where between the input and S do they first appear?', None),
+ ('Background',
+  'Each particle is processed separately ($a_i$ = first-layer vector, $u_i$ = third-layer vector) and summed twice: $P=\\tfrac1{64}\\sum_ia_i$, $S=\\tfrac1{16}\\sum_iu_i$; g is a jet-level context computed from P. A per-particle direction $v$ with $v\\cdot a_i\\propto p_{T,i}$ would make $v\\cdot P\\propto M_0$.', None),
+ ('Method',
+  'Distributed alignment search: for a jet $b$ and an edited copy $b\'$ (do($M_0$): $p_{T,i}\\to c\\,p_{T,i}$, angles $\\times c^{-1/2}$; do($M_2$): angles scaled), learn an orthonormal $Q$ (1 or 2 columns) and replace, for every particle, $a_i\\to a_i+(a\'_i-a_i)QQ^\\top$, then run the exact network. The interchange accuracy (IIA) is the share of call-changing pairs where this gives the call of $b\'$. Same at u, g, S; 3f and 16f n64; fit sample(2000, 2551), test 2552; 32–41 non-trained networks per model as baselines; Holm over 24 cells.', None),
+ ('Result',
+  'First-layer IIA: $M_0$ 0.81 (3f) / 0.86 (16f), $M_2$ 0.53 / 0.72, above the baselines\' 95th percentile (0.40 / 0.45). In 3f the $M_2$ IIA rises to 0.74 at S (+0.21 [0.19, 0.24]); in 16f it is flat from the first layer to S. g carries $M_2$ below the baseline level.', 'results/jedi/e25x.png'),
+ ('Checks',
+  'Exact forward ($|\\Delta\\text{logit}|=0$); 1,000 random subspaces per cell (q97.5 ≤ 0.22); per-particle probe $R^2$ of $p_{T,i}$ at a 1.00, of $p_{T,i}r_i^2$ 0.36 (3f) / 0.80 (16f).', None),
+ ('Verification (E25xv; refuted in part, confidence 0.25)',
+  'E25x\'s baselines at stage a were mostly networks that keep the trained first layer (identical $a_i$), trained 250 instead of 600 steps. Against 21 networks with all weights redrawn at the same 600-step budget (fresh sample 2561 / 2562), the trained first-layer $M_2$ IIA is below the random median in 3f (0.48 vs 0.57) and inside the distribution in 16f (0.72 vs 0.78). In 16f the same direction reproduces calls under an edit $r_i\\to\\kappa r_i^\\gamma$ that keeps every $p_{T,i}$, $M_0$ and $M_2$ fixed (0.68). $M_0$ at a and $M_0$, $M_2$ at S are above most random networks, rank $p$ 0.06–0.29 (Holm ≥ 0.5). The 3f rise of $M_2$ from a to S replicates (+0.28 [0.26, 0.31]).', None),
+ ('Why it matters',
+  'The start of the mass chain is not located by this test: a first-layer $M_2$ swap is available in any network of this shape. The object layer S remains the first stage where trained $M_2$ swaps exceed most random networks (claim A4c, 0.6).', None),
+]
 X9X_EXPLAINER = [
  ('Question',
   'X9w showed that set networks trained on jets shifted at random by up to 0.08 rad ignore a 0.06 rad shift but respond to a 0.12 rad shift. Does the largest shift they ignore follow the training range $A$ (the largest random shift applied during training; a learned range) or stay fixed (a property of the architecture)? Inside the range, do they cancel the shift by reading off where the jet\'s centre is?', None),
@@ -2428,7 +2482,10 @@ PAPER_EXPLAINERS = {
           ('Result 27 explained: the two gains of the mass read-out under shifts, and a test for a product unit (claims A4n, A4d, A4; E23w, E23wv)', E23W_EXPLAINER, False),
           ('Result 28 explained: does the direction-dependent shift response pass through the count units S31 and S58? (claims A4d, A3c; E23x, E23xv)', E23X_EXPLAINER, False),
           ('Result 29 explained: where the 16-feature JEDI-linear holds its mass moments, and where W jets go under larger shifts (claims A4c, A4, A1f; E25w, E25wv)', E25W_EXPLAINER, False),
-          ('Result 30 explained: what sets the size of the axis response across 56 networks (claims A10s, A10m; X13, X13v)', X13_EXPLAINER, False)],
+          ('Result 30 explained: what sets the size of the axis response across 56 networks (claims A10s, A10m; X13, X13v)', X13_EXPLAINER, False),
+          ('Result 31 explained: where JEDI-linear\'s response to a mass-fixed boost runs (claims A14, A3, A4c; E26, E26v)', E26_EXPLAINER, False),
+          ('Result 32 explained: when the axis-tied share forms during training, and what sets it (claim A10s; X14, X14v)', X14_EXPLAINER, False),
+          ('Result 33 explained: where the mass moments first appear before the object layer (claims A4c, A4; E25x, E25xv)', E25X_EXPLAINER, False)],
     'b': [('Result explained: the whole network as if-statements (claim B2)', B2_EXPLAINER, True),
           ('Result explained: a fit on hand observables vs a fit on the network\'s objects under edits (claim B3; E7, explained in Paper A result 10)', E7_EXPLAINER, False),
           ('Result explained: interchange interventions, per variable (claim B2; E22)', E22_EXPLAINER, False),

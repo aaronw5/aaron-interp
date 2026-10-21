@@ -10,6 +10,8 @@ Sets (job name -> runs as model:N:seed[:dir-tag[:train_small flags]], see gpu_jo
           cosine, --patience 100 (no early stop), directory tag -e100.
   e18     n64-axhard: dsets-d64 and linf-2b-d32-k8 at N = 64, seeds 0 and 1, --axis hardest ((deta, dphi) re-measured
           about the hardest particle; normalisation norm_stats_axhard.json from train/axis_stats.py), tag -axhard.
+  x14     x14-grid-{tf,linf}-s{0,1,2}: tf-2b-d32 and linf-2b-d32-k8 at N = 64, init seeds {0, 1, 2} x data-order seeds
+          {0, 1, 2} (--data_seed), --patience=30, tag -x14d<data seed>.
 Several runs share one GPU (NRP: GPU utilisation must stay > 40 %). CPU / memory per set from measurements: about 0.75-1
 core and 1.8-2.1 GiB of container memory per concurrent run (main jobs: 5.0-5.1 cores, 12.7-15.0 GiB for 7 runs).
 Job names anrunw-ai-train-<job>; labels owner=anrunw, study=aaron-interp, set=small-taggers. The container runs
@@ -130,12 +132,18 @@ def job_sets():
     # PFN / EFN of the same scan run as CPU Jobs (energyflow venv): train/x9w_cpu_batch.sh via job.sh (see interp/x9x_augrange.py).
     x9x = {"x9x": dict(runs=[f"dsets-d64:64:{s}:-aug{t}:--aug={a}" for s in SEEDS for t, a in (("04", "0.04"), ("16", "0.16"), ("30", "0.30"))],
                        conc=6, cpu=6, mem=14)}
-    return {"main": main, "extra1": extra1, "e18": e18, "x5": x5, "x8": x8, "x12": x12, "x9w": x9w, "x9x": x9x}
+    # X14: init seed x data-order seed factorial (train_small --data_seed), N = 64, 30 epochs, patience 30 (no early stop);
+    # directory <model>-n64-x14d<data seed>/seed<init seed>; 9 runs concurrent per GPU (~0.75-1 core, ~1.8-2 GiB each)
+    # one job per (model, init seed) with its 3 data-order seeds (9-run 7 CPU / 18 Gi jobs stayed unschedulable for 35 min on
+    # 2026-10-20; 3-run jobs; 6 Gi was OOM-killed at start-up, steady use 5.8 GiB)
+    x14 = {f"x14-grid-{k}-s{s}": dict(runs=[f"{m}:64:{s}:-x14d{d}:--data_seed={d},--patience=30" for d in (0, 1, 2)],
+                                      conc=3, cpu=3, mem=9) for k, m in (("tf", "tf-2b-d32"), ("linf", "linf-2b-d32-k8")) for s in (0, 1, 2)}
+    return {"x14": x14, "main": main, "extra1": extra1, "e18": e18, "x5": x5, "x8": x8, "x12": x12, "x9w": x9w, "x9x": x9x}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--set", default="main", help="main | extra1 | e18 | x5 | x8 | x12 | x9w | x9x")
+    ap.add_argument("--set", default="main", help="main | extra1 | e18 | x5 | x8 | x12 | x9w | x9x | x14")
     ap.add_argument("--only", default="", help="comma-separated job names")
     ap.add_argument("--suffix", default="", help="job-name suffix for resubmits, written --suffix=-b")
     ap.add_argument("--conc", type=int, default=None, help="trainings running at once per GPU (default: the set's)")

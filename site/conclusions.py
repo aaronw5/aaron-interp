@@ -121,7 +121,10 @@ CLAIM = {
         "directions found for it only follow a rescaling of all pT, and the same change made through the angles runs through "
         "the spread directions. For the spread, the gain over simply giving the edited jet the other jet's decision is small. "
         "The same test on the official 16-feature JEDI-linear, and again on the 3-feature one with new jets, finds the two "
-        "moments as separate directions in the object layer of both; where they first appear, before that layer, is untested."
+        "moments as separate directions in the object layer of both. A test of where they first appear, before that layer, "
+        "was inconclusive: networks with entirely random weights allow the same swaps about as well at the first layer, and "
+        "at the object layer the trained networks are above most but not all random networks. Holding the two directions "
+        "fixed also removes most of the decision changes caused by a boost of the jet at fixed mass."
     ),
     'A1r': (
         "JEDI-linear retrained from scratch, with and without fixed-point (quantization-aware) training, reads the jet mass "
@@ -173,8 +176,19 @@ CLAIM = {
         "stored jet axis rather than from quantities that do not move with a shift (such as distances between particles, "
         "or positions measured from the jet's own centre; the tests used cannot tell these two apart). For the set-based "
         "networks (JEDI-linear, Particle and Energy Flow Networks, Deep Sets) that share is set by the network type; for "
-        "transformer-type networks it differs between training runs of the same design. Uncertain: the networks follow the "
-        "simple two-part description only approximately, and which internal units hold the shift-independent part is open."
+        "transformer-type networks it differs between training runs of the same design. Training these networks is exactly "
+        "repeatable, and the share changes when the starting weights, the order of training batches or the length of "
+        "training is changed, with no single one of these detectably dominant; it forms in the middle of training and is "
+        "not linked to accuracy. Uncertain: the share is measured on a mass read-out of the last layer, and in one case the "
+        "network's own decision moved the other way; which internal units hold the shift-independent part is open."
+    ),
+    'A14': (
+        "Boosting a jet along its axis keeps its mass but lowers or raises its total pT; at 10 % lower pT about a third of "
+        "JEDI-linear's decisions change. About half of those changes disappear when the network's internal sum of the "
+        "hardest particles' pT is held at its pre-boost value, and most disappear when two learned directions for total pT "
+        "and pT-weighted angular spread are held, while the network's mass estimate does not move on average. So the "
+        "network reads total pT as a class feature next to the mass. Uncertain: generic high-variance directions also "
+        "carry much of the effect, and at higher pT the response is spread over several later units."
     ),
     'A1f': (
         "The more accurate official JEDI-linear with 16 input features does not build its angular information from "
@@ -719,6 +733,27 @@ EXPLAINER = {
         "all particles off the axis turns W jets first into Z and then into top or quark/gluon calls, and a stretch of the "
         "particle distances that changes the spread by the same amount gives the same number of W-to-Z changes. Ten "
         "non-trained comparison networks respond less, but with ten of them the test cannot reach p below 0.09."
+    ),
+    'E26_EXPLAINER': (
+        "When a jet is boosted along its axis so that its mass stays the same but its pT drops by 10 %, about a third of "
+        "JEDI-linear's decisions change. Holding the network's internal sum of particle pT at its pre-boost value removes "
+        "about half of those changes, and holding two learned directions for total pT and angular spread removes most; "
+        "the network's mass estimate does not move on average, and the predicted route through soft-particle pT cuts is "
+        "excluded. Repeated on new jets with a stricter random comparison, the result holds, but generic high-variance "
+        "directions also carry much of the effect."
+    ),
+    'X14_EXPLAINER': (
+        "In small transformer-type taggers, how much the last layer's mass code depends on the stored jet axis is not set "
+        "by the starting weights: it forms in the middle of training and changes when the starting weights, the batch "
+        "order or the training length is changed, with no single factor detectably dominant in 9 runs per model. Training "
+        "is exactly repeatable, so the spread comes from the optimisation path, and it is not linked to accuracy. Whether "
+        "this last-layer code reflects what the decision uses is uncertain, since the decision moved the other way in one case."
+    ),
+    'E25X_EXPLAINER': (
+        "We looked for where JEDI-linear first holds the total pT and the pT-weighted angular spread of its particles, before "
+        "the layer where they were found earlier. A single direction in each particle's first-layer values can be swapped to "
+        "reproduce a change of the spread, but networks with entirely random weights allow the same swap equally well, so "
+        "this does not show that training placed the spread there. Where training first builds it remains open."
     ),
     'X13_EXPLAINER': (
         "All 56 trained networks tested react to a shift of the whole jet that keeps its true mass, so none of them "
@@ -1424,7 +1459,9 @@ KEY_RESULT = {
         "it, so the behaviour comes from training jets whose axis is always at the centre. Across 56 trained networks of "
         "several types the shift response is present in all; its size follows how much of each network's mass estimate is "
         "tied to the stored axis, which depends on the network type for set networks and on the training run for "
-        "transformer-type networks."
+        "transformer-type networks (the whole training path, not the starting weights alone). At fixed mass, JEDI-linear "
+        "also reads total pT as a class feature, so boosting a jet along its axis changes about a third of its decisions "
+        "while its mass estimate stays the same on average."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "
