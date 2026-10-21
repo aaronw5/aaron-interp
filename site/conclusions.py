@@ -865,7 +865,10 @@ CLAIM = {
         "mass, which keep about 40 % W efficiency at 20 GeV per unit area while the networks keep almost none. The "
         "hls4ml tagger follows the plain mass, the Top Landscape ParT counts particles added without mass, and for the "
         "JetClass full-input ParT most of that count response comes from the particles being labelled neutral hadrons "
-        "(as photons, about a quarter). The uniform massless haze is a toy for real pileup."
+        "(as photons, about a quarter). The uniform massless haze is a toy for real pileup. "
+        "Round D14 (H68/H68v): when the added soft particles carry the mix of types actually found among soft "
+        "particles in JetClass (about three quarters photons), the full-input ParT responds about as much as the "
+        "kinematics-only ParT, so the large label effect is specific to particles all labelled neutral hadrons."
     ),
     'D11': (
         "JetClass-trained ParT and ParticleNet lower their top score when the W-candidate subjet pair inside a top jet is "
@@ -976,12 +979,28 @@ CLAIM = {
         "change although it responds to the count edit. (Version 1, particle level: a 9 % rise moved ParT by 0.45.)"
     ),
     'D25': (
+        "Version 2 (H67/H67v): with the jet's mass and momentum held exactly fixed, the JetClass and Top Landscape "
+        "taggers still change their output when the jet's momentum is shared less evenly between its two or three "
+        "prongs (sub-jets), clearly more than when the prongs are only rotated by the same distance, and they also "
+        "respond to a mass change at fixed width. So they read neither the mass alone nor the width and momentum "
+        "alone. The test cannot say which second quantity they use (width, prong sharing, D2 or τ21), because the two "
+        "edits change the prong sharing equally. "
+        "Version 1: "
         "Boosting a jet along its own direction keeps its mass fixed while making it narrower and raising its momentum. "
         "JetClass and Top Landscape ParT and ParticleNet change their output by about 0.1–0.4 of what an equal narrowing "
         "at fixed momentum does, so they do not read the jet's angular size alone. The test cannot tell whether they "
         "compute the invariant mass or combine an angular width with the jet momentum, because a small classifier given "
         "only the width and momentum gives the same ratio; the larger response of the hls4ml and quark–gluon taggers "
         "also appears in such reference classifiers trained on those datasets."
+    ),
+    'D26': (
+        "Changing only the particle-type labels in a jet (charged hadron, photon, neutral hadron), with every "
+        "particle's momentum kept fixed, lowers the signal scores of the JetClass taggers that see these labels. The "
+        "drop does not follow the jet's charged-energy fraction (the share of jet energy in charged particles): "
+        "swapping labels between charged and neutral particles of equal total energy, which leaves that fraction "
+        "almost unchanged, lowers the scores 1.5–2 times as much as relabelling 10 % of the energy one way. Whether "
+        "this reflects real correlations between particle type and momentum or position, or a reaction to label "
+        "patterns that never occur in real jets, has not been tested."
     ),
     'D19': (
         "When the number of displaced tracks (tracks well separated from the collision point) above every "
@@ -2052,6 +2071,27 @@ EXPLAINER = {
         "narrowing response, also inside the training momentum range. A classifier given only the jet's angular width "
         "and momentum, with no mass, gives the same ratio, so the test excludes a pure angular-size reader but cannot "
         "tell an invariant-mass reader from a width-plus-momentum reader."
+    ),
+    'H67_EXPLAINER': (
+        "Edits that hold a jet's mass and momentum exactly fixed but change its width (by sharing momentum less evenly "
+        "between prongs), or change its mass at fixed width, move every JetClass and Top Landscape tagger, so none reads "
+        "mass alone or width alone. The hls4ml taggers respond much less to the width edit on W and Z jets."
+    ),
+    'H67V_EXPLAINER': (
+        "The numbers repeat on new jets, but both edits change how momentum is shared between the prongs by the same "
+        "amount, and classifiers on mass plus prong sharing, D2, τ21 or width give similar responses. So the test "
+        "excludes pure mass and pure width readers without naming the second variable; against a rotation of matched "
+        "size, every tagger responds to the width edit, the hls4ml ones included."
+    ),
+    'H68_EXPLAINER': (
+        "Relabelling particles between charged hadron, photon and neutral hadron while keeping their momenta fixed "
+        "lowers the signal scores of the JetClass taggers that see particle types, roughly in proportion to the "
+        "relabelled energy; taggers without type inputs do not move."
+    ),
+    'H68V_EXPLAINER': (
+        "Swapping labels between charged and neutral particles of equal total energy, which leaves the jet's "
+        "charged-energy fraction almost unchanged, lowers the scores even more, so the response follows how much "
+        "labelling is rearranged, not the jet's composition. Whether real jets would ever show such patterns is open."
     ),
     'H65_EXPLAINER': (
         "Under a uniform haze of soft particles, every network loses signal faster than groomed- or area-subtracted-mass "
