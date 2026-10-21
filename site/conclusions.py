@@ -288,6 +288,30 @@ CLAIM = {
         "to the invariant mass, and an untrained network shows it too, so only the count, width and pT^D responses are "
         "shown to be learned."
     ),
+    'A4s': (
+        "We kept each W or Z jet's total momentum and mass exactly fixed and only made the momentum split between its "
+        "two prongs more lopsided. JEDI-linear then calls W jets more Z-like and Z jets more W-like (about 1.5 in "
+        "log-odds), while rotations of the same size that keep the split change almost nothing. Holding the network's "
+        "internal mass direction fixed removes most of its response to a real mass change but almost none of this one, "
+        "so the network uses the momentum sharing through a second route besides its mass variable. Which internal "
+        "objects carry that route is not identified; it is spread over several of them."
+    ),
+    'A18': (
+        "We let a search find, for each jet, the smallest change of its particles that flips JEDI-linear's call while "
+        "the jet's mass, momentum and axis stay fixed. These changes flip the real network on about 40 % of jets, against "
+        "about 2 % for random changes of the same size. Over all jet types they mostly move momentum among the hardest "
+        "particles, but the changes that turn W into Z mostly move particles toward or away from the axis, and moving "
+        "momentum into the hardest particle alone flips few calls. The changed jets often look unlike real jets, so this "
+        "maps the network's sensitivity rather than how it treats natural jets."
+    ),
+    'A1x v3': (
+        "Ten separately trained JEDI-linear networks were compared with hundreds of random formulas that fit the "
+        "reference network equally well. A unit that sums the particles' momentum times their squared distance from the "
+        "axis reappears in 8 of the 9 other networks, which random formulas with the same number of fitted terms do in "
+        "about 1–5 % of cases, so this recurrence is above chance at that level. The momentum weighting is what recurs; "
+        "the squared-distance weight holds only for particles close to the axis (within 0.2), and the soft-particle count "
+        "and hardest-particle window are not distinguished from random formulas."
+    ),
     'A15r': (
         "We tested four ways a collinear split could reach JEDI-linear's decision. Two are excluded: the cut that "
         "switches on for particles below 11 GeV, and the softest particle being pushed out of the 64 input slots. Two "
@@ -371,6 +395,14 @@ CLAIM = {
         "variables match the network's causal variables only partly. So it reproduces the network's decisions; it is not "
         "shown to reach them through the same internal variables. An accuracy lead reported first did not hold on fresh "
         "jets, and the background-rejection comparison is not resolved with the available counts."
+    ),
+    'B2o': (
+        "We tested whether the programs extracted from JEDI-linear on ordinary jets also follow it on edited jets they "
+        "were not built for. When the momentum split between a jet's two prongs is made more lopsided at fixed mass, the "
+        "floating-point copy of the network with its zero-bit masks changes the same calls as the network in about 85 % "
+        "of cases, while the hinge-formula program gets the average shift right but changes many extra calls. On the "
+        "smallest call-flipping edits found by a search, the programs predict which jets flip only slightly better than "
+        "a rule that always says \"no change\", so faithfulness off ordinary jets depends strongly on the edit."
     ),
     'B2m': (
         "The question is whether the program's variables are variables inside the network: if a variable's value is "
@@ -1060,6 +1092,26 @@ EXPLAINER = {
         "number of soft particles, the jet width, how concentrated the momentum is (pT^D), and how far particles sit from "
         "the axis, at about half to three quarters of the response of a classifier trained on those properties. The last "
         "one is not the invariant mass, and an untrained network shows it too."
+    ),
+    'E35_EXPLAINER': (
+        "With a W or Z jet's mass and momentum exactly fixed, making the momentum split between its two prongs more "
+        "lopsided moves JEDI-linear's call by about 1.5 log-odds (W toward Z, Z toward W), and same-size rotations that "
+        "keep the split do almost nothing. Holding the network's mass direction removes most of a real mass change's "
+        "effect but almost none of this one, so the sharing reaches the decision by another route. That route is spread "
+        "over several internal objects and is not yet identified."
+    ),
+    'E36_EXPLAINER': (
+        "A search for the smallest particle changes that flip JEDI-linear's call at fixed jet mass, momentum and axis "
+        "finds changes that flip the real network on about 40 % of jets, against 2 % for random changes of the same "
+        "size. They mostly move momentum among the hardest particles, except for W-to-Z flips, which move particles "
+        "radially. Moving momentum into the leading particle alone flips few calls, and the extracted programs predict "
+        "these flips only slightly better than always predicting no flip."
+    ),
+    'E33X_EXPLAINER': (
+        "The unit that sums each particle's momentum times its squared distance from the axis reappears in 8 of 9 other "
+        "trained JEDI-linear networks, which random formulas of the same complexity do in about 1–5 % of cases. The "
+        "momentum weighting is what recurs, and the squared-distance weight holds only near the axis. The soft count and "
+        "the hardest-particle window are not distinguished from random formulas."
     ),
     'E29_EXPLAINER': (
         "An algorithm that keeps only the internal connections JEDI-linear's output depends on picks out all the "
@@ -2042,6 +2094,9 @@ KEY_RESULT = {
         "Mass-type terms first appear in the dense layers of the fit, which is consistent with, but does not locate, where "
         "the network combines total pT and spread. A blind version of the procedure, applied to three other architectures, "
         "follows their decision changes as well as tuned trees of the same size, not better, and better than symbolic "
-        "regression on standard jet variables, which copies decisions on ordinary jets but not under the jet shift."
+        "regression on standard jet variables, which copies decisions on ordinary jets but not under the jet shift. "
+        "Off ordinary jets (round 16) the floating-point copy with masks follows about 85 % of the network's changed "
+        "decisions under a prong-sharing edit at fixed mass, the hinge program over-reacts, and on search-found minimal "
+        "edits the programs predict little about which jets flip."
     ),
 }
