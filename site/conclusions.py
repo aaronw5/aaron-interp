@@ -454,10 +454,26 @@ CLAIM = {
     'C15': (
         "In ParT and ParticleNet models that are given particle-identity flags, the decision that a jet comes from a Higgs "
         "boson decaying to a lepton, a neutrino and two quarks rests almost entirely on the electron or muon flag of one "
-        "particle: removing only that flag moves about 99 % of these jets to other classes. In ParT one attention head of "
-        "the final class stage reads that particle, but the information also reaches the output by a second route that "
-        "backs it up, and no small set of heads separates this class from top-quark jets with a lepton. A rerun on fresh "
-        "jets is still pending."
+        "particle: on two fresh sets of jets, removing only that flag moves about 98 % of these jets to other classes, "
+        "against under 1.3 % for the same kind of label change on a hadron, and adding a muon label to a hadron in a jet "
+        "without a lepton creates this decision in 18 % of jets. One attention head of ParT's final class stage reads the "
+        "lepton; kept alone, with the rest of the network averaged out, it gives a lepton-present score but no decision, "
+        "and that score does not separate these jets from top-quark jets with a lepton. Which parts of the full network "
+        "turn the lepton label into the decision is not yet known."
+    ),
+    'C17': (
+        "This is a planned test, not yet run: whether ParT's decision that a jet comes from a top quark decaying to three "
+        "quarks is carried by a handful of attention heads, or spread over many heads as its W-versus-Z decision is. The "
+        "test keeps only a few heads, averages out the rest of the network, and compares the result with random head sets "
+        "of the same size. The first attempt failed on a broken cluster machine, so nothing is known yet."
+    ),
+    'C18': (
+        "In real jets the momentum-weighted centre of the particles sits a few hundredths of a radian from the stored jet "
+        "axis. Moving the particles so that this centre lands on the axis, without changing the jet's mass, changes ParT's "
+        "W-versus-Z score about as much as a real mass change of the same size in the spread about the axis (ratio about "
+        "1.0). So ParT measures mass about the stored axis also for offsets of natural size; the effect is about a 1 % mass "
+        "shift. The edited jets are no longer exactly natural, because the edit moves their momentum direction off the "
+        "stored axis, so the effect on unedited jets is still to be measured."
     ),
     'C16': (
         "When one particle in a W or Z jet is moved slightly, the part of ParT's response that does not depend on the "
@@ -1165,6 +1181,22 @@ EXPLAINER = {
         "eight pair-bias heads; both results reproduce on fresh jets. A linearised copy of the network produces only about "
         "a third of that response, so the network's own nonlinearity makes most of it, not the logarithm of the pair "
         "distance alone. Which stage of the network produces it is not yet known."
+    ),
+    'P34_EXPLAINER': (
+        "Removing the electron or muon label from one particle changes about 98 % of ParT's decisions that a jet comes "
+        "from a Higgs boson decaying to a lepton, a neutrino and two quarks, against under 1 % for a matched label change "
+        "on a hadron; adding a muon label to a hadron in a jet without a lepton creates that decision in 18 % of jets. The "
+        "attention head that reads the lepton, kept alone with everything else averaged out, still scores lepton presence "
+        "but makes no decision and does not tell these jets from top-quark jets with a lepton. Which units make the "
+        "decision in the full network is still open."
+    ),
+    'P36_EXPLAINER': (
+        "Moving the particles of naturally off-centre W and Z jets so that their momentum-weighted centre sits on the "
+        "stored axis, at fixed jet mass, changes ParT's W-versus-Z score about as much as a real mass change of the same "
+        "size in the spread about the axis (ratio about 1.0). So ParT measures mass about the stored axis also for offsets "
+        "of natural size, which here amount to about a 1 % mass shift and change a few percent of decisions on the most "
+        "off-centre jets. The edit moves the jets' momentum direction off the stored axis, so unedited jets are still to "
+        "be tested."
     ),
     'P23_EXPLAINER': (
         "Shifting all of a jet's particles by a small angle changes ParT's W-versus-Z score mostly in the same way for a "
