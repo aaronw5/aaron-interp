@@ -853,21 +853,29 @@ CLAIM = {
         "possibly the shape of the prong the particles join, is not known."
     ),
     'D22': (
-        "When Pythia's hadronisation settings alone are changed so that quark and gluon jets carry about 10 % more or "
-        "fewer particles, with jet mass, girth and the output of an infrared- and collinear-safe network nearly "
-        "unchanged, Pythia-trained ParT, ParticleNet, LorentzNet and PFN taggers move their scores in the direction a "
-        "particle-count classifier predicts: the kinematic-only networks by a third to two-thirds of its response, those "
-        "with particle identity by most or all of it. So on realistic jets these networks use hadron-level information "
-        "that IRC-safe energy flow does not carry. Whether they read the number of particles or the softer momenta of "
-        "the extra hadrons is open, because every hadronisation setting tested changes both, and networks trained on "
-        "Herwig jets respond much less."
+        "When only Pythia's hadronisation is changed on the same events, Pythia-trained quark/gluon taggers move beyond "
+        "what an infrared- and collinear-safe network does, so they use hadron-level information. Settings that move the "
+        "particle count and the momentum sharing among hadrons (pT^D) apart show that ParT and ParticleNet do not follow "
+        "the total number of particles: at fixed pT^D a 7 % count change moves them by about a quarter of a count-only "
+        "classifier's response. They follow how hard the fragmentation is, which pT^D and a count of hadrons above 1–4 GeV "
+        "measure equally well; the decisive setting is far from nominal jets, and Herwig-trained networks were not tested "
+        "with Herwig-side changes."
     ),
     'D23': (
-        "Given the same nine physics edits, networks trained on JetClass and the Top Tagging Landscape change their "
-        "decisions most like a groomed-mass-plus-substructure tagger, while networks trained on hls4ml jets change them "
-        "most like a plain jet-mass window. The panel has no groomed-mass-only tagger, so it cannot say whether the "
-        "networks use substructure variables such as τ21, D2 or τ32 beyond the groomed mass, and with the few random-weight "
-        "copies used the similarities do not pass an exact multiple-testing correction."
+        "With every tagger set to keep half of the signal jets, top taggers change their calls like groomed-mass and τ32 "
+        "taggers when the momentum sharing between prongs changes at fixed jet mass, which a plain mass window cannot "
+        "see. They still respond to soft radiation that grooming removes, at about half the rate of radiation it keeps, so "
+        "they are not groomed-mass taggers; the hls4ml W/Z networks respond to both alike, as an ungroomed mass does. "
+        "Whether the top taggers use τ32 itself or another prong-sharing quantity is open, and the comparison depends on "
+        "how the edits are weighted."
+    ),
+    'D24': (
+        "When only Pythia's hadronisation changes so that top jets carry about 9 % more particles at the same mass and "
+        "three-prong structure, top taggers call them less top-like, while an infrared- and collinear-safe network does "
+        "not move. Adding only collinear copies of particles reproduces this and removing the extra particles undoes it, "
+        "so the networks treat extra soft particles at fixed substructure as a sign of QCD, the opposite of a count-only "
+        "classifier. This is measured on particle-level jets; under a crude detector-like merging ParT's shift falls to "
+        "about a quarter and one JetClass network shows none, so the size for real top tagging is open."
     ),
     'D19': (
         "When the number of displaced tracks (tracks well separated from the collision point) above every "
@@ -1829,6 +1837,44 @@ EXPLAINER = {
         "effect outside the untrained range. The count response at fixed energy flow reproduces, and the change between "
         "Herwig- and Pythia-trained networks is several times the seed-to-seed difference. Error bars at a fixed decision "
         "threshold understate how much such numbers move between jet samples."
+    ),
+    'H57_EXPLAINER': (
+        "Pythia settings that change the particle count and the momentum sharing among hadrons (pT^D) separately, on the "
+        "same parton-level events, show that the Pythia-trained ParT and ParticleNet quark/gluon taggers do not follow "
+        "the total count: at fixed pT^D a 7 % drop in count moves them by about a quarter of what a count-only classifier "
+        "does beyond an IRC-safe tagger. Where the two quantities disagree, the taggers follow pT^D. The setting that "
+        "decides this is far from nominal jets, and particle-ID networks are confounded by the changed hadron species."
+    ),
+    'H57V_EXPLAINER': (
+        "On new events the result repeats: the taggers do not follow the total number of hadrons. A count of only the "
+        "harder hadrons (above 1–4 GeV) predicts their response as well as pT^D, because the two move together in every "
+        "setting, so the experiment does not decide between momentum sharing and counting hard hadrons. The decisive "
+        "setting is a cancellation of two large opposite effects."
+    ),
+    'H60_EXPLAINER': (
+        "When only Pythia's hadronisation changes so that top jets carry about 9 % more particles at the same mass and "
+        "three-prong structure, all six top taggers tested call them less top-like, while an IRC-safe network does not "
+        "move. This is the direction of a classifier that reads the count at fixed substructure, opposite to a count-only "
+        "classifier. These are particle-level jets with many more particles than the detector-level training jets."
+    ),
+    'H60V_EXPLAINER': (
+        "Adding only extra collinear particles to top jets reproduces most of the shift, and merging the extra particles "
+        "away removes it, so on top jets the cause is the particle count at fixed substructure. Under a crude "
+        "calorimeter-like merging that brings the count into the training range, ParT's shift falls to about a quarter "
+        "and one JetClass network shows none, so the size for real detector-level tagging is open."
+    ),
+    'H58_EXPLAINER': (
+        "With every tagger set to keep half of the signal jets, top taggers' call changes under edits look more like a "
+        "groomed-mass window than an ungroomed one, and an extra τ32 cut seems to add nothing. At the published cuts "
+        "every network instead looks closest to the substructure taggers, so the earlier H55 picture depended on the "
+        "working point. The verifier showed that this reading does not hold (H58v)."
+    ),
+    'H58V_EXPLAINER': (
+        "The groomed-mass preference of top taggers comes from a single edit that changes how momentum is shared between "
+        "the prongs at fixed mass; without it there is none. Top taggers still respond to soft radiation that grooming "
+        "removes, at about half the rate of radiation it keeps, while the hls4ml W/Z networks respond to both alike, as "
+        "an ungroomed mass does. Compared at the same mass window and efficiency, a τ32 cut does add similarity; whether "
+        "the networks compute τ32 itself is open."
     ),
 }
 
