@@ -61,3 +61,4 @@ Auto-resume cron prompt (session cron, 23,53 * * * *, 7-day expiry → re-create
 - 2026-10-21: A/B r13 done (commit 042b9e3); A/B r14 wf_b516dd4b-d60 (main JEDI script, first_round 14).
 - 2026-10-21: D r11 done (commit 63a9bfa); D r12 wf_d0c742b0-841 (main physics script, first_round 12).
 - 2026-10-21: A/B r14 done (commit 674379c); A/B r15 wf_8d15945d-f7f (main JEDI script, first_round 15).
+- 2026-10-21: C r10 done (commit 37a7407); C r11 wf_1e25fbd2-baa (main bigmodels script, first_round 11).
