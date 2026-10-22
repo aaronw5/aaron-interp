@@ -370,7 +370,26 @@ CLAIM = {
         "true mass is lowered by 10 % with every particle keeping its momentum and distance from the axis, the layers "
         "follow about a tenth of the change, and about half of that also appears when the same particles are rearranged "
         "without changing the mass. So the network does not build the invariant mass; what remains open is which "
-        "quantity of the particles' arrangement around the axis that small response follows."
+        "quantity of the particles' arrangement around the axis that small response follows. A follow-up (round 21) "
+        "found that this arrangement response is not a response to how elongated the pattern of the hardest particles is, "
+        "and that it travels mainly through the units that combine the first layer's half-plane cuts (claim A21az)."
+    ),
+    'A20t v2': (
+        "Inside real top jets we slid the two subjets that form the W boson so that their pair mass moved onto the W mass "
+        "in one copy of each jet and the same distance away in another, keeping the jet mass, the three-prong shape and "
+        "the subjet widths fixed. JEDI-linear's top score differs between the two copies no more than that of a "
+        "classifier that never sees any subjet-pair mass, while a classifier given the pair masses prefers the on-peak "
+        "copy clearly (by about 0.6 in log-odds). So the network does not check whether two subjets form a W at the "
+        "strength of such a classifier; a weaker use, up to about 0.4 of it, cannot be excluded with the 83 usable jets."
+    ),
+    'A21az': (
+        "We rearranged the hardest particles of each jet around the jet axis while keeping every particle's momentum and "
+        "distance from the axis, so the jet mass and the network's mass variable stay fixed, and froze groups of internal "
+        "units to see where the network's W-versus-Z response goes. About two thirds of it disappears when the "
+        "per-particle units that combine the first layer's 'which side of the axis' cuts are frozen, and very little "
+        "when the two jet-level context units are frozen. Making the hardest particles' pattern more or less elongated "
+        "has almost no specific effect, and no single arrangement quantity we tried predicts the response; the quantity "
+        "is still unnamed, and the frozen per-particle units have no random-unit comparison."
     ),
     'A20t': (
         "Inside real top jets we moved the two subjets that form the W boson so their pair mass became 60 or 100 GeV, "
@@ -583,7 +602,17 @@ CLAIM = {
         "variables. The size measure (32 bits per stored number) favours the program. Round 20 (B9) applies it to nine "
         "trained JEDI-linear networks: about 6,600-bit programs agree with each network on 87–90 % of jets and follow "
         "its decision changes under the shift better than same-size trees and standard-variable fits on six or seven of "
-        "seven networks (claim B2n)."
+        "seven networks (claim B2n). Round 21 (B10) applies it, with azimuthal inputs added, to Deep Sets, Linformer, "
+        "transformer and PFN networks: the programs agree with each on 85–92 % of jets, but a program fitted only to the "
+        "true labels already agrees on 84–90 % (claim B2t)."
+    ),
+    'B2t': (
+        "We fitted the same compact if-statement programs to eight small jet taggers that are not JEDI-linear (Deep Sets, "
+        "Linformer, transformer and Particle Flow Networks, two training seeds each). The programs make the same decision "
+        "as each tagger on 85–92 % of jets, more often than same-size fits on standard jet variables, so the method does not "
+        "depend on JEDI-linear's architecture. But a program fitted only to the true labels already agrees with every "
+        "tagger almost as often, so most of what the programs capture is the tagging task all networks share, and which "
+        "network's program best follows a given network's response to a shifted jet changes from sample to sample."
     ),
     'B2n': (
         "We fitted the same compact if-statement program to each of nine trained JEDI-linear networks and scored each "
@@ -592,7 +621,8 @@ CLAIM = {
         "the programs pick up real differences between networks. Each network's own program also follows that network's "
         "decision changes under a jet shift better than a program fitted to the true labels. The network-specific part is "
         "small, and how much of the shift agreement it accounts for is not pinned down, because single fits vary by up to "
-        "10 points."
+        "10 points. On eight non-JEDI taggers (round 21, B10) the natural-jet part recurs, but whether a network's own "
+        "program follows its shift response better than other networks' programs changes between samples."
     ),
     'B6s': (
         "Formulas found by symbolic regression on standard jet variables (mass, groomed mass, N-subjettiness ratios, "
@@ -1428,6 +1458,23 @@ EXPLAINER = {
         "lowers JEDI-linear's top score slightly more than a matched edit of another subjet pair and changes no top "
         "decision. The W edit also narrows the subjets and lowers tau21, and a classifier blind to the pair mass shows the "
         "same extra drop, so no W-mass term is established."
+    ),
+    'E43_EXPLAINER': (
+        "Rearranging the hardest particles around the jet axis at fixed jet mass moves JEDI-linear's W-versus-Z score "
+        "mainly through the per-particle units that combine its 'which side of the axis' cuts, not through its jet-level "
+        "context units. Making the pattern more or less elongated has almost no specific effect, and the arrangement "
+        "quantity the network reads is still unnamed."
+    ),
+    'E42X_EXPLAINER': (
+        "Sliding a top jet's W-boson subjet pair onto the W mass versus the same distance away, with jet mass, three-prong "
+        "shape and subjet widths fixed, changes JEDI-linear's top score no more than a classifier that never sees subjet-pair "
+        "masses, while a classifier given those masses responds clearly. The network does not check for a W pair at that "
+        "classifier's strength; a weaker check is not excluded."
+    ),
+    'B10_EXPLAINER': (
+        "Compact if-statement programs agree with Deep Sets, Linformer, transformer and PFN taggers on 85–92 % of jets, so "
+        "the method is not tied to JEDI-linear. A program fitted only to the true labels agrees almost as often, so most of "
+        "the agreement reflects the shared task, and network-specific agreement under a jet shift is not stable between samples."
     ),
     'B9_EXPLAINER': (
         "One program-extraction recipe gives compact programs that agree with each of nine trained JEDI-linear networks on "
@@ -2586,7 +2633,9 @@ KEY_RESULT = {
         "edited jets differ from real jets only in quantities measured about the axis (round 14, E31). Checked layer by "
         "layer on jets where the two masses disagree (round 20, E41), no layer computes the invariant mass: the layers "
         "follow about a tenth of a 10 % true-mass change made at fixed axis-based mass, and half of that also appears for "
-        "a mass-preserving rearrangement of the same particles."
+        "a mass-preserving rearrangement of the same particles. That rearrangement response runs mainly through the "
+        "per-particle units built from the first layer's half-plane cuts and is not a response to the elongation of the "
+        "hardest particles' pattern (round 21, E43)."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "
@@ -2614,6 +2663,8 @@ KEY_RESULT = {
         "over standard-variable and energy-flow-polynomial surrogates is matched by surrogates on its own inputs, so "
         "it comes from the inputs rather than the staged structure. The blind version applied to nine trained JEDI-linear "
         "networks (round 20, B9) gives compact programs that agree with each network on 87–90 % of jets; a program "
-        "moved to another network loses about a point, so the programs carry a small network-specific part."
+        "moved to another network loses about a point, so the programs carry a small network-specific part. On four other "
+        "small architectures (round 21, B10) the programs agree on 85–92 % of jets, but a program fitted only to the true "
+        "labels agrees almost as often, so most of that agreement describes the task rather than one network."
     ),
 }

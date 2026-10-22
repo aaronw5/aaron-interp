@@ -33,14 +33,14 @@ spec:
     spec:
       restartPolicy: Never
       activeDeadlineSeconds: 86400
-      affinity:  # nodes where CephFS metadata ops stalled (D state in ceph_mdsc_wait_request), 2026-10-08; gpu-09.nrp.mghpcc.org 2026-10-20 (E26); k8s-gpu-2.ucsc.edu 2026-10-21 (E26w); ucm-fiona01.ucmerced.edu, k8s-haosu-12.sdsc.optiputer.net, rci-tide-gpu-04.sdsu.edu 2026-10-21 (E31); cph-dgx-node6.humboldt.edu 2026-10-21 (E33); k8s-chase-ci-01.calit2.optiputer.net 2026-10-21 (B7)
+      affinity:  # nodes where CephFS metadata ops stalled (D state in ceph_mdsc_wait_request), 2026-10-08; gpu-09.nrp.mghpcc.org 2026-10-20 (E26); k8s-gpu-2.ucsc.edu 2026-10-21 (E26w); ucm-fiona01.ucmerced.edu, k8s-haosu-12.sdsc.optiputer.net, rci-tide-gpu-04.sdsu.edu 2026-10-21 (E31); cph-dgx-node6.humboldt.edu 2026-10-21 (E33); k8s-chase-ci-01.calit2.optiputer.net 2026-10-21 (B7); k8s-haosu-10.sdsc.optiputer.net 2026-10-22 (B10)
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
               - key: kubernetes.io/hostname
                 operator: NotIn
-                values: [k8s-haosu-24.sdsc.optiputer.net, ry-gpu-01.sdsc.optiputer.net, nautilus-it-gpu05.fullerton.edu, fiona-prg1.cesnet.cz, k8s-chase-ci-07.calit2.optiputer.net, dtn-gpu2.kreonet.net, gpu-09.nrp.mghpcc.org, k8s-gpu-2.ucsc.edu, ucm-fiona01.ucmerced.edu, k8s-haosu-12.sdsc.optiputer.net, rci-tide-gpu-04.sdsu.edu, cph-dgx-node6.humboldt.edu, k8s-chase-ci-01.calit2.optiputer.net, patternlab.calit2.optiputer.net]
+                values: [k8s-haosu-24.sdsc.optiputer.net, ry-gpu-01.sdsc.optiputer.net, nautilus-it-gpu05.fullerton.edu, fiona-prg1.cesnet.cz, k8s-chase-ci-07.calit2.optiputer.net, dtn-gpu2.kreonet.net, gpu-09.nrp.mghpcc.org, k8s-gpu-2.ucsc.edu, ucm-fiona01.ucmerced.edu, k8s-haosu-12.sdsc.optiputer.net, rci-tide-gpu-04.sdsu.edu, cph-dgx-node6.humboldt.edu, k8s-chase-ci-01.calit2.optiputer.net, patternlab.calit2.optiputer.net, k8s-haosu-10.sdsc.optiputer.net]
       containers:
       - name: cpu
         image: gitlab-registry.nrp-nautilus.io/jmduarte/weaver:latest
