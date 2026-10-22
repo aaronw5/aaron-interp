@@ -494,7 +494,8 @@ def main(a):
     nn = NearestNeighbors(n_neighbors=2).fit(cz[fi]); _, nb = nn.kneighbors(cz); partner = np.where(fi[nb[:, 0]] == np.arange(N), fi[nb[:, 1]], fi[nb[:, 0]])
     def pair_slope(qname, rows):
         dq = G0[qname][:, 0] - G0[qname][partner, 0]; dm = m0all - m0all[partner]; dc = cz - cz[partner]
-        A = np.column_stack([dq, dc]); WbP = np.random.default_rng(4303).poisson(1.0, (NB, len(rows))).astype(np.float64)
+        rows = np.asarray(rows); nrow = int(rows.sum()) if rows.dtype == bool else len(rows)
+        A = np.column_stack([dq, dc]); WbP = np.random.default_rng(4303).poisson(1.0, (NB, nrow)).astype(np.float64)
         b = np.linalg.lstsq(A[rows], dm[rows], rcond=None)[0][0]
         bb = np.array([np.linalg.lstsq(A[rows] * np.sqrt(w)[:, None], dm[rows] * np.sqrt(w), rcond=None)[0][0] for w in WbP[:200]])
         return float(b), qci(bb), bb
