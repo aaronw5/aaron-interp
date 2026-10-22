@@ -731,6 +731,15 @@ CLAIM = {
     'C27': (
         "The axis dependence seen in ParT is tied to how the particle angles are measured, not to the type of network. The Lorentz-equivariant L-GATr, retrained with its particle angles measured from the stored jet axis that ParT uses, starts responding to particles moved off that axis at fixed invariant mass, at 0.38 of its response to a real mass change, where the unmodified network gives zero. This is from one early checkpoint of a training that is still running and has not been independently checked; the value is about half of ParT's, and whether it grows with training is open."
     ),
+    'C29': (
+        "ParT_full's decision follows a mass measured from the stored jet axis, but its particle layers also hold information on the true invariant mass: when the two masses are made to disagree, about three quarters of the left-over true-mass variation can be read out, also within one jet, far more than in untrained networks. The W-versus-Z score responds to a true-mass change at fixed axis mass only a quarter to a third as much as to a real mass change, so this information is present but little used. Whether the layers compute the mass or pass on what the pairwise input features already contain is not settled."
+    ),
+    'C30': (
+        "ParticleNet's later layers choose each particle's neighbours by learned similarity, and these neighbours come from the particle's own prong less often than in the first layer's plain angular neighbourhood (about 0.63 against 0.79 for W and Z jets), though more often than in an untrained network. Forcing all neighbours to come from other prongs changes W-versus-Z calls more often than cutting the jet along other spatial splits, so the prong split matters for that decision. This rests on one verification run whose controls did not exactly match the number and distance of replaced neighbours."
+    ),
+    'C31': (
+        "ParT_full tells H→bb from H→cc jets mainly by how far the charged tracks miss the collision point, read together with each track's momentum and direction: giving the tracks light-quark-like values drops the b-versus-c accuracy from 98 % to 61 %. A few attention heads in the first block where the summary token reads the particles pass this flavour difference on to the output, but these heads alone do not make the call. Where the flavour information itself is built up inside the particle layers is not yet located."
+    ),
     'C28': (
         "Inside L-GATr, one direction among the 32 plain scalar channels each token carries holds about 40 % of the network's response to a change of the jet mass from the fourth block on: copying it between jets of different mass transfers that share, and holding it fixed removes 37–49 % of the response, far more than random directions. Under edits that keep particles physical it follows the invariant mass. The rest of the mass information is spread over many channels, so no small set of directions reproduces the network's calls."
     ),
@@ -2094,6 +2103,15 @@ EXPLAINER = {
     ),
     'P59V_EXPLAINER': (
         "On new files the same direction again carries about 40 % of L-GATr's response to a real mass change, and holding it fixed removes 37–49 % of that response, against at most 8 % for random directions. With edits that keep particles physical, both the direction and the network output follow the invariant mass (0.84 of an angle-made change when all momenta are scaled), not the angular spread. About 60 % of the mass response is held elsewhere."
+    ),
+    'P63_EXPLAINER': (
+        "When jets are edited so that the true invariant mass and the axis-based mass disagree, ParT_full's particle layers still hold readable information on the true mass, also within one jet, much more than an untrained network with the same inputs. The W-versus-Z score moves only a quarter to a third as much as under a real mass change, and copying the best linear true-mass direction between jets changes nothing. Whether the layers compute the mass or pass on the pairwise input features is open."
+    ),
+    'P64_EXPLAINER': (
+        "ParticleNet's learned neighbour graphs mix the prongs of a jet more than the first layer's angular neighbourhood does, so they are not prong groupings. Cutting all same-prong links changes W-versus-Z calls more often than cutting along other spatial splits of the same jet, while for top-versus-QCD any such cut acts alike. The controls did not exactly match how many and how distant the replaced neighbours were."
+    ),
+    'P65_EXPLAINER': (
+        "Giving the tracks of H→bb jets light-quark-like impact parameters drops ParT_full's b-versus-c accuracy from 98 % to 61 %, and shuffling a jet's own values among its tracks has almost the same effect, so the network reads which tracks are displaced. Four heads of the first class-attention block carry this flavour difference to the output; swapping them with a same-flavour jet changes nothing. These heads alone do not reproduce the call, and where the flavour information is formed is not located."
     ),
     'P60_EXPLAINER': (
         "L-GATr retrained with its particle angles measured from the stored jet axis, as ParT does, responds to particles moved off that axis at fixed invariant mass with 0.38 of a real mass change after 5,000 training iterations, against zero for the unmodified network, and the response passes entirely through those angle inputs. So the axis dependence comes from the inputs, not from the architecture; it is about half of ParT's so far, and the training is still running."
