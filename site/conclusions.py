@@ -71,7 +71,10 @@ CLAIM = {
         "axis-displaced inputs, not something that can be seen on natural jets (claim A4o). Round 15 (E32) tests a "
         "realistic case: when the axis is computed from particles snapped to trigger-sized calorimeter towers, the network "
         "changes its W/Z decision about 0.9 as much as for a real mass change of the predicted size, and the response "
-        "disappears when the spread about the new axis is restored (claim A4t)."
+        "disappears when the spread about the new axis is restored (claim A4t). Round 20 (E41) asks the question layer by "
+        "layer on jets where the two masses disagree: no layer computes the true invariant mass; what the layers carry "
+        "beyond the axis-based mass responds to particles displaced from the axis and to how the hardest particles are "
+        "arranged around it (claim A4m)."
     ),
     'A4n': (
         "On real, unedited jets whose axis is slightly off the pT-weighted centre, moving the particles so that the jet is "
@@ -360,6 +363,23 @@ CLAIM = {
         "cross a pT-rank window edge; no single sum passes the multiple-test correction, and why the effect weakens toward "
         "the jet edge is open."
     ),
+    'A4m': (
+        "We asked whether any layer of JEDI-linear computes the true invariant mass of the jet, as opposed to the "
+        "axis-based mass √(M0·M2) (total pT times the pT-weighted squared distance of the particles from the stored axis). "
+        "The layers carry information beyond the axis-based mass only when particles are shifted off the axis. When the "
+        "true mass is lowered by 10 % with every particle keeping its momentum and distance from the axis, the layers "
+        "follow about a tenth of the change, and about half of that also appears when the same particles are rearranged "
+        "without changing the mass. So the network does not build the invariant mass; what remains open is which "
+        "quantity of the particles' arrangement around the axis that small response follows."
+    ),
+    'A20t': (
+        "Inside real top jets we moved the two subjets that form the W boson so their pair mass became 60 or 100 GeV, "
+        "keeping the jet mass, the three-prong shape variable tau32 and the axis fixed. JEDI-linear's top score drops "
+        "slightly more than under a matching edit of a different subjet pair, and no top decision changes. The W edit "
+        "also makes the subjets narrower and the jet more two-prong-like (lower tau21), and a classifier that never sees "
+        "the pair mass shows the same extra drop, so the effect cannot be attributed to the W mass. Whether a weak W-mass "
+        "term exists needs a control edit with the same side effects."
+    ),
     'A18': (
         "We let a search find, for each jet, the smallest change of its particles that flips JEDI-linear's call while "
         "the jet's mass, momentum and axis stay fixed. These changes flip the real network on about 40 % of jets, against "
@@ -560,7 +580,19 @@ CLAIM = {
         "shifted about as well as boosted trees, decision trees or small neural networks of the same size whose settings "
         "were tuned on held-out jets, but not better; much larger surrogates follow the network more closely. Symbolic "
         "regression was tested later (2026-10-20): on standard jet variables it falls behind, but so do trees on those "
-        "variables. The size measure (32 bits per stored number) favours the program."
+        "variables. The size measure (32 bits per stored number) favours the program. Round 20 (B9) applies it to nine "
+        "trained JEDI-linear networks: about 6,600-bit programs agree with each network on 87–90 % of jets and follow "
+        "its decision changes under the shift better than same-size trees and standard-variable fits on six or seven of "
+        "seven networks (claim B2n)."
+    ),
+    'B2n': (
+        "We fitted the same compact if-statement program to each of nine trained JEDI-linear networks and scored each "
+        "program against the other networks. A program taken from another network agrees about 1 point less often with a "
+        "network than its own program does, while refitting a network's own program on different jets loses nothing, so "
+        "the programs pick up real differences between networks. Each network's own program also follows that network's "
+        "decision changes under a jet shift better than a program fitted to the true labels. The network-specific part is "
+        "small, and how much of the shift agreement it accounts for is not pinned down, because single fits vary by up to "
+        "10 points."
     ),
     'B6s': (
         "Formulas found by symbolic regression on standard jet variables (mass, groomed mass, N-subjettiness ratios, "
@@ -1374,6 +1406,25 @@ EXPLAINER = {
         "untrained first half and 66–78 % when only class scores are passed. The layer content is shared between "
         "retrains; whether they compute it the same way, and which network the edit responses follow (except the Z-jet "
         "prong-sharing response, which follows the receiver), is not resolved with seven networks."
+    ),
+    'E41_EXPLAINER': (
+        "On jets where the true invariant mass and the axis-based mass √(M0·M2) disagree, JEDI-linear's layers separate "
+        "the two only when particles are shifted off the axis. Lowering the true mass by 10 % with each particle's momentum "
+        "and distance from the axis fixed moves the layers by about a tenth of a real mass change, and about half of that "
+        "also appears for a mass-preserving rearrangement of the same particles; the learned direction that undoes the "
+        "edit's few decision changes does the same for the rearrangement. The network does not build the invariant mass."
+    ),
+    'E42_EXPLAINER': (
+        "Setting the W-boson subjet pair mass inside real top jets to 60 or 100 GeV, at fixed jet mass, tau32 and axis, "
+        "lowers JEDI-linear's top score slightly more than a matched edit of another subjet pair and changes no top "
+        "decision. The W edit also narrows the subjets and lowers tau21, and a classifier blind to the pair mass shows the "
+        "same extra drop, so no W-mass term is established."
+    ),
+    'B9_EXPLAINER': (
+        "One program-extraction recipe gives compact programs that agree with each of nine trained JEDI-linear networks on "
+        "87–90 % of jets and beat same-size surrogates. Programs moved to another network lose about a point of agreement "
+        "while refits of the same network lose nothing, and each network's own program follows its shift-edit decision "
+        "changes better than a program fitted to the true labels; the network-specific part is small and varies between fits."
     ),
     'B8_EXPLAINER': (
         "Scored on the network's decision changes under a small rigid shift, the large staged program beats same-size "
@@ -2514,7 +2565,10 @@ KEY_RESULT = {
         "JEDI-linear's mass estimate unchanged, and its radial weight is a power of distance slightly above 2. In real "
         "jets the centre is never far enough from the axis to change the mass by more than 0.7 %, so the difference "
         "between the two masses shows only for axis-displaced inputs, such as jets measured about another axis; the "
-        "edited jets differ from real jets only in quantities measured about the axis (round 14, E31)."
+        "edited jets differ from real jets only in quantities measured about the axis (round 14, E31). Checked layer by "
+        "layer on jets where the two masses disagree (round 20, E41), no layer computes the invariant mass: the layers "
+        "follow about a tenth of a 10 % true-mass change made at fixed axis-based mass, and half of that also appears for "
+        "a mass-preserving rearrangement of the same particles."
     ),
     'Why this matters: the jet axis is a convention': (
         "Because the networks' mass depends on the axis, measuring particle positions about another accepted axis "
@@ -2540,6 +2594,8 @@ KEY_RESULT = {
         "edits the programs predict little about which jets flip; training them on such edited jets labelled by the "
         "network does not change that (round 17). Scored on edit responses at equal size (round 18), the program's lead "
         "over standard-variable and energy-flow-polynomial surrogates is matched by surrogates on its own inputs, so "
-        "it comes from the inputs rather than the staged structure."
+        "it comes from the inputs rather than the staged structure. The blind version applied to nine trained JEDI-linear "
+        "networks (round 20, B9) gives compact programs that agree with each network on 87–90 % of jets; a program "
+        "moved to another network loses about a point, so the programs carry a small network-specific part."
     ),
 }
