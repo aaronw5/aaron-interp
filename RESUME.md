@@ -80,3 +80,10 @@ Auto-resume cron prompt (session cron, 23,53 * * * *, 7-day expiry → re-create
 - 2026-10-22: A/B r20 done (commit 99790a1; E41 answers the per-layer invariant-mass question for JEDI: no); A/B r21 wf_8db9deb2-766 (main JEDI script, first_round 21). Note: when publishing, diff files.json against the artifact's file list, not against the previous local files.json (ledger agents rebuild it).
 - 2026-10-22: C r14 done (commit f4ae37a; P63 answers the per-layer invariant-mass question for ParT: present in particle layers, mostly unused); C r15 wf_31e40e39-22b (main bigmodels script, first_round 15).
 - 2026-10-22: A/B r21 done (commit c2b9c7c); main session fixed the e43 crash; A/B r22 wf_7ab10225-077 (main JEDI script, first_round 22). Note: subagents' cluster resubmissions are sometimes blocked by the permission classifier; the main session can submit jobs (./part_job.sh / ./job.sh) when a node reports this.
+
+## Paused 2026-10-22 (user: "pause this until next week" and "run less things simultaneously to reduce token usage")
+All three loops stopped mid-round with TaskStop; the auto-resume cron is deleted. Resume points (resumeFromRunId replays finished agents from cache):
+- A/B r22 wf_7ab10225-077 (main JEDI script, first_round 22)
+- C r15 wf_31e40e39-22b (main bigmodels script, first_round 15)
+- D r18 wf_bdcd16cf-6f5 (main physics script, first_round 18)
+Seed args are in the RESUME log above and in each run's journal.jsonl. From next week run ONE loop at a time (user rule), rotating A/B -> C -> D unless the user picks.
