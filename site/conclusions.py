@@ -693,6 +693,15 @@ CLAIM = {
     'C25': (
         'In L-GATr each hidden channel of the feed-forward layers is switched on and off by its own scalar part. Read one at a time, these channels track a class or jet quantity more often than mixed directions of the same layer (about 19 % against 13 %), and this appears only after the switch. Acting on single channels does not move the network more specifically than acting on mixed directions, so they are a preferred basis for reading information but not separately controllable parts. Whether a few channels alone can carry the decision is untested, because the test used could not exceed 36 % accuracy even with all channels kept.'
     ),
+    'C6 v3': (
+        "L-GATr, the Lorentz-equivariant tagger, does not use the jet axis stored in the data file, and when the jet mass is changed in ways that keep every particle physical, its W-versus-Z score follows the invariant mass: a 5 % mass rise made by scaling all momenta moves it 0.84 as much as the same rise made by widening the angles. A larger angular spread at the same mass reaches it only through its per-particle angle inputs, at about an eighth of a real mass change. Making particles heavier or lighter than real particles also moves the score, which is why earlier particle-mass edits gave misleading ratios; this reading rests on one verification run and still needs an independent repeat."
+    ),
+    'C27': (
+        "The axis dependence seen in ParT is tied to how the particle angles are measured, not to the type of network. The Lorentz-equivariant L-GATr, retrained with its particle angles measured from the stored jet axis that ParT uses, starts responding to particles moved off that axis at fixed invariant mass, at 0.38 of its response to a real mass change, where the unmodified network gives zero. This is from one early checkpoint of a training that is still running and has not been independently checked; the value is about half of ParT's, and whether it grows with training is open."
+    ),
+    'C28': (
+        "Inside L-GATr, one direction among the 32 plain scalar channels each token carries holds about 40 % of the network's response to a change of the jet mass from the fourth block on: copying it between jets of different mass transfers that share, and holding it fixed removes 37–49 % of the response, far more than random directions. Under edits that keep particles physical it follows the invariant mass. The rest of the mass information is spread over many channels, so no small set of directions reproduces the network's calls."
+    ),
     'C26': (
         "No set of 16 or fewer of L-GATr's 96 attention heads, kept alone, reproduces 80 % of its W-versus-Z or top-versus-QCD decision, whichever of three rules is used to switch the other heads off. When switched-off heads are replaced with outputs from jets pointing the same way, only six heads in the first three blocks matter individually and 32 heads recover about 0.7 of the top-versus-QCD decision. How small a faithful circuit can be, and whether the chosen heads beat random ones, remain open."
     ),
@@ -2004,6 +2013,21 @@ EXPLAINER = {
     ),
     'P54_EXPLAINER': (
         "L-GATr's gated hidden channels track a class or physics quantity more often than mixed directions of the same layer (19 % against 13 % on two samples), and only after the gate. Steering or removing single channels gives no consistent advantage over mixed directions, so the channels are a preferred read-out basis but not separately controllable units. The small-circuit test could not reach the full tagger even with every channel kept, so it does not decide whether small channel circuits exist."
+    ),
+    'P56_EXPLAINER': (
+        "Raising L-GATr's jet mass by making every particle heavier at fixed directions moved its W-versus-Z score only a third as much as the same mass rise made by widening the angles, all through its four-vector inputs; widening the spread at fixed mass moved it about a fifth as much. The verification showed that the heavier-particle edit also pushes particles off their physical mass, which by itself moves the score the other way, so this ratio does not measure how much L-GATr reads the invariant mass."
+    ),
+    'P56V_EXPLAINER': (
+        "On new jets the heavier-particle response was smaller (a quarter instead of a third of a real mass change). Reversing every energy change of the fixed-mass energy shuffle gave the same response, so L-GATr reacts to particles being off their physical mass in either direction, by about half of a real mass change and opposite in sign to the mass response. The share of the angular spread that reaches it through the angle inputs, about 0.13, reproduced; the four-vector share did not."
+    ),
+    'P59_EXPLAINER': (
+        "A search for a small part of L-GATr's internal state that stores the jet mass found one direction among its 32 plain scalar channels that carries about 40 % of the response to a real mass change from the fourth block on, well above random directions and mismatched-pair controls. The scalar parts of its multivectors carry little, and no subset of four or fewer directions reproduces the calls. Its response to particle-mass edits was later shown to come from unphysical particle masses."
+    ),
+    'P59V_EXPLAINER': (
+        "On new files the same direction again carries about 40 % of L-GATr's response to a real mass change, and holding it fixed removes 37–49 % of that response, against at most 8 % for random directions. With edits that keep particles physical, both the direction and the network output follow the invariant mass (0.84 of an angle-made change when all momenta are scaled), not the angular spread. About 60 % of the mass response is held elsewhere."
+    ),
+    'P60_EXPLAINER': (
+        "L-GATr retrained with its particle angles measured from the stored jet axis, as ParT does, responds to particles moved off that axis at fixed invariant mass with 0.38 of a real mass change after 5,000 training iterations, against zero for the unmodified network, and the response passes entirely through those angle inputs. So the axis dependence comes from the inputs, not from the architecture; it is about half of ParT's so far, and the training is still running."
     ),
     'P55_EXPLAINER': (
         'No set of 16 or fewer attention heads in L-GATr reproduces 80 % of its W/Z or top/QCD decision under any of three replacement rules. Replacing switched-off heads with outputs from jets that point elsewhere made most heads look necessary; with direction-matched replacements only six early heads are individually needed and 32 heads recover about 0.7 of the top/QCD decision. Whether the chosen heads beat random ones was not testable with 100 random sets.'

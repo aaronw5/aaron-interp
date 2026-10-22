@@ -1,0 +1,120 @@
+diff --git a/experiments/tagging/embedding.py b/experiments/tagging/embedding.py
+index da2e54d..d455f82 100644
+--- a/experiments/tagging/embedding.py
++++ b/experiments/tagging/embedding.py
+@@ -42,6 +42,15 @@ def embed_tagging_data_into_ga(fourmomenta, scalars, ptr, cfg_data):
+ 
+     # add extra scalar channels
+     if cfg_data.add_scalar_features:
++        # P60 (aaron-interp): with stored_axis_features the last two scalar columns are the
++        # JetClass part_deta, part_dphi (about the stored jet_eta / jet_phi, exactly ParT's
++        # inputs); they replace deta, dphi below (dR = hypot) and are removed from the scalars
++        stored_axis = (
++            "stored_axis_features" in cfg_data and cfg_data.stored_axis_features
++        )
++        if stored_axis:
++            deta_stored, dphi_stored = scalars[..., -2:-1], scalars[..., -1:]
++            scalars = scalars[..., :-2]
+         log_pt = get_pt(fourmomenta).unsqueeze(-1).log()
+         log_energy = fourmomenta[..., 0].unsqueeze(-1).log()
+ 
+@@ -55,6 +64,8 @@ def embed_tagging_data_into_ga(fourmomenta, scalars, ptr, cfg_data):
+         dphi = ((phi_4 - phi_jet + torch.pi) % (2 * torch.pi) - torch.pi).unsqueeze(-1)
+         eta_4, eta_jet = get_eta(fourmomenta), get_eta(jet)
+         deta = -(eta_4 - eta_jet).unsqueeze(-1)
++        if stored_axis:
++            dphi, deta = dphi_stored, deta_stored
+         dr = torch.sqrt(dphi**2 + deta**2)
+         scalar_features = [
+             log_pt,
+diff --git a/experiments/tagging/jetclassexperiment.py b/experiments/tagging/jetclassexperiment.py
+index 0bcca7d..9d1b16a 100644
+--- a/experiments/tagging/jetclassexperiment.py
++++ b/experiments/tagging/jetclassexperiment.py
+@@ -39,6 +39,9 @@ class JetClassTaggingExperiment(TaggingExperiment):
+         with open_dict(self.cfg):
+             self.cfg.data.num_global_tokens = 1
+             self.cfg.model.net.out_mv_channels = len(self.class_names)
++            self.cfg.data.stored_axis_features = (
++                self.cfg.data.features == "storedaxis"
++            )
+ 
+             if self.cfg.data.features == "fourmomenta":
+                 self.cfg.model.net.in_s_channels = 0
+@@ -58,6 +61,14 @@ class JetClassTaggingExperiment(TaggingExperiment):
+                 self.cfg.data.data_config = (
+                     "experiments/tagging/miniweaver/default.yaml"
+                 )
++            elif self.cfg.data.features == "storedaxis":
++                # P60 (aaron-interp): default.yaml + the stored part_deta, part_dphi
++                # (about the JetClass jet_eta / jet_phi, as ParT reads them); the two
++                # extra columns are consumed by the embedding, so in_s_channels = 10
++                self.cfg.model.net.in_s_channels = 10
++                self.cfg.data.data_config = (
++                    "experiments/tagging/miniweaver/storedaxis.yaml"
++                )
+             else:
+                 raise ValueError(
+                     f"Input feature option {self.cfg.data.features} not implemented"
+diff --git a/experiments/tagging/miniweaver/storedaxis.yaml b/experiments/tagging/miniweaver/storedaxis.yaml
+new file mode 100644
+index 0000000..3d6cb48
+--- /dev/null
++++ b/experiments/tagging/miniweaver/storedaxis.yaml
+@@ -0,0 +1,55 @@
++### P60 (aaron-interp): default.yaml + part_deta, part_dphi (stored-axis features, as ParT)
++selection: null
++   ### use `&`, `|`, `~` for logical operations on numpy arrays
++   ### can use functions from `math`, `np` (numpy), and `awkward` in the expression
++
++new_variables:
++   ### [format] name: formula
++   ### can use functions from `math`, `np` (numpy), and `awkward` in the expression
++   part_d0: np.tanh(part_d0val)
++   part_dz: np.tanh(part_dzval)
++
++inputs:
++   pf_features:
++      length: 128
++      pad_mode: constant
++      vars: 
++      ### [format 1]: var_name (no transformation)
++      ### [format 2]: [var_name, 
++      ###              subtract_by(optional, default=None, no transf. if preprocess.method=manual, auto transf. if preprocess.method=auto), 
++      ###              multiply_by(optional, default=1), 
++      ###              clip_min(optional, default=-5), 
++      ###              clip_max(optional, default=5), 
++      ###              pad_value(optional, default=0)]
++         - [part_charge, null]
++         - [part_isChargedHadron, null]
++         - [part_isNeutralHadron, null]
++         - [part_isPhoton, null]
++         - [part_isElectron, null]
++         - [part_isMuon, null]
++         - [part_d0, null]
++         - [part_d0err, 0, 1, 0, 1]
++         - [part_dz, null]
++         - [part_dzerr, 0, 1, 0, 1]
++         - [part_deta, null]
++         - [part_dphi, null]
++   pf_vectors:
++      length: 128
++      pad_mode: constant
++      vars: 
++         - [part_energy, null]
++         - [part_px, null]
++         - [part_py, null]
++         - [part_pz, null]
++
++labels:
++   ### type can be `simple`, `custom`
++   ### [option 1] use `simple` for binary/multi-class classification, then `value` is a list of 0-1 labels
++   type: simple
++   value: [label_QCD, label_Hbb, label_Hcc, label_Hgg, label_H4q, label_Hqql, label_Tbqq, label_Tbl, label_Wqq, label_Zqq]
++   ### [option 2] otherwise use `custom` to define the label, then `value` is a map
++   # type: custom
++   # value: 
++   #    truth_label: label.argmax(1)
++
++weights: None
+\ No newline at end of file
