@@ -77,3 +77,4 @@ Auto-resume cron prompt (session cron, 23,53 * * * *, 7-day expiry → re-create
 - 2026-10-22: A/B r19 done (commit ac55078); A/B r20 wf_a77f2606-a8d (main JEDI script, first_round 20; includes the per-layer invariant-mass test).
 - 2026-10-22: C r13 done (commit 17de2ae); C r14 wf_4f47c22d-103 (main bigmodels script, first_round 14; includes the per-block invariant-mass test for ParT). P60 L-GATr stored-axis retrain running.
 - 2026-10-22: D r17 done (commit 0e67b2d); main session launched d-h59-ln-score and d-h79-verify2; D r18 wf_bdcd16cf-6f5 (main physics script, first_round 18).
+- 2026-10-22: A/B r20 done (commit 99790a1; E41 answers the per-layer invariant-mass question for JEDI: no); A/B r21 wf_8db9deb2-766 (main JEDI script, first_round 21). Note: when publishing, diff files.json against the artifact's file list, not against the previous local files.json (ledger agents rebuild it).
