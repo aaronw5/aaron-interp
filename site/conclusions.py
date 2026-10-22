@@ -1131,9 +1131,27 @@ CLAIM = {
         "mostly to edits of how the jet's energy is spread in angle (narrower spread reads as quark), much more when the "
         "energy is pulled toward a common radius than for the opposite move, and a random rearrangement of the same size "
         "does not reproduce it. Moving the particle count or the momentum sharing at fixed angularities gives no "
-        "direction-dependent response, so this is not counting. Still uncertain: the energy-flow network, a tree on "
-        "angularities and the leading particle's radius all give the same pattern, so the radial variable is not "
-        "identified, and the dominant edits produce jets a classifier separates from real ones."
+        "direction-dependent response, so this is not counting. Moving only the hardest particle's distance from the axis, "
+        "with all seven angularities held, also moves every network (H79), so they use radial information the angularities "
+        "do not carry. Still uncertain: no single radial variable is identified, and the dispersion D and λ(1,0.1) cannot "
+        "be moved alone without unrealistic jets."
+    ),
+    'D31': (
+        "Holding all 15 values of the five-body N-subjettiness basis, plus jet mass, pT, axis and particle count, while "
+        "every particle moves by about 1 % leaves every trained top, W/Z and quark–gluon tagger with most of its score "
+        "response, while a classifier built on those 15 values gives exactly zero. So none of these networks is a function "
+        "of the basis, even though a classifier on it nearly matches their accuracy; the IRC-safe energy-flow network also "
+        "keeps a response, so part of the leftover is IRC-safe structure beyond the basis. Still uncertain: the edit works "
+        "on only part of the jets, and the size of the reduction on quark–gluon jets (about 0.7 of a matched move) depends "
+        "on the comparison edit and the step."
+    ),
+    'D32': (
+        "On the same top and QCD jets and the same seven edits, ParT and ParticleNet differ from each other more than "
+        "taggers trained on JetClass differ from taggers trained on Top Landscape: the architecture accounts for about half "
+        "of the between-model variation on JetClass jets, the training data for about a tenth. Every tagger, including a "
+        "classical mass-plus-τ32 cut, loses top-likeness when the W decay angle is rotated or the periphery removed. "
+        "Still uncertain: only 2–3 training seeds per cell, the seed spread on Top Landscape jets is as large as either "
+        "factor, and the result is not yet verified."
     ),
     'D25': (
         "Version 3 (H69/H69v): with jet mass and momentum held fixed, the full-input JetClass ParT and ParticleNet "
@@ -2396,6 +2414,36 @@ EXPLAINER = {
         "almost only to the angular-spread edits (LHA and width), with a pattern matching the energy-flow network "
         "(cosine about 0.99), and barely to the particle count or pT^D. Uncertain: these edits make jets a classifier "
         "separates from real ones (AUC about 0.9)."
+    ),
+    'H80_EXPLAINER': (
+        "Moving every particle by about 1 % while the 15 N-subjettiness values, mass, pT, axis and particle count stay "
+        "fixed changes the scores of top, W/Z and hls4ml taggers almost as much as a move that changes those values, and "
+        "of quark–gluon taggers about half as much; a tree on the 15 values does not respond at all. Uncertain: the "
+        "comparison edit moved hard particles more, which the verification corrects (H80v)."
+    ),
+    'H80V_EXPLAINER': (
+        "With a comparison edit that moves each particle by the same amounts, the networks keep about 0.9 (top, W/Z) and "
+        "0.7 (quark–gluon) of their response when the N-subjettiness basis is held, so every network reads more than the "
+        "basis but the quark–gluon reduction is smaller than first reported. Uncertain: the matched comparison edit is "
+        "easier to tell from real jets, and JEDI-linear was not rerun."
+    ),
+    'H79_EXPLAINER': (
+        "Moving the hardest particle 10 % further from the jet axis at fixed angularities, particle count and axis makes "
+        "every quark/gluon network call the jet slightly more quark-like (ParT −0.04 log-odds), on near-realistic jets "
+        "and both generators. The dispersion D and λ(1,0.1) cannot be moved alone without unrealistic jets, so no single "
+        "radial variable is identified."
+    ),
+    'H79V_EXPLAINER': (
+        "The networks are not functions of the seven angularities, but the claim that they read the leading particle's "
+        "radius against the data trend is not established: the reference classifier used that radius alone, not its "
+        "effect at fixed angularities. Uncertain: the fresh-sample rerun did not run, and a rotation that keeps every "
+        "constraint moves the networks by a similar amount."
+    ),
+    'H81_EXPLAINER': (
+        "On the same jets and edits, ParT and ParticleNet differ more from each other than JetClass-trained differ from "
+        "Top-Landscape-trained models: the architecture accounts for about half of the between-model variation on JetClass "
+        "jets and the training dataset for about a tenth. Uncertain: only 2-3 seeds per cell, the seed spread is as large as "
+        "both factors on Top Landscape jets, and which jets are edited matters about as much as the training data."
     ),
     'H76V_EXPLAINER': (
         "The angular-spread response is lopsided: pulling energy toward a common radius moves ParT toward quark four to "
